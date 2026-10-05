@@ -3,7 +3,7 @@ services:
     name: sendport
     runtime: node
     plan: free
-    buildCommand: npm install && npx prisma db push --accept-data-loss && npm run build
+    buildCommand: npm install && npx prisma db push --accept-data-loss && node prisma/seed.js && npm run build
     startCommand: npm run start
     healthCheckPath: /api/v1/usage
     envVars:
