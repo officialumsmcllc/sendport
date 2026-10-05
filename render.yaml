@@ -9,6 +9,10 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 20.18.0
+      - key: HOSTNAME
+        value: 0.0.0.0
+      - key: PORT
+        value: "10000"
       - key: DATABASE_URL
         value: file:./dev.db
       - key: NEXT_PUBLIC_APP_URL
