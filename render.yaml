@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: sendport
+    runtime: node
+    plan: free
+    buildCommand: npm install && npx prisma db push --accept-data-loss && npm run build
+    startCommand: npm run start
+    healthCheckPath: /api/v1/usage
+    envVars:
+      - key: NODE_VERSION
+        value: 20.18.0
+      - key: DATABASE_URL
+        value: file:./dev.db
+      - key: NEXT_PUBLIC_APP_URL
+        value: https://getsendport.com
+      - key: NEXT_PUBLIC_SITE_NAME
+        value: Sendport
+      - key: NEXT_PUBLIC_SITE_DOMAIN
+        value: getsendport.com
+      - key: JWT_SECRET
+        generateValue: true
+      - key: SMTP_HOST
+        value: smtp.hostinger.com
+      - key: SMTP_PORT
+        value: "465"
+      - key: SMTP_SECURE
+        value: "true"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+        sync: false
