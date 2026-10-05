@@ -1,0 +1,15 @@
+<svg width="32" height="32" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="40" height="40" rx="10" fill="url(#sendport-grad)" />
+  <path d="M10 20.5L30 11L21.5 31L17.5 22.5L10 20.5Z" fill="white" fill-opacity="0.95" />
+  <path d="M17.5 22.5L30 11" stroke="url(#sendport-accent)" stroke-width="2" stroke-linecap="round" />
+  <defs>
+    <linearGradient id="sendport-grad" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4F46E5" />
+      <stop offset="1" stop-color="#0EA5E9" />
+    </linearGradient>
+    <linearGradient id="sendport-accent" x1="17" y1="11" x2="30" y2="22" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E0E7FF" />
+      <stop offset="1" stop-color="#38BDF8" />
+    </linearGradient>
+  </defs>
+</svg>

@@ -1,0 +1,69 @@
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/db/prisma";
+import { sendEmailEngine } from "@/lib/email/dispatcher";
+
+/**
+ * POST /api/v1/emails/batch
+ * Send up to 1,000 distinct personalized emails in one call
+ */
+export async function POST(req: NextRequest) {
+  try {
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return NextResponse.json(
+        { error: "Unauthorized. Missing 'Authorization: Bearer sk_live_...' header." },
+        { status: 401 }
+      );
+    }
+
+    let workspace = await prisma.workspace.findFirst();
+    if (!workspace) {
+      workspace = await prisma.workspace.create({
+        data: { name: "Default Workspace", slug: "default", dailyQuota: 500 },
+      });
+    }
+
+    const body = await req.json();
+    if (!Array.isArray(body)) {
+      return NextResponse.json(
+        { error: "Batch payload must be a JSON array of email objects." },
+        { status: 422 }
+      );
+    }
+
+    if (body.length > 1000) {
+      return NextResponse.json(
+        { error: "Maximum batch limit exceeded. Send up to 1,000 emails per batch." },
+        { status: 422 }
+      );
+    }
+
+    const results = [];
+    for (const item of body) {
+      try {
+        const res = await sendEmailEngine({
+          workspaceId: workspace.id,
+          from: item.from,
+          to: item.to,
+          subject: item.subject,
+          html: item.html,
+          text: item.text,
+          trackOpens: item.track_opens !== false,
+          trackClicks: item.track_clicks !== false,
+        });
+        results.push(res);
+      } catch (err: any) {
+        results.push({
+          from: item.from,
+          to: item.to,
+          status: "failed",
+          error: err.message,
+        });
+      }
+    }
+
+    return NextResponse.json({ data: results }, { status: 200 });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}

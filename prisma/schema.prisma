@@ -1,0 +1,301 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String          @id @default(cuid())
+  name          String?
+  email         String          @unique
+  passwordHash  String?
+  role          String          @default("USER") // USER, ADMIN
+  twoFactorEnabled Boolean      @default(false)
+  twoFactorSecret  String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  workspaces    WorkspaceMember[]
+  apiKeys       ApiKey[]
+  domains       Domain[]
+  subscriptions Subscription[]
+  payments      PaymentTransaction[]
+  auditLogs     AuditLog[]
+}
+
+model Workspace {
+  id          String            @id @default(cuid())
+  name        String
+  slug        String            @unique
+  plan        String            @default("STARTER") // STARTER, GROWTH, SCALE_PRO
+  dailyQuota  Int               @default(500)
+  usedToday   Int               @default(0)
+  quotaResetAt DateTime         @default(now())
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  members     WorkspaceMember[]
+  domains     Domain[]
+  apiKeys     ApiKey[]
+  emails      EmailLog[]
+  templates   EmailTemplate[]
+  folders     TemplateFolder[]
+  audiences   Audience[]
+  webhooks    Webhook[]
+  suppressions Suppression[]
+}
+
+model WorkspaceMember {
+  id          String    @id @default(cuid())
+  workspaceId String
+  userId      String
+  role        String    @default("OWNER") // OWNER, ADMIN, DEVELOPER, VIEWER
+  createdAt   DateTime  @default(now())
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+}
+
+model Domain {
+  id              String      @id @default(cuid())
+  workspaceId     String
+  userId          String
+  name            String      // e.g. officialum1.com
+  status          String      @default("PENDING") // PENDING, VERIFIED, FAILED
+  dkimSelector    String      @default("sendport")
+  dkimPrivateKey  String      // RSA-2048 private key (PEM)
+  dkimPublicKey   String      // RSA-2048 public key for DNS TXT
+  spfRecord       String      @default("v=spf1 include:mail.getsendport.com ~all")
+  dmarcRecord     String      @default("v=DMARC1; p=none; rua=mailto:dmarc@getsendport.com")
+  mxRecord        String      @default("inbound.getsendport.com")
+  isDkimValid     Boolean     @default(false)
+  isSpfValid      Boolean     @default(false)
+  isDmarcValid    Boolean     @default(false)
+  isMxValid       Boolean     @default(false)
+  verifiedAt      DateTime?
+  lastCheckedAt   DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  workspace       Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emails          EmailLog[]
+
+  @@unique([workspaceId, name])
+}
+
+model ApiKey {
+  id          String      @id @default(cuid())
+  workspaceId String
+  userId      String
+  name        String
+  keyHash     String      @unique // hashed or raw sk_live_...
+  keyPrefix   String      // e.g. sk_live_8f9a...
+  scope       String      @default("FULL_ACCESS") // FULL_ACCESS, SEND_ONLY, INBOUND_ONLY
+  dailyLimit  Int         @default(500)
+  usedToday   Int         @default(0)
+  lastUsedAt  DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  workspace   Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model EmailLog {
+  id              String         @id @default(cuid())
+  workspaceId     String
+  domainId        String?
+  messageId       String         @unique // e.g. msg_89f41b2c
+  from            String
+  to              String
+  subject         String
+  htmlBody        String?
+  textBody        String?
+  status          String         @default("QUEUED") // QUEUED, DELIVERED, OPENED, CLICKED, BOUNCED, COMPLAINED, FAILED
+  bounceType      String?        // HARD, SOFT
+  bounceReason    String?
+  openCount       Int            @default(0)
+  clickCount      Int            @default(0)
+  openToken       String?        @unique
+  clickToken      String?        @unique
+  latencyMs       Int?
+  dkimSigned      Boolean        @default(true)
+  ipAddress       String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  workspace       Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  domain          Domain?        @relation(fields: [domainId], references: [id], onDelete: SetNull)
+  events          TrackingEvent[]
+}
+
+model TrackingEvent {
+  id          String    @id @default(cuid())
+  emailLogId  String
+  type        String    // OPEN, CLICK, BOUNCE, COMPLAINT
+  targetUrl   String?
+  ip          String?
+  userAgent   String?
+  createdAt   DateTime  @default(now())
+
+  emailLog    EmailLog  @relation(fields: [emailLogId], references: [id], onDelete: Cascade)
+}
+
+model TemplateFolder {
+  id          String          @id @default(cuid())
+  workspaceId String
+  name        String
+  slug        String
+  color       String?         @default("#3b82f6")
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  workspace   Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  templates   EmailTemplate[]
+
+  @@unique([workspaceId, slug])
+}
+
+model EmailTemplate {
+  id          String          @id @default(cuid())
+  workspaceId String
+  folderId    String?
+  name        String
+  slug        String
+  subject     String
+  htmlContent String
+  textContent String?
+  variables   String?         // JSON array of variables like ["user_name", "amount"]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  workspace   Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  folder      TemplateFolder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
+
+  @@unique([workspaceId, slug])
+}
+
+model Audience {
+  id          String    @id @default(cuid())
+  workspaceId String
+  name        String
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  contacts    Contact[]
+
+  @@unique([workspaceId, name])
+}
+
+model Contact {
+  id            String    @id @default(cuid())
+  audienceId    String
+  email         String
+  firstName     String?
+  lastName      String?
+  unsubscribed  Boolean   @default(false)
+  tags          String?   // JSON array of strings e.g. ["VIP", "Newsletter"]
+  customData    String?   // JSON object with custom attributes
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  audience      Audience  @relation(fields: [audienceId], references: [id], onDelete: Cascade)
+
+  @@unique([audienceId, email])
+}
+
+model Webhook {
+  id          String    @id @default(cuid())
+  workspaceId String
+  url         String
+  secret      String    // HMAC secret for signature
+  events      String    // comma separated: email.delivered,email.opened,email.clicked,email.bounced
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  deliveries  WebhookDeliveryLog[]
+}
+
+model WebhookDeliveryLog {
+  id          String    @id @default(cuid())
+  webhookId   String
+  event       String
+  payload     String
+  statusCode  Int?
+  response    String?
+  success     Boolean   @default(false)
+  attempts    Int       @default(1)
+  createdAt   DateTime  @default(now())
+
+  webhook     Webhook   @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+}
+
+model Suppression {
+  id          String    @id @default(cuid())
+  workspaceId String
+  email       String
+  reason      String    // BOUNCE, UNSUBSCRIBE, COMPLAINT, MANUAL
+  createdAt   DateTime  @default(now())
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, email])
+}
+
+model Subscription {
+  id          String    @id @default(cuid())
+  userId      String
+  plan        String    // STARTER, GROWTH, SCALE_PRO
+  billingCycle String   @default("MONTHLY") // MONTHLY, YEARLY
+  currency    String    @default("USD")
+  amount      Float     @default(0)
+  dailyLimit  Int       @default(500)
+  status      String    @default("ACTIVE") // ACTIVE, PENDING_PAYMENT, EXPIRED, CANCELLED
+  startedAt   DateTime  @default(now())
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PaymentTransaction {
+  id              String    @id @default(cuid())
+  userId          String
+  plan            String
+  amount          Float
+  currency        String    @default("USD")
+  method          String    // STRIPE, BANK_TRANSFER, EASYPAISA, JAZZCASH, RAAST, CRYPTO_USDT, WISE
+  referenceId     String?   // Transaction ID or TxHash
+  senderName      String?
+  senderPhone     String?
+  receiptUrl      String?   // Proof screenshot / slip
+  status          String    @default("PENDING") // PENDING, APPROVED, REJECTED
+  adminNotes      String?
+  approvedAt      DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id          String    @id @default(cuid())
+  userId      String?
+  action      String    // API_KEY_CREATED, DOMAIN_ADDED, PAYMENT_SUBMITTED, etc.
+  details     String?   // JSON details
+  ip          String?
+  createdAt   DateTime  @default(now())
+
+  user        User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
