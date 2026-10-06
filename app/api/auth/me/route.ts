@@ -46,17 +46,18 @@ export async function GET() {
     };
 
     let recentEmails: any[] = [];
+    const workspaceIds = user.workspaces?.map((w) => w.workspace.id) || [];
 
-    if (primaryWorkspace) {
+    if (workspaceIds.length > 0) {
       const [total, delivered, opened, clicked, bounced, logs] = await Promise.all([
-        prisma.emailLog.count({ where: { workspaceId: primaryWorkspace.id } }),
-        prisma.emailLog.count({ where: { workspaceId: primaryWorkspace.id, status: "DELIVERED" } }),
-        prisma.emailLog.count({ where: { workspaceId: primaryWorkspace.id, status: "OPENED" } }),
-        prisma.emailLog.count({ where: { workspaceId: primaryWorkspace.id, status: "CLICKED" } }),
-        prisma.emailLog.count({ where: { workspaceId: primaryWorkspace.id, status: "BOUNCED" } }),
+        prisma.emailLog.count({ where: { workspaceId: { in: workspaceIds } } }),
+        prisma.emailLog.count({ where: { workspaceId: { in: workspaceIds }, status: "DELIVERED" } }),
+        prisma.emailLog.count({ where: { workspaceId: { in: workspaceIds }, status: "OPENED" } }),
+        prisma.emailLog.count({ where: { workspaceId: { in: workspaceIds }, status: "CLICKED" } }),
+        prisma.emailLog.count({ where: { workspaceId: { in: workspaceIds }, status: "BOUNCED" } }),
         prisma.emailLog.findMany({
-          where: { workspaceId: primaryWorkspace.id },
-          take: 10,
+          where: { workspaceId: { in: workspaceIds } },
+          take: 50,
           orderBy: { createdAt: "desc" },
           select: {
             id: true,
@@ -79,6 +80,7 @@ export async function GET() {
         time: new Date(l.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         dkim: l.dkimSigned,
       }));
+
 
       stats.delivered = delivered + opened + clicked;
       stats.opened = opened + clicked;
