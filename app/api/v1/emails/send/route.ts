@@ -2,39 +2,89 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { sendEmailEngine, parseFromHeader } from "@/lib/email/dispatcher";
 import { validateEmailAddress } from "@/lib/email/validator";
+import { getCurrentUser } from "@/lib/auth/session";
 
 /**
  * POST /api/v1/emails/send
- * Authorization: Bearer sk_live_...
+ * Authorization: Bearer sk_live_... (or authenticated browser session)
  */
 export async function POST(req: NextRequest) {
   try {
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json(
-        { error: "Unauthorized. Missing or invalid 'Authorization: Bearer sk_live_...' header." },
-        { status: 401 }
-      );
+    const authHeader = req.headers.get("Authorization") || req.headers.get("authorization");
+    let workspace: any = null;
+    let userId: string | null = null;
+
+    // 1. Check API Key Header if present
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      const apiKeyToken = authHeader.replace("Bearer ", "").trim();
+      if (apiKeyToken && apiKeyToken !== "undefined" && apiKeyToken !== "null") {
+        const apiKey = await prisma.apiKey.findFirst({
+          where: {
+            OR: [
+              { keyHash: apiKeyToken },
+              { keyPrefix: { startsWith: apiKeyToken.substring(0, 12) } },
+            ],
+          },
+          include: {
+            workspace: {
+              include: { apiKeys: true, domains: true },
+            },
+          },
+        });
+
+        if (apiKey?.workspace) {
+          workspace = apiKey.workspace;
+          userId = apiKey.userId;
+        }
+      }
     }
 
-    const apiKeyToken = authHeader.replace("Bearer ", "").trim();
-
-    // Authenticate API key or allow default workspace for local testing
-    let workspace = await prisma.workspace.findFirst({
-      include: { apiKeys: true },
-    });
-
+    // 2. Fallback to Browser Session if request came from logged-in Dashboard/Playground
     if (!workspace) {
-      // Create default workspace if fresh install
-      workspace = await prisma.workspace.create({
-        data: {
-          name: "Default Workspace",
-          slug: "default",
-          plan: "STARTER",
-          dailyQuota: 500,
-        },
-        include: { apiKeys: true },
+      const session = await getCurrentUser();
+      if (session) {
+        const user = await prisma.user.findUnique({
+          where: { id: session.userId },
+          include: {
+            workspaces: {
+              include: {
+                workspace: {
+                  include: { apiKeys: true, domains: true },
+                },
+              },
+            },
+          },
+        });
+
+        workspace = user?.workspaces?.[0]?.workspace;
+        userId = session.userId;
+      }
+    }
+
+    // 3. Fallback for fresh local setup / default workspace if none found
+    if (!workspace) {
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return NextResponse.json(
+          { error: "Unauthorized. Missing or invalid 'Authorization: Bearer sk_live_...' header or active session." },
+          { status: 401 }
+        );
+      }
+
+      workspace = await prisma.workspace.findFirst({
+        include: { apiKeys: true, domains: true },
       });
+
+      if (!workspace) {
+        workspace = await prisma.workspace.create({
+          data: {
+            name: "Default Workspace",
+            slug: "default",
+            plan: "STARTER",
+            dailyQuota: 500,
+          },
+          include: { apiKeys: true, domains: true },
+        });
+      }
     }
 
     const body = await req.json();

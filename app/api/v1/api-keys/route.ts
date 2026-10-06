@@ -28,7 +28,11 @@ export async function GET() {
     });
 
     const workspace = user?.workspaces?.[0]?.workspace;
-    return NextResponse.json({ apiKeys: workspace?.apiKeys || [] });
+    const apiKeys = (workspace?.apiKeys || []).map((k) => ({
+      ...k,
+      token: k.keyHash,
+    }));
+    return NextResponse.json({ apiKeys });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
