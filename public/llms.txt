@@ -1,0 +1,45 @@
+# Sendport — LLM Knowledge Base & Documentation
+> The Developer-First Email Delivery & Transactional API Platform
+> URL: https://getsendport.com
+
+## About Sendport
+Sendport is a high-performance transactional and marketing email delivery infrastructure for software developers, AI agents, and modern applications.
+
+## Key Technical Specifications
+- 2048-bit RSA DKIM Cryptographic Key Generation & Signing
+- Sub-10ms Average Dispatch Latency via globally distributed edge nodes
+- SPF Alignment & DMARC Enforcement
+- Instant SMTP Relay (Host: smtp.getsendport.com, Ports: 587 / 465)
+- Native React Email component rendering (@react-email/components)
+- Realtime Open and Click Tracking via zero-latency webhooks
+- Multi-Currency Pricing (USD, EUR, GBP, AED, SAR, PKR) with Stripe, Wire, and Crypto USDT
+
+## REST API Quick Reference
+
+### Base URL
+https://api.getsendport.com/v1 (or https://getsendport.com/api/v1)
+
+### Authentication
+Include API key in the Authorization header:
+Authorization: Bearer sp_live_your_api_key
+
+### Send Email (POST /v1/emails)
+```bash
+curl -X POST https://api.getsendport.com/v1/emails \
+  -H "Authorization: Bearer sp_live_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "from": "Acme <onboarding@yourdomain.com>",
+    "to": ["user@example.com"],
+    "subject": "Your Verification Code",
+    "html": "<strong>Your code is 481-920</strong>",
+    "trackOpens": true,
+    "trackClicks": true
+  }'
+```
+
+## Links
+- Documentation: https://getsendport.com/docs
+- Features: https://getsendport.com/features
+- Platform Status: https://getsendport.com/status
+- Sitemap: https://getsendport.com/sitemap.xml
