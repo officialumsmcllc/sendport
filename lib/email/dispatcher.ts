@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db/prisma";
 import { signDkimHeader } from "@/lib/dns/dkim";
 import { dispatchWebhookEvents } from "@/lib/webhooks/dispatcher";
 import { siteConfig } from "@/lib/config/site";
+import { dispatchDirectToMx } from "@/lib/email/direct-mx";
 
 export interface SendEmailOptions {
   workspaceId: string;
@@ -151,7 +152,7 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
     },
   });
 
-  // 6. Upstream SMTP Delivery (if configured in .env)
+  // 6. Real-time Internet Delivery: Configured Relay OR Automatic Direct MX Routing
   if (process.env.SMTP_USER && process.env.SMTP_PASS && process.env.SMTP_HOST) {
     try {
       const transporter = nodemailer.createTransport({
@@ -179,9 +180,34 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
         },
       });
     } catch (smtpError) {
-      console.warn("Upstream SMTP delivery warning (falling back to engine queue):", smtpError);
+      console.warn("Upstream SMTP delivery warning (falling back to direct MX):", smtpError);
+      await dispatchDirectToMx({
+        from: options.from,
+        to: recipients,
+        subject: options.subject,
+        html: processedHtml,
+        text: options.text,
+        replyTo: options.replyTo,
+        headers: options.headers,
+        messageId,
+        dkimSignatureHeader,
+      });
     }
+  } else {
+    // Automatic Direct MX Dispatch straight to recipient mail servers (e.g. Gmail / Yahoo / Outlook)
+    await dispatchDirectToMx({
+      from: options.from,
+      to: recipients,
+      subject: options.subject,
+      html: processedHtml,
+      text: options.text,
+      replyTo: options.replyTo,
+      headers: options.headers,
+      messageId,
+      dkimSignatureHeader,
+    });
   }
+
 
   // 7. Fire Webhook for email.delivered
   dispatchWebhookEvents(options.workspaceId, "email.delivered", {
