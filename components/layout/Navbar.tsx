@@ -103,6 +103,9 @@ export function Navbar({
           <Link href="/dashboard/link-checker" className="hover:text-primary-400 transition-colors">
             Link Checker
           </Link>
+          <Link href="/blog" className="hover:text-primary-400 transition-colors">
+            Blog
+          </Link>
           <Link
             href="/status"
             className="hover:text-primary-400 transition-colors flex items-center gap-1.5"
@@ -263,6 +266,9 @@ export function Navbar({
           </Link>
           <Link href="/dashboard/link-checker" className="block text-sm py-1 font-medium hover:text-primary-400">
             Link Checker
+          </Link>
+          <Link href="/blog" className="block text-sm py-1 font-medium hover:text-primary-400">
+            Blog & Guides
           </Link>
           <Link href="/status" className="block text-sm py-1 font-medium hover:text-primary-400">
             Uptime Status

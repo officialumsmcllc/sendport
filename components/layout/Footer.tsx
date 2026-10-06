@@ -50,6 +50,7 @@ export function Footer({ dark = true }: { dark?: boolean }) {
           <div>
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-200 mb-3">Developers</h3>
             <ul className="space-y-2.5 text-xs text-slate-400">
+              <li><Link href="/blog" className="hover:text-white transition-colors">Engineering & Guides Blog</Link></li>
               <li><Link href="/docs" className="hover:text-white transition-colors">REST API Reference</Link></li>
               <li><Link href="/dashboard/smtp" className="hover:text-white transition-colors">SMTP Relay Credentials</Link></li>
               <li><Link href="/dashboard/playground" className="hover:text-white transition-colors">Interactive API Playground</Link></li>
