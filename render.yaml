@@ -1,3 +1,9 @@
+databases:
+  - name: sendport-db
+    databaseName: sendport
+    user: sendport
+    plan: starter
+
 services:
   - type: web
     name: sendport
@@ -13,7 +19,9 @@ services:
       - key: PORT
         value: "10000"
       - key: DATABASE_URL
-        value: file:./dev.db
+        fromDatabase:
+          name: sendport-db
+          property: connectionString
       - key: NEXT_PUBLIC_APP_URL
         value: https://getsendport.com
       - key: NEXT_PUBLIC_SITE_NAME
@@ -21,6 +29,8 @@ services:
       - key: NEXT_PUBLIC_SITE_DOMAIN
         value: getsendport.com
       - key: JWT_SECRET
+        generateValue: true
+      - key: SESSION_SECRET
         generateValue: true
       - key: SMTP_HOST
         value: smtp.hostinger.com
