@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import "./globals.css";
 import { siteConfig } from "@/lib/config/site";
 import { SendportJsonLd } from "@/components/seo/JsonLd";
@@ -79,8 +80,24 @@ export default function RootLayout({
         <SendportJsonLd />
       </head>
       <body className="min-h-screen bg-black text-slate-100 antialiased selection:bg-white/20 selection:text-white">
+        {/* Google Analytics (gtag.js) */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-FZSYLVT8JC"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', 'G-FZSYLVT8JC');
+          `}
+        </Script>
+
         {children}
       </body>
     </html>
   );
 }
+
