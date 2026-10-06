@@ -1,13 +1,36 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Users, Search, RefreshCw, ShieldCheck, UserCheck, Mail, Database, CheckCircle2 } from "lucide-react";
+import {
+  Users,
+  Search,
+  RefreshCw,
+  ShieldCheck,
+  UserCheck,
+  Mail,
+  Database,
+  CheckCircle2,
+  Edit,
+  Sliders,
+  RotateCcw,
+  Sparkles,
+  ShieldAlert,
+  AlertCircle,
+} from "lucide-react";
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Edit Modal State
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [editRole, setEditRole] = useState("USER");
+  const [editPlan, setEditPlan] = useState("STARTER");
+  const [editQuota, setEditQuota] = useState(500);
+  const [updating, setUpdating] = useState(false);
+  const [toastMsg, setToastMsg] = useState("");
 
   const fetchUsers = async () => {
     try {
@@ -28,6 +51,69 @@ export default function AdminUsersPage() {
   useEffect(() => {
     fetchUsers();
   }, []);
+
+  const openEditModal = (user: any) => {
+    setSelectedUser(user);
+    setEditRole(user.role);
+    const ws = user.workspaces?.[0]?.workspace;
+    setEditPlan(ws?.plan || "STARTER");
+    setEditQuota(ws?.dailyQuota || 500);
+  };
+
+  const handleSaveUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedUser) return;
+    try {
+      setUpdating(true);
+      const ws = selectedUser.workspaces?.[0]?.workspace;
+      const res = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: selectedUser.id,
+          workspaceId: ws?.id,
+          role: editRole,
+          plan: editPlan,
+          dailyQuota: Number(editQuota),
+        }),
+      });
+
+      if (res.ok) {
+        setSelectedUser(null);
+        setToastMsg(`Updated permissions for ${selectedUser.email}`);
+        setTimeout(() => setToastMsg(""), 3500);
+        fetchUsers();
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleResetQuota = async (user: any) => {
+    const ws = user.workspaces?.[0]?.workspace;
+    if (!ws) return;
+    if (!confirm(`Reset today's used quota for ${user.email} back to 0?`)) return;
+
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          workspaceId: ws.id,
+          resetUsedToday: true,
+        }),
+      });
+      if (res.ok) {
+        setToastMsg(`Reset used quota counter for ${user.email}`);
+        setTimeout(() => setToastMsg(""), 3500);
+        fetchUsers();
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const filtered = users.filter(
     (u) =>
@@ -57,6 +143,13 @@ export default function AdminUsersPage() {
           Refresh Users
         </button>
       </div>
+
+      {toastMsg && (
+        <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 font-bold flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4" />
+          {toastMsg}
+        </div>
+      )}
 
       {/* KPI Stats */}
       {stats && (
@@ -99,7 +192,7 @@ export default function AdminUsersPage() {
           <h2 className="text-xs font-bold uppercase tracking-wider text-slate-300">
             Account List ({filtered.length})
           </h2>
-          <span className="text-[11px] font-mono text-slate-400">Role & Quota Management</span>
+          <span className="text-[11px] font-mono text-slate-400">Direct Quota & Plan Overrides</span>
         </div>
 
         <div className="overflow-x-auto">
@@ -111,7 +204,7 @@ export default function AdminUsersPage() {
                 <th className="p-4">Workspace & Plan</th>
                 <th className="p-4">Daily Quota</th>
                 <th className="p-4">Resources</th>
-                <th className="p-4 text-right">Joined</th>
+                <th className="p-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60">
@@ -137,7 +230,15 @@ export default function AdminUsersPage() {
                     </td>
                     <td className="p-4">
                       <p className="font-semibold text-slate-200">{ws?.name || "Default Workspace"}</p>
-                      <span className="inline-block mt-0.5 text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">
+                      <span
+                        className={`inline-block mt-0.5 text-[10px] font-mono uppercase px-2 py-0.5 rounded font-bold ${
+                          ws?.plan === "SCALE_PRO"
+                            ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                            : ws?.plan === "GROWTH"
+                            ? "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                            : "bg-slate-800 text-slate-400"
+                        }`}
+                      >
                         {ws?.plan || "STARTER"}
                       </span>
                     </td>
@@ -154,8 +255,22 @@ export default function AdminUsersPage() {
                         <p>{user._count?.payments || 0} Invoices</p>
                       </div>
                     </td>
-                    <td className="p-4 text-right text-[11px] text-slate-400 font-mono">
-                      {new Date(user.createdAt).toLocaleDateString()}
+                    <td className="p-4 text-right space-x-1.5 whitespace-nowrap">
+                      <button
+                        onClick={() => handleResetQuota(user)}
+                        title="Reset Used Today to 0"
+                        className="p-1.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-amber-400 transition-colors inline-flex items-center gap-1 text-[11px]"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" />
+                        Reset
+                      </button>
+                      <button
+                        onClick={() => openEditModal(user)}
+                        className="px-2.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold transition-colors inline-flex items-center gap-1.5 text-[11px]"
+                      >
+                        <Edit className="w-3.5 h-3.5" />
+                        Manage
+                      </button>
                     </td>
                   </tr>
                 );
@@ -164,6 +279,96 @@ export default function AdminUsersPage() {
           </table>
         </div>
       </div>
+
+      {/* Edit User & Quotas Modal */}
+      {selectedUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <Sliders className="w-4 h-4 text-amber-400" />
+                Manage Account & Quotas
+              </h3>
+              <button
+                onClick={() => setSelectedUser(null)}
+                className="text-slate-400 hover:text-white text-xs font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800">
+              <p className="text-xs font-bold text-white">{selectedUser.email}</p>
+              <p className="text-[11px] text-slate-400 font-mono mt-0.5">ID: {selectedUser.id}</p>
+            </div>
+
+            <form onSubmit={handleSaveUser} className="space-y-4 text-xs">
+              <div>
+                <label className="block text-slate-400 font-bold mb-1">User Role Authority</label>
+                <select
+                  value={editRole}
+                  onChange={(e) => setEditRole(e.target.value)}
+                  className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-white font-bold focus:border-amber-500 focus:outline-none"
+                >
+                  <option value="USER">USER (Regular Customer)</option>
+                  <option value="ADMIN">ADMIN (Superadmin Root Authority)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-slate-400 font-bold mb-1">Workspace Plan Tier</label>
+                <select
+                  value={editPlan}
+                  onChange={(e) => {
+                    const p = e.target.value;
+                    setEditPlan(p);
+                    if (p === "SCALE_PRO") setEditQuota(25000);
+                    else if (p === "GROWTH") setEditQuota(5000);
+                    else setEditQuota(500);
+                  }}
+                  className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-white font-bold focus:border-amber-500 focus:outline-none"
+                >
+                  <option value="STARTER">STARTER (Free - 500 emails/day)</option>
+                  <option value="GROWTH">GROWTH ($19/mo - 5,000 emails/day)</option>
+                  <option value="SCALE_PRO">SCALE_PRO ($59/mo - 25,000 emails/day)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-slate-400 font-bold mb-1">Custom Daily Sending Quota</label>
+                <input
+                  type="number"
+                  min="100"
+                  step="100"
+                  value={editQuota}
+                  onChange={(e) => setEditQuota(Number(e.target.value))}
+                  className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-white font-mono font-bold focus:border-amber-500 focus:outline-none"
+                />
+                <p className="text-[10px] text-slate-500 mt-1">
+                  You can set any custom quota (e.g. 50,000 or 100,000 emails/day).
+                </p>
+              </div>
+
+              <div className="pt-2 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedUser(null)}
+                  className="w-1/2 py-2.5 rounded-xl border border-slate-700 bg-slate-800 text-white font-bold hover:bg-slate-700 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={updating}
+                  className="w-1/2 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black transition-colors shadow-lg shadow-amber-500/20"
+                >
+                  {updating ? "Saving..." : "Update Account"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

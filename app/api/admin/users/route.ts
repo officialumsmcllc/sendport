@@ -1,6 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
+import { logSecurityAudit } from "@/lib/security/audit";
 
 export async function GET() {
   try {
@@ -55,6 +56,49 @@ export async function GET() {
         totalAdmins,
         activeWorkspacesCount,
       },
+    });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+export async function PATCH(req: NextRequest) {
+  try {
+    const session = await getCurrentUser();
+    if (!session || session.role !== "ADMIN") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
+
+    const body = await req.json();
+    const { userId, workspaceId, role, plan, dailyQuota, resetUsedToday } = body;
+
+    // 1. Update user role if provided
+    if (userId && role) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: { role },
+      });
+      logSecurityAudit("USER_ROLE_CHANGED", session.userId, { targetUserId: userId, newRole: role });
+    }
+
+    // 2. Update workspace settings (plan, quota, reset counter)
+    if (workspaceId) {
+      const updateData: any = {};
+      if (plan) updateData.plan = plan;
+      if (dailyQuota !== undefined) updateData.dailyQuota = Number(dailyQuota);
+      if (resetUsedToday) updateData.usedToday = 0;
+
+      await prisma.workspace.update({
+        where: { id: workspaceId },
+        data: updateData,
+      });
+
+      logSecurityAudit("WORKSPACE_ADMIN_MODIFIED", session.userId, { workspaceId, updateData });
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Account settings updated successfully.",
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
