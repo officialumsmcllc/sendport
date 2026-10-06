@@ -155,8 +155,38 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
   let deliveryStatus: "DELIVERED" | "FAILED" = "FAILED";
   let deliveryError: string | null = null;
 
-  // 6. Real-time Internet Delivery: Autonomous Python MTA Daemon OR Configured Relay OR Direct MX
-  if (process.env.MTA_SERVER_URL) {
+  // 6. Real-time Internet Delivery: Cloudflare Edge Loophole OR Autonomous Python MTA OR Configured Relay OR Direct MX
+  if (process.env.CLOUDFLARE_WORKER_URL) {
+    try {
+      const cfRes = await fetch(process.env.CLOUDFLARE_WORKER_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Sendport-Key": process.env.CLOUDFLARE_WORKER_SECRET || "sendport_edge_master_key_2026",
+        },
+        body: JSON.stringify({
+          from_address: options.from,
+          to_addresses: recipients,
+          subject: options.subject,
+          html: processedHtml,
+          text: options.text,
+          reply_to: options.replyTo,
+          dkim_domain: domainRecord?.name,
+          dkim_selector: domainRecord?.dkimSelector || "sendport",
+          dkim_private_key: domainRecord?.dkimPrivateKey || undefined,
+        }),
+      });
+      const cfData = await cfRes.json().catch(() => ({}));
+      if (cfRes.ok && cfData.success !== false) {
+        deliveryStatus = "DELIVERED";
+        console.log(`[CLOUDFLARE EDGE DISPATCH] Delivered to inbox via Cloudflare Worker Port 443 Loophole`);
+      } else {
+        deliveryError = `Cloudflare Edge Error: ${cfData.error || cfRes.statusText}`;
+      }
+    } catch (cfErr: any) {
+      deliveryError = `Cloudflare Worker Error: ${cfErr.message}`;
+    }
+  } else if (process.env.MTA_SERVER_URL) {
     try {
       const mtaRes = await fetch(`${process.env.MTA_SERVER_URL}/v1/deliver`, {
         method: "POST",
@@ -186,6 +216,7 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
       deliveryError = `MTA connection error: ${mtaErr.message}`;
     }
   } else if (process.env.SMTP_USER && process.env.SMTP_PASS && process.env.SMTP_HOST) {
+
     try {
       const transporter = nodemailer.createTransport({
         host: process.env.SMTP_HOST,
