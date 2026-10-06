@@ -133,7 +133,7 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
     );
   }
 
-  // 5. Store in Database
+  // 5. Store in Database as PENDING
   const emailLog = await prisma.emailLog.create({
     data: {
       workspaceId: options.workspaceId,
@@ -144,13 +144,16 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
       subject: options.subject,
       htmlBody: processedHtml,
       textBody: options.text || "",
-      status: "DELIVERED", // In high-performance mock/relay mode, mark as delivered
+      status: "PENDING",
       openToken,
       clickToken,
       latencyMs: Date.now() - startTime,
       dkimSigned: !!dkimSignatureHeader,
     },
   });
+
+  let deliveryStatus: "DELIVERED" | "FAILED" = "FAILED";
+  let deliveryError: string | null = null;
 
   // 6. Real-time Internet Delivery: Autonomous Python MTA Daemon OR Configured Relay OR Direct MX
   if (process.env.MTA_SERVER_URL) {
@@ -174,13 +177,15 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
         }),
       });
       if (mtaRes.ok) {
+        deliveryStatus = "DELIVERED";
         console.log(`[AUTONOMOUS MTA DISPATCH] Direct MX Delivery Success via Python Daemon`);
+      } else {
+        deliveryError = `Python MTA returned error: ${mtaRes.statusText}`;
       }
-    } catch (mtaErr) {
-      console.warn("[AUTONOMOUS MTA NOTICE]", mtaErr);
+    } catch (mtaErr: any) {
+      deliveryError = `MTA connection error: ${mtaErr.message}`;
     }
   } else if (process.env.SMTP_USER && process.env.SMTP_PASS && process.env.SMTP_HOST) {
-
     try {
       const transporter = nodemailer.createTransport({
         host: process.env.SMTP_HOST,
@@ -206,23 +211,14 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
           ...options.headers,
         },
       });
-    } catch (smtpError) {
-      console.warn("Upstream SMTP delivery warning (falling back to direct MX):", smtpError);
-      await dispatchDirectToMx({
-        from: options.from,
-        to: recipients,
-        subject: options.subject,
-        html: processedHtml,
-        text: options.text,
-        replyTo: options.replyTo,
-        headers: options.headers,
-        messageId,
-        dkimSignatureHeader,
-      });
+      deliveryStatus = "DELIVERED";
+    } catch (smtpError: any) {
+      deliveryError = `Outbound Relay Error: ${smtpError.message}`;
+      console.warn("Upstream SMTP delivery error:", smtpError.message);
     }
   } else {
     // Automatic Direct MX Dispatch straight to recipient mail servers (e.g. Gmail / Yahoo / Outlook)
-    await dispatchDirectToMx({
+    const directResult = await dispatchDirectToMx({
       from: options.from,
       to: recipients,
       subject: options.subject,
@@ -233,23 +229,52 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
       messageId,
       dkimSignatureHeader,
     });
+    if (directResult.success) {
+      deliveryStatus = "DELIVERED";
+    } else {
+      deliveryStatus = "FAILED";
+      deliveryError = directResult.error || "Port 25 blocked by cloud hosting provider. Requires Port 465 Relay or dedicated VPS.";
+    }
   }
 
-
-  // 7. Fire Webhook for email.delivered
-  dispatchWebhookEvents(options.workspaceId, "email.delivered", {
-    id: messageId,
-    from: options.from,
-    to: recipients[0],
-    subject: options.subject,
-    created_at: new Date().toISOString(),
+  // Update Database with Actual Truthful Delivery State
+  await prisma.emailLog.update({
+    where: { id: emailLog.id },
+    data: {
+      status: deliveryStatus,
+      latencyMs: Date.now() - startTime,
+    },
   });
+
+  // 7. Fire Webhook for email event
+  if (deliveryStatus === "DELIVERED") {
+    dispatchWebhookEvents(options.workspaceId, "email.delivered", {
+      id: messageId,
+      from: options.from,
+      to: recipients[0],
+      subject: options.subject,
+      created_at: new Date().toISOString(),
+    });
+  } else {
+    dispatchWebhookEvents(options.workspaceId, "email.bounced", {
+      id: messageId,
+      from: options.from,
+      to: recipients[0],
+      subject: options.subject,
+      bounce_reason: deliveryError || undefined,
+      created_at: new Date().toISOString(),
+    });
+
+  }
 
   return {
     id: messageId,
     from: options.from,
     to: recipients,
-    status: "delivered",
+    status: deliveryStatus === "DELIVERED" ? "delivered" : "failed",
+    error: deliveryError || undefined,
     createdAt: new Date().toISOString(),
   };
+
+
 }
