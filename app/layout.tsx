@@ -75,7 +75,7 @@ export default function RootLayout({
       <head>
         <SendportJsonLd />
       </head>
-      <body className="min-h-screen bg-white text-slate-900 antialiased selection:bg-primary-100 selection:text-primary-900">
+      <body className="min-h-screen bg-black text-slate-100 antialiased selection:bg-white/20 selection:text-white">
         {children}
       </body>
     </html>
