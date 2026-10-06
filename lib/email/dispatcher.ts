@@ -152,8 +152,35 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
     },
   });
 
-  // 6. Real-time Internet Delivery: Configured Relay OR Automatic Direct MX Routing
-  if (process.env.SMTP_USER && process.env.SMTP_PASS && process.env.SMTP_HOST) {
+  // 6. Real-time Internet Delivery: Autonomous Python MTA Daemon OR Configured Relay OR Direct MX
+  if (process.env.MTA_SERVER_URL) {
+    try {
+      const mtaRes = await fetch(`${process.env.MTA_SERVER_URL}/v1/deliver`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-MTA-Key": process.env.MTA_SECRET_KEY || "sendport_mta_master_secret_key_2026",
+        },
+        body: JSON.stringify({
+          from_address: options.from,
+          to_addresses: recipients,
+          subject: options.subject,
+          html: processedHtml,
+          text: options.text,
+          reply_to: options.replyTo,
+          headers: options.headers,
+          dkim_selector: domainRecord?.dkimSelector || "sendport",
+          dkim_private_key: domainRecord?.dkimPrivateKey || undefined,
+        }),
+      });
+      if (mtaRes.ok) {
+        console.log(`[AUTONOMOUS MTA DISPATCH] Direct MX Delivery Success via Python Daemon`);
+      }
+    } catch (mtaErr) {
+      console.warn("[AUTONOMOUS MTA NOTICE]", mtaErr);
+    }
+  } else if (process.env.SMTP_USER && process.env.SMTP_PASS && process.env.SMTP_HOST) {
+
     try {
       const transporter = nodemailer.createTransport({
         host: process.env.SMTP_HOST,
