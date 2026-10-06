@@ -64,7 +64,7 @@ export const metadata: Metadata = {
     apple: "/icon.svg",
   },
   verification: {
-    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+    google: "ikx7Y7qawZMo7QUj2SA2PjFqOE-dmbj-Nl4fbhtafXE",
   },
 };
 
