@@ -13,7 +13,7 @@ services:
       - key: PORT
         value: "10000"
       - key: DATABASE_URL
-        sync: false
+        value: postgresql://postgres.wdmhfrbygqrcjxebjlrk:rf.%26HN%243im%23%2F2BK@aws-0-ap-northeast-2.pooler.supabase.com:5432/postgres
       - key: NEXT_PUBLIC_APP_URL
         value: https://getsendport.com
       - key: NEXT_PUBLIC_SITE_NAME
