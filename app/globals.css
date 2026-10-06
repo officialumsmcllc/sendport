@@ -7,6 +7,37 @@
   --foreground: #ffffff;
 }
 
+/* Global Selection Styling - high contrast blue highlight */
+::selection {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+}
+
+::-moz-selection {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+}
+
+/* Ensure standard inputs in light containers have crystal clear dark text */
+input, textarea, select {
+  color: #0f172a;
+  caret-color: #2563eb;
+}
+
+input::selection, textarea::selection {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+}
+
+/* Dark panels text color overrides */
+.bg-slate-950 input,
+.bg-slate-900 input,
+.bg-slate-950 textarea,
+.bg-slate-900 textarea {
+  color: #f8fafc !important;
+  caret-color: #60a5fa;
+}
+
 body {
   color: var(--foreground);
   background: var(--background);
