@@ -26,7 +26,7 @@ export function EmailReimaginedCta() {
 
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
-            href="/dashboard"
+            href="/signup"
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-white px-8 py-3.5 text-sm font-semibold text-black shadow-xl hover:bg-slate-200 transition-all hover:scale-105 active:scale-95"
           >
             Get started

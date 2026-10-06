@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { CreditCard, CheckCircle2, Upload, ShieldCheck, ArrowRight, Zap, Check } from "lucide-react";
 import { CURRENCIES, SupportedCurrency, formatPrice } from "@/lib/payments/currencies";
 
@@ -8,6 +8,28 @@ export default function BillingPage() {
   const [currency, setCurrency] = useState<SupportedCurrency>("USD");
   const [selectedPlan, setSelectedPlan] = useState<"STARTER" | "GROWTH" | "SCALE_PRO">("GROWTH");
   const [paymentMethod, setPaymentMethod] = useState<"STRIPE" | "MANUAL">("STRIPE");
+
+  // Live workspace quota & usage
+  const [workspaceStats, setWorkspaceStats] = useState({
+    plan: "STARTER",
+    usedToday: 0,
+    dailyQuota: 500,
+  });
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.stats) {
+          setWorkspaceStats({
+            plan: data.stats.plan || "STARTER",
+            usedToday: data.stats.usedToday || 0,
+            dailyQuota: data.stats.dailyQuota || 500,
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Manual payment form states
   const [manualMethod, setManualMethod] = useState("EASYPAISA");
@@ -49,6 +71,11 @@ export default function BillingPage() {
     setSubmitted(true);
   };
 
+  const usagePercent = Math.min(
+    100,
+    Math.round((workspaceStats.usedToday / (workspaceStats.dailyQuota || 1)) * 100)
+  );
+
   return (
     <div className="space-y-8">
       {/* HEADER */}
@@ -79,14 +106,25 @@ export default function BillingPage() {
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-card flex flex-col sm:flex-row items-center justify-between gap-4">
         <div>
           <span className="text-xs font-bold text-primary-600 uppercase tracking-wider">Current Plan</span>
-          <h2 className="text-2xl font-black text-slate-900 mt-1">Growth Plan (5,000/day)</h2>
+          <h2 className="text-2xl font-black text-slate-900 mt-1">
+            {workspaceStats.plan === "GROWTH"
+              ? "Growth Plan (5,000/day)"
+              : workspaceStats.plan === "SCALE_PRO"
+              ? "Scale Pro Plan (20,000/day)"
+              : "Starter Plan (500/day)"}
+          </h2>
           <p className="text-xs text-slate-500 mt-1">Daily quota resets automatically at 00:00 UTC.</p>
         </div>
         <div className="text-right">
           <span className="text-xs text-slate-400 block">Today&apos;s Usage</span>
-          <span className="text-2xl font-black text-slate-900 font-mono">142 / 5,000</span>
+          <span className="text-2xl font-black text-slate-900 font-mono">
+            {workspaceStats.usedToday} / {workspaceStats.dailyQuota}
+          </span>
           <div className="w-48 h-2 bg-slate-100 rounded-full mt-2 overflow-hidden">
-            <div className="bg-primary-600 h-full rounded-full w-[2.8%]" />
+            <div
+              className="bg-primary-600 h-full rounded-full transition-all duration-300"
+              style={{ width: `${Math.max(2, usagePercent)}%` }}
+            />
           </div>
         </div>
       </div>

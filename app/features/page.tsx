@@ -38,9 +38,9 @@ import { Sendport } from 'sendport';
 const sendport = new Sendport({ apiKey: 'sp_live_...' });
 
 await sendport.emails.send({
-  from: 'Acme <onboarding@acme.com>',
+  from: 'Your App <onboarding@yourdomain.com>',
   to: ['user@example.com'],
-  subject: 'Welcome to Acme',
+  subject: 'Welcome to our platform',
   react: <WelcomeEmail name="Sarah" />
 });`,
     },
@@ -53,7 +53,7 @@ await sendport.emails.send({
       code: `// Instant Domain DNS Check
 curl -X POST https://api.getsendport.com/v1/domains/verify \\
   -H "Authorization: Bearer sp_live_..." \\
-  -d '{"domain": "acme.com"}'
+  -d '{"domain": "yourdomain.com"}'
 
 // Response:
 // { "dkim": "VALID_2048_BIT", "spf": "ALIGNED", "dmarc": "ENFORCED" }`,
@@ -72,7 +72,7 @@ export function InvoiceEmail({ invoiceNumber, total }) {
       <Container className="bg-slate-900 text-white p-8 rounded-xl font-sans">
         <Text className="text-2xl font-bold">Invoice #{invoiceNumber}</Text>
         <Text className="text-slate-400">Total Due: {total}</Text>
-        <Button href="https://acme.com/pay" className="bg-primary-600 px-6 py-3 rounded-lg text-white font-semibold">
+        <Button href="https://yourdomain.com/pay" className="bg-primary-600 px-6 py-3 rounded-lg text-white font-semibold">
           Pay Now
         </Button>
       </Container>

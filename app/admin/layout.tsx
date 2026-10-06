@@ -60,6 +60,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     } catch (e) {
       console.error(e);
     }
+    try {
+      localStorage.removeItem("sendport_user");
+    } catch (e) {}
     router.push("/login");
     router.refresh();
   };

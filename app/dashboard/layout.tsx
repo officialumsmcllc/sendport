@@ -43,6 +43,9 @@ export default function DashboardLayout({
     } catch (e) {
       console.error(e);
     }
+    try {
+      localStorage.removeItem("sendport_user");
+    } catch (e) {}
     router.push("/login");
     router.refresh();
   };

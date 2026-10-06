@@ -118,7 +118,7 @@ export default function HomePage() {
               {/* CTA Buttons (Resend Glass Aesthetic with Shimmer) */}
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
                 <Link
-                  href="/dashboard"
+                  href="/signup"
                   className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-8 py-3.5 text-sm font-semibold text-black shadow-xl hover:bg-slate-200 transition-all hover:scale-105 active:scale-95 shimmer-effect"
                 >
                   Get started

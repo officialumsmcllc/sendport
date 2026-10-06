@@ -48,7 +48,13 @@ function SignupForm() {
         return;
       }
 
-      // Registration successful -> go to dashboard
+      // Registration successful -> cache session and go to dashboard
+      try {
+        if (data.user) {
+          localStorage.setItem("sendport_user", JSON.stringify(data.user));
+        }
+      } catch (e) {}
+
       router.push("/dashboard");
       router.refresh();
     } catch (err: any) {

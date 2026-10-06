@@ -5,7 +5,7 @@ import { Inbox, Webhook, Plus, Copy, Check, ArrowRight, ShieldCheck } from "luci
 
 export default function InboundPage() {
   const [inboundDomain, setInboundDomain] = useState("inbound.getsendport.com");
-  const [webhookUrl, setWebhookUrl] = useState("https://myapp.com/api/webhooks/incoming-email");
+  const [webhookUrl, setWebhookUrl] = useState("");
   const [copied, setCopied] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -68,6 +68,7 @@ export default function InboundPage() {
           <input
             type="url"
             required
+            placeholder="https://yourdomain.com/api/webhooks/incoming-email"
             value={webhookUrl}
             onChange={(e) => setWebhookUrl(e.target.value)}
             className="w-full rounded-xl border border-slate-200 p-2.5 font-mono text-xs focus:ring-2 focus:ring-primary-500"

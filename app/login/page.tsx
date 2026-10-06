@@ -37,7 +37,13 @@ export default function LoginPage() {
         return;
       }
 
-      // Successful login - redirect based on role or explicit redirect param
+      // Successful login - store cached user and redirect based on role or explicit redirect param
+      try {
+        if (data.user) {
+          localStorage.setItem("sendport_user", JSON.stringify(data.user));
+        }
+      } catch (e) {}
+
       const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
       const redirectTarget = params?.get("redirect");
 
