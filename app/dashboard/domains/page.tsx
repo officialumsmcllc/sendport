@@ -25,44 +25,44 @@ interface DomainItem {
 }
 
 export default function DomainsPage() {
-  const [domains, setDomains] = useState<DomainItem[]>([
-    {
-      id: "dom_1",
-      name: "getsendport.com",
-      status: "VERIFIED",
-      dkimSelector: "sendport",
-      spfValid: true,
-      dkimValid: true,
-      dmarcValid: true,
-      verifiedAt: "Oct 1, 2026",
-    },
-    {
-      id: "dom_2",
-      name: "officialum1.com",
-      status: "VERIFIED",
-      dkimSelector: "sendport",
-      spfValid: true,
-      dkimValid: true,
-      dmarcValid: true,
-      verifiedAt: "Sep 28, 2026",
-    },
-    {
-      id: "dom_3",
-      name: "mycompany-app.io",
-      status: "PENDING",
-      dkimSelector: "sendport",
-      spfValid: false,
-      dkimValid: false,
-      dmarcValid: false,
-      verifiedAt: "Pending verification",
-    },
-  ]);
-
+  const [domains, setDomains] = useState<DomainItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedDomain, setSelectedDomain] = useState<DomainItem | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newDomainName, setNewDomainName] = useState("");
   const [verifying, setVerifying] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  const fetchDomains = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch("/api/v1/domains");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.domains) {
+          const mapped: DomainItem[] = data.domains.map((d: any) => ({
+            id: d.id,
+            name: d.name,
+            status: d.status || "PENDING",
+            dkimSelector: d.dkimSelector || "sendport",
+            spfValid: d.isSpfValid || false,
+            dkimValid: d.isDkimValid || false,
+            dmarcValid: d.isDmarcValid || false,
+            verifiedAt: d.verifiedAt ? new Date(d.verifiedAt).toLocaleDateString() : "Pending DNS",
+          }));
+          setDomains(mapped);
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchDomains();
+  }, []);
 
   const handleCopy = (text: string, key: string) => {
     navigator.clipboard.writeText(text);
@@ -78,23 +78,38 @@ export default function DomainsPage() {
     }, 1200);
   };
 
-  const handleAddDomain = () => {
+  const handleAddDomain = async () => {
     if (!newDomainName) return;
     const clean = newDomainName.toLowerCase().replace(/https?:\/\//, "").trim();
-    const newDom: DomainItem = {
-      id: `dom_${Date.now()}`,
-      name: clean,
-      status: "PENDING",
-      dkimSelector: "sendport",
-      spfValid: false,
-      dkimValid: false,
-      dmarcValid: false,
-      verifiedAt: "Pending DNS verification",
-    };
-    setDomains([...domains, newDom]);
-    setSelectedDomain(newDom);
-    setShowAddModal(false);
-    setNewDomainName("");
+    try {
+      const res = await fetch("/api/v1/domains", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: clean }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const newDom: DomainItem = {
+          id: data.id || `dom_${Date.now()}`,
+          name: clean,
+          status: "PENDING",
+          dkimSelector: "sendport",
+          spfValid: false,
+          dkimValid: false,
+          dmarcValid: false,
+          verifiedAt: "Pending DNS verification",
+        };
+        setDomains((prev) => [newDom, ...prev]);
+        setSelectedDomain(newDom);
+        setShowAddModal(false);
+        setNewDomainName("");
+      } else {
+        const err = await res.json();
+        alert(err.error || "Failed to add domain.");
+      }
+    } catch {
+      alert("Network error adding domain.");
+    }
   };
 
   return (
@@ -127,7 +142,22 @@ export default function DomainsPage() {
 
       {/* DOMAINS LIST TABLE */}
       <div className="rounded-2xl border border-slate-200 bg-white shadow-card overflow-hidden">
-        <div className="overflow-x-auto">
+        {domains.length === 0 && !loading ? (
+          <div className="p-12 text-center text-slate-500 space-y-3">
+            <Globe className="w-10 h-10 mx-auto text-slate-300" />
+            <h3 className="text-sm font-bold text-slate-800">No Sending Domains Added Yet</h3>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+              Add your domain to generate 2048-bit DKIM keys, SPF authentication, and start sending high-deliverability emails.
+            </p>
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-slate-800 transition-all"
+            >
+              <Plus className="w-3.5 h-3.5" /> Add Your First Domain
+            </button>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 border-b border-slate-100 text-slate-500 font-semibold uppercase tracking-wider">
               <tr>
@@ -187,6 +217,7 @@ export default function DomainsPage() {
             </tbody>
           </table>
         </div>
+        )}
       </div>
 
       {/* DNS RECORDS MODAL */}
