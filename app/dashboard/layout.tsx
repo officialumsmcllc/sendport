@@ -47,6 +47,25 @@ export default function DashboardLayout({
     router.refresh();
   };
 
+  const [user, setUser] = useState<{ id: string; email: string; name?: string | null; role: string } | null>(null);
+
+  React.useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => {
+        if (!res.ok) {
+          router.push("/login");
+          return null;
+        }
+        return res.json();
+      })
+      .then((data) => {
+        if (data?.user) {
+          setUser(data.user);
+        }
+      })
+      .catch(() => {});
+  }, [router]);
+
   const navItems = [
     { label: "Overview", href: "/dashboard", icon: LayoutDashboard },
     { label: "Audiences & Contacts", href: "/dashboard/audiences", icon: Activity },
@@ -64,7 +83,6 @@ export default function DashboardLayout({
     { label: "Live Delivery Logs", href: "/dashboard/logs", icon: ShieldCheck },
     { label: "Billing & Plans", href: "/dashboard/billing", icon: CreditCard },
     { label: "2FA & Audit Logs", href: "/dashboard/security", icon: Lock },
-    { label: "👑 Admin Panel", href: "/dashboard/admin", icon: UserCheck },
   ];
 
   return (
@@ -125,8 +143,21 @@ export default function DashboardLayout({
 
         {/* Footer info in sidebar */}
         <div className="border-t border-slate-100 pt-3 text-xs text-slate-500 space-y-2.5 px-2">
+          {user?.role === "ADMIN" && (
+            <Link
+              href="/admin"
+              className="w-full flex items-center justify-between py-1.5 px-2.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 hover:bg-amber-100 transition-colors font-bold text-[11px]"
+            >
+              <span className="flex items-center gap-1.5">
+                <UserCheck className="w-3.5 h-3.5 text-amber-700" /> Platform Admin Portal
+              </span>
+              <ArrowUpRight className="w-3.5 h-3.5 text-amber-600" />
+            </Link>
+          )}
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-medium text-slate-600">Active Workspace</span>
+            <span className="text-[11px] font-medium text-slate-600 truncate max-w-[130px]" title={user?.email || "Workspace"}>
+              {user?.email || "Active User"}
+            </span>
             <Link href="/" className="text-primary-600 hover:underline flex items-center gap-0.5 text-[11px]">
               Website <ArrowUpRight className="w-3 h-3" />
             </Link>

@@ -37,8 +37,17 @@ export default function LoginPage() {
         return;
       }
 
-      // Successful login
-      router.push("/dashboard");
+      // Successful login - redirect based on role or explicit redirect param
+      const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+      const redirectTarget = params?.get("redirect");
+
+      if (redirectTarget && redirectTarget.startsWith("/")) {
+        router.push(redirectTarget);
+      } else if (data.user?.role === "ADMIN") {
+        router.push("/admin");
+      } else {
+        router.push("/dashboard");
+      }
       router.refresh();
     } catch (err: any) {
       setError("An unexpected network error occurred. Please try again.");

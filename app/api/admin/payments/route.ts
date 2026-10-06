@@ -1,9 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { logSecurityAudit } from "@/lib/security/audit";
+import { getCurrentUser } from "@/lib/auth/session";
 
 export async function GET() {
   try {
+    const session = await getCurrentUser();
+    if (!session) {
+      return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+    }
+    if (session.role !== "ADMIN") {
+      return NextResponse.json({ error: "Access denied. Administrator privileges required." }, { status: 403 });
+    }
+
     const transactions = await prisma.paymentTransaction.findMany({
       orderBy: { createdAt: "desc" },
       include: { user: true },
@@ -16,6 +25,14 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    const session = await getCurrentUser();
+    if (!session) {
+      return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+    }
+    if (session.role !== "ADMIN") {
+      return NextResponse.json({ error: "Access denied. Administrator privileges required." }, { status: 403 });
+    }
+
     const body = await req.json();
     const { transactionId, action, adminNotes } = body; // action: "APPROVE" | "REJECT"
 
