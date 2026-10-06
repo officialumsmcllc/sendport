@@ -7,26 +7,16 @@ import { generateDkimKeyPair } from "@/lib/dns/dkim";
  */
 export async function GET(req: NextRequest) {
   try {
-    let workspace = await prisma.workspace.findFirst({
-      include: {
-        domains: {
-          orderBy: { createdAt: "desc" },
-        },
-      },
+    const domains = await prisma.domain.findMany({
+      orderBy: { createdAt: "desc" },
     });
 
-    if (!workspace) {
-      workspace = await prisma.workspace.create({
-        data: { name: "Default Workspace", slug: "default" },
-        include: { domains: true },
-      });
-    }
-
-    return NextResponse.json({ domains: workspace.domains });
+    return NextResponse.json({ domains });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
 
 export async function POST(req: NextRequest) {
   try {

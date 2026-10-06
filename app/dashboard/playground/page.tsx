@@ -107,35 +107,49 @@ export default function PlaygroundPage() {
   const [copiedCode, setCopiedCode] = useState(false);
 
   useEffect(() => {
-    // 1. Fetch available API Keys
+    // 1. Fetch user info to auto-fill name & recipient
+    fetch("/api/auth/me")
+      .then((res) => res.json())
+      .then((userData) => {
+        const user = userData?.user;
+        const displayName = user?.name || "Muhammad Umar";
+        if (user?.email) {
+          setTo(user.email);
+        }
+
+        // 2. Fetch Verified Domains to auto-fill From
+        fetch("/api/v1/domains")
+          .then((res) => res.json())
+          .then((domainData) => {
+            if (domainData.domains && domainData.domains.length > 0) {
+              setDomains(domainData.domains);
+              const verified = domainData.domains.find((d: DomainItem) => d.status === "VERIFIED");
+              if (verified) {
+                setFrom(`${displayName} <hello@${verified.name}>`);
+              } else {
+                setFrom(`${displayName} <hello@${domainData.domains[0].name}>`);
+              }
+            } else {
+              setFrom(`${displayName} <hello@getsendport.com>`);
+            }
+          })
+          .catch((err) => console.error("Could not fetch domains:", err));
+      })
+      .catch((err) => console.error("Could not fetch user:", err));
+
+    // 3. Fetch available API Keys
     fetch("/api/v1/api-keys")
       .then((res) => res.json())
       .then((data) => {
         if (data.apiKeys && data.apiKeys.length > 0) {
           setApiKeys(data.apiKeys);
-          // Pre-select first key token or prefix
           const firstKey = data.apiKeys[0];
           setSelectedKey(firstKey.token || firstKey.keyPrefix || "session");
         }
       })
       .catch((err) => console.error("Could not fetch API keys:", err));
-
-    // 2. Fetch Verified Domains to auto-fill From
-    fetch("/api/v1/domains")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.domains && data.domains.length > 0) {
-          setDomains(data.domains);
-          const verified = data.domains.find((d: DomainItem) => d.status === "VERIFIED");
-          if (verified) {
-            setFrom(`Sendport Test <onboarding@${verified.name}>`);
-          } else {
-            setFrom(`Sendport Team <hello@getsendport.com>`);
-          }
-        }
-      })
-      .catch((err) => console.error("Could not fetch domains:", err));
   }, []);
+
 
   const handleTemplateChange = (templateId: string) => {
     const t = EMAIL_TEMPLATES.find((item) => item.id === templateId);

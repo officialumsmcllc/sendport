@@ -52,20 +52,26 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
   const recipients = Array.isArray(options.to) ? options.to : [options.to];
   const { name: senderName, email: senderEmail, domain: senderDomain } = parseFromHeader(options.from);
 
-  // 1. Check if domain is verified in this workspace
-  // Note: For demo/sandbox domain or onboarding, allow if explicitly set
+  // 1. Check if domain is verified in this workspace or platform
+  const normalizedDomain = senderDomain.toLowerCase().trim();
   const domainRecord = await prisma.domain.findFirst({
     where: {
-      workspaceId: options.workspaceId,
-      name: senderDomain,
+      OR: [
+        { workspaceId: options.workspaceId, name: { equals: normalizedDomain, mode: "insensitive" } },
+        { name: { equals: normalizedDomain, mode: "insensitive" } },
+      ],
     },
   });
 
-  const isDemoOrSandbox = senderDomain === "getsendport.com" || senderDomain === "resend.dev" || senderDomain === "localhost";
+  const isDemoOrSandbox =
+    normalizedDomain === "getsendport.com" ||
+    normalizedDomain === "officialum1.com" ||
+    normalizedDomain === "resend.dev" ||
+    normalizedDomain === "localhost";
 
   if (!domainRecord && !isDemoOrSandbox) {
     throw new Error(
-      `Domain "${senderDomain}" is not added or verified in your Sendport account. Please add and verify your domain in the dashboard before sending.`
+      `Domain "${senderDomain}" is not added in your Sendport account. Please add your domain in the dashboard before sending.`
     );
   }
 
