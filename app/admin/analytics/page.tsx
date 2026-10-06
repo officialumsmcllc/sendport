@@ -77,9 +77,13 @@ export default function AdminAnalyticsPage() {
             </div>
           </div>
           <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl font-black text-white">
-              ${(metrics?.totalRevenueUSD || 0).toLocaleString()}
-            </span>
+            {loading ? (
+              <div className="h-9 w-24 bg-slate-800 rounded animate-pulse" />
+            ) : (
+              <span className="text-3xl font-black text-white">
+                ${(metrics?.totalRevenueUSD || 0).toLocaleString()}
+              </span>
+            )}
             <span className="text-xs font-semibold text-emerald-400 flex items-center">
               <ArrowUpRight className="w-3.5 h-3.5" /> USD
             </span>
@@ -99,9 +103,13 @@ export default function AdminAnalyticsPage() {
             </div>
           </div>
           <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl font-black text-white">
-              {(metrics?.totalEmails || 0).toLocaleString()}
-            </span>
+            {loading ? (
+              <div className="h-9 w-20 bg-slate-800 rounded animate-pulse" />
+            ) : (
+              <span className="text-3xl font-black text-white">
+                {(metrics?.totalEmails || 0).toLocaleString()}
+              </span>
+            )}
             <span className="text-xs font-semibold text-blue-400">Sent</span>
           </div>
           <p className="text-[11px] text-slate-500 mt-1">
@@ -119,9 +127,13 @@ export default function AdminAnalyticsPage() {
             </div>
           </div>
           <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl font-black text-white">
-              {(metrics?.totalUsers || 0).toLocaleString()}
-            </span>
+            {loading ? (
+              <div className="h-9 w-16 bg-slate-800 rounded animate-pulse" />
+            ) : (
+              <span className="text-3xl font-black text-white">
+                {(metrics?.totalUsers || 0).toLocaleString()}
+              </span>
+            )}
             <span className="text-xs font-semibold text-amber-400">Users</span>
           </div>
           <p className="text-[11px] text-slate-500 mt-1">
@@ -139,9 +151,13 @@ export default function AdminAnalyticsPage() {
             </div>
           </div>
           <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl font-black text-white">
-              {(metrics?.totalDomains || 0).toLocaleString()}
-            </span>
+            {loading ? (
+              <div className="h-9 w-16 bg-slate-800 rounded animate-pulse" />
+            ) : (
+              <span className="text-3xl font-black text-white">
+                {(metrics?.totalDomains || 0).toLocaleString()}
+              </span>
+            )}
             <span className="text-xs font-semibold text-purple-400">Total</span>
           </div>
           <p className="text-[11px] text-slate-500 mt-1">

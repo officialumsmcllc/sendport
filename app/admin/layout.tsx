@@ -32,6 +32,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [verifying, setVerifying] = useState(true);
 
   useEffect(() => {
+    // 1. Instant optimistic auth check from localStorage cache
+    try {
+      const cached = localStorage.getItem("sendport_user");
+      if (cached) {
+        const u = JSON.parse(cached);
+        if (u && u.role === "ADMIN") {
+          setAdminUser(u);
+          setVerifying(false);
+        }
+      }
+    } catch (e) {}
+
+    // 2. Validate in background with server session
     fetch("/api/auth/me")
       .then((res) => {
         if (!res.ok) {
@@ -43,10 +56,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       .then((data) => {
         if (data?.user) {
           if (data.user.role !== "ADMIN") {
-            // Not an admin - kick back to customer dashboard
             router.push("/dashboard?error=unauthorized_admin_access");
           } else {
             setAdminUser(data.user);
+            try {
+              localStorage.setItem("sendport_user", JSON.stringify(data.user));
+            } catch (e) {}
           }
         }
       })

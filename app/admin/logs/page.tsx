@@ -10,10 +10,7 @@ import {
   XCircle,
   Eye,
   MousePointer,
-  ShieldCheck,
   Building2,
-  Clock,
-  Filter,
 } from "lucide-react";
 
 export default function AdminLogsPage() {
@@ -77,30 +74,44 @@ export default function AdminLogsPage() {
       </div>
 
       {/* KPI Stats */}
-      {stats && (
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 shadow-lg">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Total Email Volume</span>
-            <p className="text-3xl font-black text-white mt-1">{stats.totalCount}</p>
-            <p className="text-[11px] text-slate-500 mt-1">Logged dispatches</p>
-          </div>
-          <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5 shadow-lg">
-            <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">Delivered & Read</span>
-            <p className="text-3xl font-black text-emerald-400 mt-1">{stats.deliveredCount}</p>
-            <p className="text-[11px] text-slate-400 mt-1">Successful SMTP handshakes</p>
-          </div>
-          <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-5 shadow-lg">
-            <span className="text-xs font-bold uppercase tracking-wider text-amber-400">Bounces</span>
-            <p className="text-3xl font-black text-amber-400 mt-1">{stats.bouncedCount}</p>
-            <p className="text-[11px] text-slate-400 mt-1">Hard & soft mailbox rejections</p>
-          </div>
-          <div className="rounded-2xl border border-rose-500/20 bg-rose-500/5 p-5 shadow-lg">
-            <span className="text-xs font-bold uppercase tracking-wider text-rose-400">Failures</span>
-            <p className="text-3xl font-black text-rose-400 mt-1">{stats.failedCount}</p>
-            <p className="text-[11px] text-slate-400 mt-1">Network / DNS dropouts</p>
-          </div>
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 shadow-lg">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Total Email Volume</span>
+          {loading ? (
+            <div className="h-9 w-16 bg-slate-800 rounded animate-pulse my-1" />
+          ) : (
+            <p className="text-3xl font-black text-white mt-1">{stats?.totalCount || 0}</p>
+          )}
+          <p className="text-[11px] text-slate-500 mt-1">Logged dispatches</p>
         </div>
-      )}
+        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5 shadow-lg">
+          <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">Delivered & Read</span>
+          {loading ? (
+            <div className="h-9 w-16 bg-slate-800 rounded animate-pulse my-1" />
+          ) : (
+            <p className="text-3xl font-black text-emerald-400 mt-1">{stats?.deliveredCount || 0}</p>
+          )}
+          <p className="text-[11px] text-slate-400 mt-1">Successful SMTP handshakes</p>
+        </div>
+        <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-5 shadow-lg">
+          <span className="text-xs font-bold uppercase tracking-wider text-amber-400">Bounces</span>
+          {loading ? (
+            <div className="h-9 w-16 bg-slate-800 rounded animate-pulse my-1" />
+          ) : (
+            <p className="text-3xl font-black text-amber-400 mt-1">{stats?.bouncedCount || 0}</p>
+          )}
+          <p className="text-[11px] text-slate-400 mt-1">Hard & soft mailbox rejections</p>
+        </div>
+        <div className="rounded-2xl border border-rose-500/20 bg-rose-500/5 p-5 shadow-lg">
+          <span className="text-xs font-bold uppercase tracking-wider text-rose-400">Failures</span>
+          {loading ? (
+            <div className="h-9 w-16 bg-slate-800 rounded animate-pulse my-1" />
+          ) : (
+            <p className="text-3xl font-black text-rose-400 mt-1">{stats?.failedCount || 0}</p>
+          )}
+          <p className="text-[11px] text-slate-400 mt-1">Network / DNS dropouts</p>
+        </div>
+      </div>
 
       {/* Controls Bar */}
       <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-3">
@@ -136,26 +147,34 @@ export default function AdminLogsPage() {
       <div className="rounded-2xl border border-slate-800 bg-slate-900/60 shadow-2xl overflow-hidden">
         <div className="p-4 border-b border-slate-800 bg-slate-950/60 flex items-center justify-between">
           <h2 className="text-xs font-bold uppercase tracking-wider text-slate-300">
-            Dispatch Stream ({filtered.length} recent events)
+            Dispatch Stream ({loading ? "Loading..." : `${filtered.length} recent events`})
           </h2>
           <span className="text-[11px] font-mono text-slate-400">Live Global Relays</span>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="border-b border-slate-800 bg-slate-950 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              <tr>
-                <th className="p-4">Message ID & Subject</th>
-                <th className="p-4">From &rarr; To</th>
-                <th className="p-4">Workspace</th>
-                <th className="p-4">Status</th>
-                <th className="p-4">Engagement</th>
-                <th className="p-4 text-right">Timestamp</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/60">
-              {filtered.length > 0 ? (
-                filtered.map((log) => (
+        {loading ? (
+          <div className="p-6 space-y-3">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-14 bg-slate-800/60 rounded-xl animate-pulse" />
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="p-12 text-center text-slate-500 text-xs">No email logs found matching filter.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="border-b border-slate-800 bg-slate-950 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                <tr>
+                  <th className="p-4">Message ID & Subject</th>
+                  <th className="p-4">From &rarr; To</th>
+                  <th className="p-4">Workspace</th>
+                  <th className="p-4">Status</th>
+                  <th className="p-4">Engagement</th>
+                  <th className="p-4 text-right">Timestamp</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60">
+                {filtered.map((log) => (
                   <tr
                     key={log.id}
                     onClick={() => setSelectedLog(log)}
@@ -206,17 +225,11 @@ export default function AdminLogsPage() {
                       {new Date(log.createdAt).toLocaleTimeString()}
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={6} className="text-center py-8 text-slate-500">
-                    No email logs found matching filter.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Log Details Modal */}

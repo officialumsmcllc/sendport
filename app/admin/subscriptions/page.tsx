@@ -6,15 +6,6 @@ import {
   Plus,
   RefreshCw,
   CheckCircle2,
-  AlertCircle,
-  Sliders,
-  Sparkles,
-  ArrowUpRight,
-  ShieldCheck,
-  Calendar,
-  Building2,
-  Clock,
-  User,
 } from "lucide-react";
 
 export default function AdminSubscriptionsPage() {
@@ -146,26 +137,36 @@ export default function AdminSubscriptionsPage() {
       <div className="rounded-2xl border border-slate-800 bg-slate-900/60 shadow-2xl overflow-hidden">
         <div className="p-4 border-b border-slate-800 bg-slate-950/60 flex items-center justify-between">
           <h2 className="text-xs font-bold uppercase tracking-wider text-slate-300">
-            Active Subscriptions ({subscriptions.length})
+            Active Subscriptions ({loading ? "Loading..." : subscriptions.length})
           </h2>
           <span className="text-[11px] font-mono text-slate-400">Manual & Automated Tier Upgrades</span>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="border-b border-slate-800 bg-slate-950 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              <tr>
-                <th className="p-4">Customer Account</th>
-                <th className="p-4">Assigned Plan Tier</th>
-                <th className="p-4">Daily Sending Limit</th>
-                <th className="p-4">Billing Cycle</th>
-                <th className="p-4">Status</th>
-                <th className="p-4 text-right">Started / Expiry</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/60">
-              {subscriptions.length > 0 ? (
-                subscriptions.map((sub) => (
+        {loading ? (
+          <div className="p-6 space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-14 bg-slate-800/60 rounded-xl animate-pulse" />
+            ))}
+          </div>
+        ) : subscriptions.length === 0 ? (
+          <div className="p-12 text-center text-slate-500 text-xs">
+            No active manual subscription records yet. Click "Manual Upgrade / Provision" to assign a plan.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="border-b border-slate-800 bg-slate-950 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                <tr>
+                  <th className="p-4">Customer Account</th>
+                  <th className="p-4">Assigned Plan Tier</th>
+                  <th className="p-4">Daily Sending Limit</th>
+                  <th className="p-4">Billing Cycle</th>
+                  <th className="p-4">Status</th>
+                  <th className="p-4 text-right">Started / Expiry</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60">
+                {subscriptions.map((sub) => (
                   <tr key={sub.id} className="hover:bg-slate-800/30 transition-colors">
                     <td className="p-4">
                       <p className="font-bold text-white">{sub.user?.email || "Unknown"}</p>
@@ -210,17 +211,11 @@ export default function AdminSubscriptionsPage() {
                       )}
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={6} className="text-center py-8 text-slate-500">
-                    No active manual subscription records yet. Click "Manual Upgrade / Provision" to assign a plan.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Manual Provision Modal */}

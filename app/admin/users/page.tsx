@@ -5,23 +5,17 @@ import {
   Users,
   Search,
   RefreshCw,
-  ShieldCheck,
-  UserCheck,
-  Mail,
-  Database,
   CheckCircle2,
   Edit,
   Sliders,
   RotateCcw,
-  Sparkles,
-  ShieldAlert,
-  AlertCircle,
+  Building2,
 } from "lucide-react";
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
   // Edit Modal State
@@ -152,25 +146,35 @@ export default function AdminUsersPage() {
       )}
 
       {/* KPI Stats */}
-      {stats && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 shadow-lg">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Total Users</span>
-            <p className="text-3xl font-black text-white mt-1">{stats.totalUsers}</p>
-            <p className="text-[11px] text-slate-500 mt-1">Accounts registered in platform</p>
-          </div>
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 shadow-lg">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Active Workspaces</span>
-            <p className="text-3xl font-black text-amber-400 mt-1">{stats.activeWorkspacesCount}</p>
-            <p className="text-[11px] text-slate-500 mt-1">Isolated customer environments</p>
-          </div>
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 shadow-lg">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Platform Admins</span>
-            <p className="text-3xl font-black text-emerald-400 mt-1">{stats.totalAdmins}</p>
-            <p className="text-[11px] text-slate-500 mt-1">Users with ADMIN authority</p>
-          </div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 shadow-lg">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Total Users</span>
+          {loading ? (
+            <div className="h-9 w-16 bg-slate-800 rounded animate-pulse my-1" />
+          ) : (
+            <p className="text-3xl font-black text-white mt-1">{stats?.totalUsers || 0}</p>
+          )}
+          <p className="text-[11px] text-slate-500 mt-1">Accounts registered in platform</p>
         </div>
-      )}
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 shadow-lg">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Active Workspaces</span>
+          {loading ? (
+            <div className="h-9 w-16 bg-slate-800 rounded animate-pulse my-1" />
+          ) : (
+            <p className="text-3xl font-black text-amber-400 mt-1">{stats?.activeWorkspacesCount || 0}</p>
+          )}
+          <p className="text-[11px] text-slate-500 mt-1">Isolated customer environments</p>
+        </div>
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 shadow-lg">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Platform Admins</span>
+          {loading ? (
+            <div className="h-9 w-16 bg-slate-800 rounded animate-pulse my-1" />
+          ) : (
+            <p className="text-3xl font-black text-emerald-400 mt-1">{stats?.totalAdmins || 0}</p>
+          )}
+          <p className="text-[11px] text-slate-500 mt-1">Users with ADMIN authority</p>
+        </div>
+      </div>
 
       {/* Search */}
       <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4 shadow-lg">
@@ -190,94 +194,104 @@ export default function AdminUsersPage() {
       <div className="rounded-2xl border border-slate-800 bg-slate-900/60 shadow-2xl overflow-hidden">
         <div className="p-4 border-b border-slate-800 bg-slate-950/60 flex items-center justify-between">
           <h2 className="text-xs font-bold uppercase tracking-wider text-slate-300">
-            Account List ({filtered.length})
+            Account List ({loading ? "Loading..." : filtered.length})
           </h2>
           <span className="text-[11px] font-mono text-slate-400">Direct Quota & Plan Overrides</span>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="border-b border-slate-800 bg-slate-950 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              <tr>
-                <th className="p-4">User Details</th>
-                <th className="p-4">Role</th>
-                <th className="p-4">Workspace & Plan</th>
-                <th className="p-4">Daily Quota</th>
-                <th className="p-4">Resources</th>
-                <th className="p-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/60">
-              {filtered.map((user) => {
-                const ws = user.workspaces?.[0]?.workspace;
-                return (
-                  <tr key={user.id} className="hover:bg-slate-800/30 transition-colors">
-                    <td className="p-4">
-                      <p className="font-bold text-white">{user.email}</p>
-                      <p className="text-[11px] text-slate-400">{user.name || "No display name"}</p>
-                      <p className="text-[10px] font-mono text-slate-500">{user.id}</p>
-                    </td>
-                    <td className="p-4">
-                      <span
-                        className={`inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                          user.role === "ADMIN"
-                            ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
-                            : "bg-slate-800 text-slate-300 border border-slate-700"
-                        }`}
-                      >
-                        {user.role}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <p className="font-semibold text-slate-200">{ws?.name || "Default Workspace"}</p>
-                      <span
-                        className={`inline-block mt-0.5 text-[10px] font-mono uppercase px-2 py-0.5 rounded font-bold ${
-                          ws?.plan === "SCALE_PRO"
-                            ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
-                            : ws?.plan === "GROWTH"
-                            ? "bg-blue-500/10 text-blue-400 border border-blue-500/20"
-                            : "bg-slate-800 text-slate-400"
-                        }`}
-                      >
-                        {ws?.plan || "STARTER"}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <p className="font-bold text-amber-400">
-                        {ws?.dailyQuota ? ws.dailyQuota.toLocaleString() : "500"} emails/day
-                      </p>
-                      <p className="text-[10px] text-slate-500">Used today: {ws?.usedToday || 0}</p>
-                    </td>
-                    <td className="p-4">
-                      <div className="text-[11px] text-slate-400 space-y-0.5">
-                        <p>{user._count?.domains || 0} Domains</p>
-                        <p>{user._count?.apiKeys || 0} API Keys</p>
-                        <p>{user._count?.payments || 0} Invoices</p>
-                      </div>
-                    </td>
-                    <td className="p-4 text-right space-x-1.5 whitespace-nowrap">
-                      <button
-                        onClick={() => handleResetQuota(user)}
-                        title="Reset Used Today to 0"
-                        className="p-1.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-amber-400 transition-colors inline-flex items-center gap-1 text-[11px]"
-                      >
-                        <RotateCcw className="w-3.5 h-3.5" />
-                        Reset
-                      </button>
-                      <button
-                        onClick={() => openEditModal(user)}
-                        className="px-2.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold transition-colors inline-flex items-center gap-1.5 text-[11px]"
-                      >
-                        <Edit className="w-3.5 h-3.5" />
-                        Manage
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        {loading ? (
+          <div className="p-6 space-y-3">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-14 bg-slate-800/60 rounded-xl animate-pulse" />
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="p-12 text-center text-slate-500 text-xs">No users found matching search.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="border-b border-slate-800 bg-slate-950 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                <tr>
+                  <th className="p-4">User Details</th>
+                  <th className="p-4">Role</th>
+                  <th className="p-4">Workspace & Plan</th>
+                  <th className="p-4">Daily Quota</th>
+                  <th className="p-4">Resources</th>
+                  <th className="p-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60">
+                {filtered.map((user) => {
+                  const ws = user.workspaces?.[0]?.workspace;
+                  return (
+                    <tr key={user.id} className="hover:bg-slate-800/30 transition-colors">
+                      <td className="p-4">
+                        <p className="font-bold text-white">{user.email}</p>
+                        <p className="text-[11px] text-slate-400">{user.name || "No display name"}</p>
+                        <p className="text-[10px] font-mono text-slate-500">{user.id}</p>
+                      </td>
+                      <td className="p-4">
+                        <span
+                          className={`inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                            user.role === "ADMIN"
+                              ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                              : "bg-slate-800 text-slate-300 border border-slate-700"
+                          }`}
+                        >
+                          {user.role}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <p className="font-semibold text-slate-200">{ws?.name || "Default Workspace"}</p>
+                        <span
+                          className={`inline-block mt-0.5 text-[10px] font-mono uppercase px-2 py-0.5 rounded font-bold ${
+                            ws?.plan === "SCALE_PRO"
+                              ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                              : ws?.plan === "GROWTH"
+                              ? "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                              : "bg-slate-800 text-slate-400"
+                          }`}
+                        >
+                          {ws?.plan || "STARTER"}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <p className="font-bold text-amber-400">
+                          {ws?.dailyQuota ? ws.dailyQuota.toLocaleString() : "500"} emails/day
+                        </p>
+                        <p className="text-[10px] text-slate-500">Used today: {ws?.usedToday || 0}</p>
+                      </td>
+                      <td className="p-4">
+                        <div className="text-[11px] text-slate-400 space-y-0.5">
+                          <p>{user._count?.domains || 0} Domains</p>
+                          <p>{user._count?.apiKeys || 0} API Keys</p>
+                          <p>{user._count?.payments || 0} Invoices</p>
+                        </div>
+                      </td>
+                      <td className="p-4 text-right space-x-1.5 whitespace-nowrap">
+                        <button
+                          onClick={() => handleResetQuota(user)}
+                          title="Reset Used Today to 0"
+                          className="p-1.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-amber-400 transition-colors inline-flex items-center gap-1 text-[11px]"
+                        >
+                          <RotateCcw className="w-3.5 h-3.5" />
+                          Reset
+                        </button>
+                        <button
+                          onClick={() => openEditModal(user)}
+                          className="px-2.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold transition-colors inline-flex items-center gap-1.5 text-[11px]"
+                        >
+                          <Edit className="w-3.5 h-3.5" />
+                          Manage
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Edit User & Quotas Modal */}

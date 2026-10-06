@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 
 export default function AdminPaymentsPage() {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<"ALL" | "PENDING" | "APPROVED" | "REJECTED">("ALL");
@@ -140,6 +140,7 @@ export default function AdminPaymentsPage() {
             Review manual subscription receipts (Easypaisa, JazzCash, USDT, Wire) and automatically activate customer daily quotas.
           </p>
         </div>
+
         <button
           onClick={fetchTransactions}
           disabled={loading}
@@ -159,7 +160,11 @@ export default function AdminPaymentsPage() {
               <Clock className="w-4 h-4" />
             </span>
           </div>
-          <p className="text-3xl font-black text-amber-400">{pendingCount}</p>
+          {loading ? (
+            <div className="h-9 w-20 bg-slate-800 rounded animate-pulse my-1" />
+          ) : (
+            <p className="text-3xl font-black text-amber-400">{pendingCount}</p>
+          )}
           <p className="text-[11px] text-slate-500 mt-1">Awaiting administrator verification</p>
         </div>
 
@@ -170,7 +175,11 @@ export default function AdminPaymentsPage() {
               <ShieldCheck className="w-4 h-4" />
             </span>
           </div>
-          <p className="text-3xl font-black text-emerald-400">{approvedCount}</p>
+          {loading ? (
+            <div className="h-9 w-20 bg-slate-800 rounded animate-pulse my-1" />
+          ) : (
+            <p className="text-3xl font-black text-emerald-400">{approvedCount}</p>
+          )}
           <p className="text-[11px] text-slate-500 mt-1">Quotas activated on workspace</p>
         </div>
 
@@ -181,7 +190,11 @@ export default function AdminPaymentsPage() {
               <DollarSign className="w-4 h-4" />
             </span>
           </div>
-          <p className="text-3xl font-black text-white">${totalVolume.toLocaleString()}</p>
+          {loading ? (
+            <div className="h-9 w-24 bg-slate-800 rounded animate-pulse my-1" />
+          ) : (
+            <p className="text-3xl font-black text-white">${totalVolume.toLocaleString()}</p>
+          )}
           <p className="text-[11px] text-slate-500 mt-1">Processed platform revenue</p>
         </div>
       </div>
@@ -220,12 +233,18 @@ export default function AdminPaymentsPage() {
       <div className="rounded-2xl border border-slate-800 bg-slate-900/60 shadow-2xl overflow-hidden backdrop-blur">
         <div className="p-4 border-b border-slate-800 bg-slate-950/60 flex items-center justify-between">
           <h2 className="text-xs font-bold uppercase tracking-wider text-slate-300">
-            Payment Receipts Queue ({filtered.length})
+            Payment Receipts Queue ({loading ? "Loading..." : filtered.length})
           </h2>
           <span className="text-[11px] font-mono text-amber-400">Platform Superadmin Mode</span>
         </div>
 
-        {filtered.length === 0 ? (
+        {loading ? (
+          <div className="p-6 space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-14 bg-slate-800/60 rounded-xl animate-pulse" />
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="p-12 text-center text-slate-500 space-y-2">
             <CreditCard className="w-8 h-8 mx-auto text-slate-600" />
             <p className="text-sm font-semibold text-slate-400">No payment receipts found in queue</p>
