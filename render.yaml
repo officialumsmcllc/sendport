@@ -1,9 +1,15 @@
+databases:
+  - name: sendport-db
+    databaseName: sendport
+    user: sendport_user
+    plan: free
+
 services:
   - type: web
     name: sendport
     runtime: node
     plan: starter
-    buildCommand: npm install && npx prisma db push --accept-data-loss && node prisma/seed.js && npm run build
+    buildCommand: npm install && npx prisma db push && node prisma/seed.js && npm run build
     startCommand: npm run start
     envVars:
       - key: NODE_VERSION
@@ -13,7 +19,9 @@ services:
       - key: PORT
         value: "10000"
       - key: DATABASE_URL
-        value: file:./dev.db
+        fromDatabase:
+          name: sendport-db
+          property: connectionString
       - key: NEXT_PUBLIC_APP_URL
         value: https://getsendport.com
       - key: NEXT_PUBLIC_SITE_NAME

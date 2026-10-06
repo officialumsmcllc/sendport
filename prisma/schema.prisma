@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -68,8 +68,8 @@ model Domain {
   name            String      // e.g. officialum1.com
   status          String      @default("PENDING") // PENDING, VERIFIED, FAILED
   dkimSelector    String      @default("sendport")
-  dkimPrivateKey  String      // RSA-2048 private key (PEM)
-  dkimPublicKey   String      // RSA-2048 public key for DNS TXT
+  dkimPrivateKey  String      @db.Text // RSA-2048 private key (PEM)
+  dkimPublicKey   String      @db.Text // RSA-2048 public key for DNS TXT
   spfRecord       String      @default("v=spf1 include:mail.getsendport.com ~all")
   dmarcRecord     String      @default("v=DMARC1; p=none; rua=mailto:dmarc@getsendport.com")
   mxRecord        String      @default("inbound.getsendport.com")
@@ -115,8 +115,8 @@ model EmailLog {
   from            String
   to              String
   subject         String
-  htmlBody        String?
-  textBody        String?
+  htmlBody        String?        @db.Text
+  textBody        String?        @db.Text
   status          String         @default("QUEUED") // QUEUED, DELIVERED, OPENED, CLICKED, BOUNCED, COMPLAINED, FAILED
   bounceType      String?        // HARD, SOFT
   bounceReason    String?
@@ -169,9 +169,9 @@ model EmailTemplate {
   name        String
   slug        String
   subject     String
-  htmlContent String
-  textContent String?
-  variables   String?         // JSON array of variables like ["user_name", "amount"]
+  htmlContent String          @db.Text
+  textContent String?         @db.Text
+  variables   String?         @db.Text // JSON array of variables like ["user_name", "amount"]
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 
@@ -202,8 +202,8 @@ model Contact {
   firstName     String?
   lastName      String?
   unsubscribed  Boolean   @default(false)
-  tags          String?   // JSON array of strings e.g. ["VIP", "Newsletter"]
-  customData    String?   // JSON object with custom attributes
+  tags          String?   @db.Text // JSON array of strings e.g. ["VIP", "Newsletter"]
+  customData    String?   @db.Text // JSON object with custom attributes
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -230,9 +230,9 @@ model WebhookDeliveryLog {
   id          String    @id @default(cuid())
   webhookId   String
   event       String
-  payload     String
+  payload     String    @db.Text
   statusCode  Int?
-  response    String?
+  response    String?   @db.Text
   success     Boolean   @default(false)
   attempts    Int       @default(1)
   createdAt   DateTime  @default(now())
@@ -293,7 +293,7 @@ model AuditLog {
   id          String    @id @default(cuid())
   userId      String?
   action      String    // API_KEY_CREATED, DOMAIN_ADDED, PAYMENT_SUBMITTED, etc.
-  details     String?   // JSON details
+  details     String?   @db.Text // JSON details
   ip          String?
   createdAt   DateTime  @default(now())
 
