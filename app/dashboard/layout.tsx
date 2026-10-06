@@ -47,7 +47,21 @@ export default function DashboardLayout({
     router.refresh();
   };
 
-  const [user, setUser] = useState<{ id: string; email: string; name?: string | null; role: string } | null>(null);
+  const [user, setUser] = useState<{
+    id: string;
+    email: string;
+    name?: string | null;
+    role: string;
+    workspaces?: {
+      workspace: {
+        id: string;
+        name: string;
+        plan: string;
+        dailyQuota: number;
+        usedToday: number;
+      };
+    }[];
+  } | null>(null);
 
   React.useEffect(() => {
     fetch("/api/auth/me")
@@ -85,6 +99,11 @@ export default function DashboardLayout({
     { label: "2FA & Audit Logs", href: "/dashboard/security", icon: Lock },
   ];
 
+  const currentWs = user?.workspaces?.[0]?.workspace;
+  const quotaUsed = currentWs?.usedToday || 0;
+  const quotaLimit = currentWs?.dailyQuota || 500;
+  const quotaPct = Math.min(100, Math.round((quotaUsed / quotaLimit) * 100));
+
   return (
     <div className="flex min-h-screen bg-slate-50 text-slate-900">
       {/* DESKTOP SIDEBAR */}
@@ -104,17 +123,24 @@ export default function DashboardLayout({
           <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 shadow-sm">
             <div className="flex items-center justify-between text-xs text-slate-500 font-medium mb-1.5">
               <span>Workspace</span>
-              <span className="rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-800">
-                PRO ACTIVE
+              <span className="rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-800 uppercase">
+                {currentWs?.plan || "STARTER"} ACTIVE
               </span>
             </div>
-            <p className="text-sm font-bold text-slate-900 truncate">Default Workspace</p>
+            <p className="text-sm font-bold text-slate-900 truncate">
+              {currentWs?.name || (user?.name ? `${user.name}'s Workspace` : "My Workspace")}
+            </p>
             <div className="mt-2 text-[11px] text-slate-500 flex justify-between">
               <span>Daily Quota:</span>
-              <span className="font-bold text-slate-800">142 / 5,000</span>
+              <span className="font-bold text-slate-800">
+                {quotaUsed.toLocaleString()} / {quotaLimit.toLocaleString()}
+              </span>
             </div>
             <div className="mt-1 h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
-              <div className="h-full bg-primary-600 rounded-full w-[2.8%]" />
+              <div
+                className="h-full bg-primary-600 rounded-full transition-all"
+                style={{ width: `${Math.max(2, quotaPct)}%` }}
+              />
             </div>
           </div>
 
