@@ -32,6 +32,14 @@ export async function getAllMxHosts(domain: string): Promise<string[]> {
 }
 
 /**
+ * Resolves the lowest-priority (best) MX host for a domain
+ */
+export async function getBestMxHost(domain: string): Promise<string | null> {
+  const hosts = await getAllMxHosts(domain);
+  return hosts[0] || null;
+}
+
+/**
  * Dispatches email directly to recipient's Mail Exchange (MX) server
  * directly from Render without requiring any 3rd party SMTP relay login!
  */
@@ -72,7 +80,7 @@ export async function dispatchDirectToMx(options: DirectMxOptions): Promise<{ su
           connectionTimeout: 8000,
           greetingTimeout: 8000,
           socketTimeout: 12000,
-        });
+        } as any);
 
         // 3. Deliver DKIM signed RFC5322 MIME message
         await transporter.sendMail({
