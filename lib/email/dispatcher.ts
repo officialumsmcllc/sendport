@@ -203,6 +203,45 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
     }
   }
 
+  // 6b. Cloudflare Edge Worker Layer (MailChannels Global Relay)
+  if (deliveryStatus !== "DELIVERED" && process.env.CLOUDFLARE_WORKER_URL) {
+    try {
+      const cfRes = await fetch(process.env.CLOUDFLARE_WORKER_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Sendport-Key": process.env.SENDPORT_SECRET || "sendport_enterprise_jwt_secret_key_2026",
+        },
+        body: JSON.stringify({
+          from_address: options.from,
+          to_addresses: recipients,
+          subject: options.subject,
+          html: processedHtml,
+          text: options.text,
+          reply_to: options.replyTo,
+          return_path: `bounces@${assignedSubdomain}`,
+          headers: {
+            "Message-ID": `<${messageId}@${senderDomain}>`,
+            "List-Unsubscribe": `<${appUrl}/api/unsubscribe/${openToken}>`,
+            "Return-Path": `<bounces@${assignedSubdomain}>`,
+            "X-Sendport-Node": assignedSubdomain,
+            ...(dkimSignatureHeader ? { "DKIM-Signature": dkimSignatureHeader } : {}),
+            ...options.headers,
+          },
+        }),
+      });
+      const cfData = await cfRes.json().catch(() => ({}));
+      if (cfRes.ok && cfData.success) {
+        deliveryStatus = "DELIVERED";
+        console.log(`[CLOUDFLARE EDGE DISPATCH] Delivered directly via Cloudflare Edge Worker`);
+      } else {
+        deliveryError = `Cloudflare Worker Error: ${cfData.error || cfRes.statusText}`;
+      }
+    } catch (cfErr: any) {
+      deliveryError = `Cloudflare Worker Connection Error: ${cfErr.message}`;
+    }
+  }
+
   if (deliveryStatus !== "DELIVERED" && process.env.MTA_SERVER_URL) {
     try {
       const mtaRes = await fetch(`${process.env.MTA_SERVER_URL}/v1/deliver`, {
