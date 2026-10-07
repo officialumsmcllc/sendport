@@ -193,116 +193,116 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
     }
   }
   
-  if (deliveryStatus !== "DELIVERED" && process.env.CLOUDFLARE_WORKER_URL) {
-    try {
-      const cfRes = await fetch(process.env.CLOUDFLARE_WORKER_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Sendport-Key": process.env.CLOUDFLARE_WORKER_SECRET || "sendport_edge_master_key_2026",
-        },
+  if (deliveryStatus !== "DELIVERED") {
+    if (process.env.CLOUDFLARE_WORKER_URL) {
+      try {
+        const cfRes = await fetch(process.env.CLOUDFLARE_WORKER_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Sendport-Key": process.env.CLOUDFLARE_WORKER_SECRET || "sendport_edge_master_key_2026",
+          },
+          body: JSON.stringify({
+            from_address: options.from,
+            to_addresses: recipients,
+            subject: options.subject,
+            html: processedHtml,
+            text: options.text,
+            reply_to: options.replyTo,
+            dkim_domain: domainRecord?.name,
+            dkim_selector: domainRecord?.dkimSelector || "sendport",
+            dkim_private_key: domainRecord?.dkimPrivateKey || undefined,
+          }),
+        });
+        const cfData = await cfRes.json().catch(() => ({}));
+        if (cfRes.ok && cfData.success !== false) {
+          deliveryStatus = "DELIVERED";
+          console.log(`[CLOUDFLARE EDGE DISPATCH] Delivered to inbox via Cloudflare Worker Port 443 Loophole`);
+        } else {
+          deliveryError = `Cloudflare Edge Error: ${cfData.error || cfRes.statusText}`;
+        }
+      } catch (cfErr: any) {
+        deliveryError = `Cloudflare Worker Error: ${cfErr.message}`;
+      }
+    } else if (process.env.MTA_SERVER_URL) {
+      try {
+        const mtaRes = await fetch(`${process.env.MTA_SERVER_URL}/v1/deliver`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-MTA-Key": process.env.MTA_SECRET_KEY || "sendport_mta_master_secret_key_2026",
+          },
+          body: JSON.stringify({
+            from_address: options.from,
+            to_addresses: recipients,
+            subject: options.subject,
+            html: processedHtml,
+            text: options.text,
+            reply_to: options.replyTo,
+            headers: options.headers,
+            dkim_selector: domainRecord?.dkimSelector || "sendport",
+            dkim_private_key: domainRecord?.dkimPrivateKey || undefined,
+          }),
+        });
+        if (mtaRes.ok) {
+          deliveryStatus = "DELIVERED";
+          console.log(`[AUTONOMOUS MTA DISPATCH] Direct MX Delivery Success via Python Daemon`);
+        } else {
+          deliveryError = `Python MTA returned error: ${mtaRes.statusText}`;
+        }
+      } catch (mtaErr: any) {
+        deliveryError = `MTA connection error: ${mtaErr.message}`;
+      }
+    } else if (process.env.SMTP_USER && process.env.SMTP_PASS && process.env.SMTP_HOST) {
+      try {
+        const transporter = nodemailer.createTransport({
+          host: process.env.SMTP_HOST,
+          port: parseInt(process.env.SMTP_PORT || "465", 10),
+          secure: process.env.SMTP_SECURE === "true",
+          auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS,
+          },
+        });
 
-        body: JSON.stringify({
-          from_address: options.from,
-          to_addresses: recipients,
+        await transporter.sendMail({
+          from: options.from,
+          to: recipients,
           subject: options.subject,
           html: processedHtml,
           text: options.text,
-          reply_to: options.replyTo,
-          dkim_domain: domainRecord?.name,
-          dkim_selector: domainRecord?.dkimSelector || "sendport",
-          dkim_private_key: domainRecord?.dkimPrivateKey || undefined,
-        }),
-      });
-      const cfData = await cfRes.json().catch(() => ({}));
-      if (cfRes.ok && cfData.success !== false) {
+          replyTo: options.replyTo,
+          headers: {
+            "Message-ID": `<${messageId}@${senderDomain}>`,
+            "List-Unsubscribe": `<${appUrl}/api/unsubscribe/${openToken}>`,
+            ...(dkimSignatureHeader ? { "DKIM-Signature": dkimSignatureHeader } : {}),
+            ...options.headers,
+          },
+        });
         deliveryStatus = "DELIVERED";
-        console.log(`[CLOUDFLARE EDGE DISPATCH] Delivered to inbox via Cloudflare Worker Port 443 Loophole`);
-      } else {
-        deliveryError = `Cloudflare Edge Error: ${cfData.error || cfRes.statusText}`;
+      } catch (smtpError: any) {
+        deliveryError = `Outbound Relay Error: ${smtpError.message}`;
+        console.warn("Upstream SMTP delivery error:", smtpError.message);
       }
-    } catch (cfErr: any) {
-      deliveryError = `Cloudflare Worker Error: ${cfErr.message}`;
-    }
-  } else if (process.env.MTA_SERVER_URL) {
-    try {
-      const mtaRes = await fetch(`${process.env.MTA_SERVER_URL}/v1/deliver`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-MTA-Key": process.env.MTA_SECRET_KEY || "sendport_mta_master_secret_key_2026",
-        },
-        body: JSON.stringify({
-          from_address: options.from,
-          to_addresses: recipients,
-          subject: options.subject,
-          html: processedHtml,
-          text: options.text,
-          reply_to: options.replyTo,
-          headers: options.headers,
-          dkim_selector: domainRecord?.dkimSelector || "sendport",
-          dkim_private_key: domainRecord?.dkimPrivateKey || undefined,
-        }),
-      });
-      if (mtaRes.ok) {
-        deliveryStatus = "DELIVERED";
-        console.log(`[AUTONOMOUS MTA DISPATCH] Direct MX Delivery Success via Python Daemon`);
-      } else {
-        deliveryError = `Python MTA returned error: ${mtaRes.statusText}`;
-      }
-    } catch (mtaErr: any) {
-      deliveryError = `MTA connection error: ${mtaErr.message}`;
-    }
-  } else if (process.env.SMTP_USER && process.env.SMTP_PASS && process.env.SMTP_HOST) {
-
-    try {
-      const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: parseInt(process.env.SMTP_PORT || "465", 10),
-        secure: process.env.SMTP_SECURE === "true",
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS,
-        },
-      });
-
-      await transporter.sendMail({
+    } else {
+      // Automatic Direct MX Dispatch straight to recipient mail servers (e.g. Gmail / Yahoo / Outlook)
+      const directResult = await dispatchDirectToMx({
         from: options.from,
         to: recipients,
         subject: options.subject,
         html: processedHtml,
         text: options.text,
         replyTo: options.replyTo,
-        headers: {
-          "Message-ID": `<${messageId}@${senderDomain}>`,
-          "List-Unsubscribe": `<${appUrl}/api/unsubscribe/${openToken}>`,
-          ...(dkimSignatureHeader ? { "DKIM-Signature": dkimSignatureHeader } : {}),
-          ...options.headers,
-        },
+        headers: options.headers,
+        messageId,
+        dkimSignatureHeader,
       });
-      deliveryStatus = "DELIVERED";
-    } catch (smtpError: any) {
-      deliveryError = `Outbound Relay Error: ${smtpError.message}`;
-      console.warn("Upstream SMTP delivery error:", smtpError.message);
-    }
-  } else {
-    // Automatic Direct MX Dispatch straight to recipient mail servers (e.g. Gmail / Yahoo / Outlook)
-    const directResult = await dispatchDirectToMx({
-      from: options.from,
-      to: recipients,
-      subject: options.subject,
-      html: processedHtml,
-      text: options.text,
-      replyTo: options.replyTo,
-      headers: options.headers,
-      messageId,
-      dkimSignatureHeader,
-    });
-    if (directResult.success) {
-      deliveryStatus = "DELIVERED";
-    } else {
-      deliveryStatus = "FAILED";
-      deliveryError = directResult.error || "Port 25 blocked by cloud hosting provider. Requires Port 465 Relay or dedicated VPS.";
+      if (directResult.success) {
+        deliveryStatus = "DELIVERED";
+      } else {
+        deliveryStatus = "FAILED";
+        deliveryError = directResult.error || "Port 25 blocked by cloud hosting provider. Requires Port 465 Relay or dedicated VPS.";
+      }
     }
   }
 
