@@ -86,21 +86,23 @@ foreach ($recipients as $recipient) {
 
     $rawMsgId = $customHeaders['Message-ID'] ?? ('<msg_' . bin2hex(random_bytes(8)) . '@' . $dkimDomain . '>');
     $messageId = trim($rawMsgId);
-    $fromFormatted = $senderName ? "=?UTF-8?B?" . base64_encode($senderName) . "?= <{$senderEmail}>" : "<{$senderEmail}>";
+    $fromFormatted = $senderName
+        ? (preg_match('/[^\x20-\x7E]/', $senderName) ? "=?UTF-8?B?" . base64_encode($senderName) . "?= <{$senderEmail}>" : "{$senderName} <{$senderEmail}>")
+        : "<{$senderEmail}>";
 
     // 1. Immutable Base64 Body (guarantees zero character or newline mutation by Linux Postfix)
     $contentToEncode = $html ?: $text;
     $body = rtrim(chunk_split(base64_encode($contentToEncode))) . "\r\n";
 
-    // 2. Body Hash for DKIM (RFC 6376 relaxed canonicalization)
+    // 2. Body Hash for DKIM (RFC 6376 relaxed body canonicalization)
     $bodyHash = base64_encode(hash('sha256', $body, true));
 
-    // 3. Relaxed Header Canonicalization (Signing immutable headers)
-    $hFrom = "from: " . preg_replace('/\s+/', ' ', trim($fromFormatted));
-    $hMsgId = "message-id: " . preg_replace('/\s+/', ' ', trim($messageId));
-    $hMime = "mime-version: 1.0";
-    $hType = "content-type: text/html; charset=UTF-8";
-    $hEnc = "content-transfer-encoding: base64";
+    // 3. Relaxed Header Canonicalization (RFC 6376: strictly NO WSP after colon)
+    $hFrom = "from:" . preg_replace('/\s+/', ' ', trim($fromFormatted));
+    $hMsgId = "message-id:" . preg_replace('/\s+/', ' ', trim($messageId));
+    $hMime = "mime-version:1.0";
+    $hType = "content-type:text/html; charset=UTF-8";
+    $hEnc = "content-transfer-encoding:base64";
 
     $hList = "from:message-id:mime-version:content-type:content-transfer-encoding";
     $timestamp = time();
