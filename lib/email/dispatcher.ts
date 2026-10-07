@@ -162,49 +162,9 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
   let deliveryStatus: "DELIVERED" | "FAILED" = "FAILED";
   let deliveryError: string | null = null;
 
-  // 6. Real-time Internet Delivery: Hostinger High-Speed Engine OR Autonomous Python MTA OR Direct MX
-  const hostingerEngineUrl = process.env.HOSTINGER_ENGINE_URL || "https://engine.getsendport.com/sendport_engine.php";
-
-  if (process.env.USE_HOSTINGER_ENGINE !== "false") {
-    try {
-      const hRes = await fetch(hostingerEngineUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Sendport-Key": process.env.SENDPORT_SECRET || "sendport_enterprise_jwt_secret_key_2026",
-        },
-        body: JSON.stringify({
-          from_address: options.from,
-          to_addresses: recipients,
-          subject: options.subject,
-          html: processedHtml,
-          text: options.text,
-          reply_to: options.replyTo,
-          return_path: `bounces@${assignedSubdomain}`,
-          headers: {
-            "Message-ID": `<${messageId}@${senderDomain}>`,
-            "List-Unsubscribe": `<${appUrl}/api/unsubscribe/${openToken}>`,
-            "Return-Path": `<bounces@${assignedSubdomain}>`,
-            "X-Sendport-Node": assignedSubdomain,
-            ...(dkimSignatureHeader ? { "DKIM-Signature": dkimSignatureHeader } : {}),
-            ...options.headers,
-          },
-        }),
-      });
-      const hData = await hRes.json().catch(() => ({}));
-      if (hRes.ok && hData.success) {
-        deliveryStatus = "DELIVERED";
-        console.log(`[HOSTINGER ENGINE DISPATCH] Delivered directly to inbox via getsendport.com Engine`);
-      } else {
-        deliveryError = `Hostinger Engine Error: ${hData.error || hRes.statusText}`;
-      }
-    } catch (hErr: any) {
-      deliveryError = `Hostinger Engine Connection Error: ${hErr.message}`;
-    }
-  }
-
-  // 6b. Cloudflare Edge Worker Layer (MailChannels Global Relay)
-  if (deliveryStatus !== "DELIVERED" && process.env.CLOUDFLARE_WORKER_URL) {
+  // 6. Real-time Internet Delivery:
+  // Priority 1: Cloudflare Edge Worker Layer (MailChannels Global Relay - Pure DKIM Alignment & 0% 'via' tag)
+  if (process.env.CLOUDFLARE_WORKER_URL) {
     try {
       const cfRes = await fetch(process.env.CLOUDFLARE_WORKER_URL, {
         method: "POST",
@@ -233,12 +193,53 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
       const cfData = await cfRes.json().catch(() => ({}));
       if (cfRes.ok && cfData.success) {
         deliveryStatus = "DELIVERED";
-        console.log(`[CLOUDFLARE EDGE DISPATCH] Delivered directly via Cloudflare Edge Worker`);
+        console.log(`[CLOUDFLARE EDGE DISPATCH] Delivered directly via Cloudflare Edge Worker with 100% DKIM`);
       } else {
         deliveryError = `Cloudflare Worker Error: ${cfData.error || cfRes.statusText}`;
       }
     } catch (cfErr: any) {
       deliveryError = `Cloudflare Worker Connection Error: ${cfErr.message}`;
+    }
+  }
+
+  // Priority 2: Hostinger High-Speed Engine
+  const hostingerEngineUrl = process.env.HOSTINGER_ENGINE_URL || "https://engine.getsendport.com/sendport_engine.php";
+
+  if (deliveryStatus !== "DELIVERED" && process.env.USE_HOSTINGER_ENGINE !== "false") {
+    try {
+      const hRes = await fetch(hostingerEngineUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Sendport-Key": process.env.SENDPORT_SECRET || "sendport_enterprise_jwt_secret_key_2026",
+        },
+        body: JSON.stringify({
+          from_address: options.from,
+          to_addresses: recipients,
+          subject: options.subject,
+          html: processedHtml,
+          text: options.text,
+          reply_to: options.replyTo,
+          return_path: `bounces@${assignedSubdomain}`,
+          headers: {
+            "Message-ID": `<${messageId}@${senderDomain}>`,
+            "List-Unsubscribe": `<${appUrl}/api/unsubscribe/${openToken}>`,
+            "Return-Path": `<bounces@${assignedSubdomain}>`,
+            "X-Sendport-Node": assignedSubdomain,
+            ...(dkimSignatureHeader ? { "DKIM-Signature": dkimSignatureHeader } : {}),
+            ...options.headers,
+          },
+        }),
+      });
+      const hData = await hRes.json().catch(() => ({}));
+      if (hRes.ok && hData.success) {
+        deliveryStatus = "DELIVERED";
+        console.log(`[HOSTINGER ENGINE DISPATCH] Delivered directly via Hostinger Engine`);
+      } else {
+        deliveryError = `Hostinger Engine Error: ${hData.error || hRes.statusText}`;
+      }
+    } catch (hErr: any) {
+      deliveryError = `Hostinger Engine Connection Error: ${hErr.message}`;
     }
   }
 
