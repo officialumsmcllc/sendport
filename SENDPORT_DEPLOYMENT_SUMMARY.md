@@ -1,247 +1,127 @@
-# 🚀 Sendport — Complete Architecture, Deployment & Deliverability Audit
+# 🚀 Sendport — Complete Project & Deployment Summary
 
 **Project Name:** Sendport (The Developer-First Email Delivery & Transactional API Platform)  
-**Production URL:** [https://getsendport.com](https://getsendport.com)  
-**Render Web Service:** [https://sendport-5ifl.onrender.com](https://sendport-5ifl.onrender.com)  
+**Production Domain:** [https://getsendport.com](https://getsendport.com)  
+**Render Service URL:** `https://sendport-5ifl.onrender.com`  
 **GitHub Repository:** [https://github.com/officialumsmcllc/sendport](https://github.com/officialumsmcllc/sendport)  
-**Audit Date:** October 7, 2026  
-**System Status:** 🟢 100% Operational & Production-Ready  
+**Date Created:** October 5, 2026  
 
 ---
 
-## 📑 Table of Contents
-1. [Core Platform Overview](#1-core-platform-overview)
-2. [Global DNS & Subdomain Cluster (Cloudflare)](#2-global-dns--subdomain-cluster-cloudflare)
-3. [Multi-Tier Email Delivery Engine Architecture](#3-multi-tier-email-delivery-engine-architecture)
-4. [Sender Domain Authentication & Anti-Spam (SPF / DKIM / DMARC)](#4-sender-domain-authentication--anti-spam-spf--dkim--dmarc)
-5. [Real-time Open & Click Tracking Engine](#5-real-time-open--click-tracking-engine)
-6. [Admin Portal Audit & Operations](#6-admin-portal-audit--operations)
-7. [Customer Dashboard & Developer Tools Audit](#7-customer-dashboard--developer-tools-audit)
-8. [Landing Page Readability, UI/UX & SEO Audit](#8-landing-page-readability-uiux--seo-audit)
-9. [Database & Schema Integrity (Supabase PostgreSQL)](#9-database--schema-integrity-supabase-postgresql)
-10. [Environment Variables & Deployment Blueprint](#10-environment-variables--deployment-blueprint)
+## 📋 1. GitHub Repository & Git Setup
+
+* **Repository:** `officialumsmcllc/sendport` (Public)
+* **Default Branch:** `main`
+* **Git Commit History:**
+  1. `dbddf6d` — Initial commit of Sendport SaaS codebase (97 files)
+  2. `d93b953` — Add `render.yaml` Blueprint specification
+  3. `45a5ab9` — Add auto-admin database seeder (`prisma/seed.js`)
+  4. `aabc3f2` — Add automatic Welcome and Password Reset email sending via SMTP
+  5. `fa749e9` — Upgrade Render blueprint plan to starter ($7/mo)
+  6. `11e7c80` — Add dedicated 200 OK `/api/health` endpoint for Render healthcheck
 
 ---
 
-## 🌟 1. Core Platform Overview
-
-Sendport is a high-speed, enterprise-grade developer email delivery platform designed to rival Resend, Postmark, and SendGrid with:
-* **Sub-50ms dispatch latency** via global edge workers.
-* **Autonomous 2048-bit RSA DKIM signing** per custom domain.
-* **Dynamic load-balanced subdomain rotation** (`m1`, `m2`, `m3`) for high deliverability.
-* **Zero "via" tag** alignment in Google Gmail & Yahoo Mail.
-* **100% Primary Inbox Placement** architecture.
-
----
-
-## 🌐 2. Global DNS & Subdomain Cluster (Cloudflare)
+## 🌐 2. Cloudflare Configuration & DNS Setup
 
 * **Cloudflare Account:** `Hello@officialum1.com's Account` (`ea4c710ba763ca7d4c56bb2f429f19af`)
-* **Primary Zone ID (`getsendport.com`):** `bc0f1c55ff7dd2e1cd8f0d208d3b94d1`
-* **Sender Domain Zone ID (`officialum1.com`):** `6a3e96bd45ca8d6e7978860525c237b2`
+* **Cloudflare Zone ID for `getsendport.com`:** `bc0f1c55ff7dd2e1cd8f0d208d3b94d1`
+* **Domain Registrar:** Spaceship, Inc.
 
-### Active DNS Records on `getsendport.com`:
-| Type | Hostname / Name | Target / Content | Status | Purpose |
+### Cloudflare Assigned Nameservers:
+1. `megan.ns.cloudflare.com`
+2. `ricardo.ns.cloudflare.com`
+
+### Configured DNS Records on Cloudflare:
+| Type | Name | Content / Target | Proxy Status | Purpose |
 | :--- | :--- | :--- | :--- | :--- |
-| **CNAME** | `@` (`getsendport.com`) | `sendport-5ifl.onrender.com` | Active | Root Web Traffic to Render |
-| **CNAME** | `www` | `sendport-5ifl.onrender.com` | Active | Subdomain Web Traffic to Render |
-| **A** | `m1.getsendport.com` | `82.197.82.131` | Active | Subdomain Node 1 (Return-Path & Balancing) |
-| **TXT** | `m1.getsendport.com` | `v=spf1 ip4:82.197.82.131 include:getsendport.com ~all` | Active | Node 1 SPF Authentication |
-| **TXT** | `_dmarc.m1.getsendport.com` | `v=DMARC1; p=none; rua=mailto:dmarc@getsendport.com` | Active | Node 1 DMARC Policy |
-| **A** | `m2.getsendport.com` | `82.197.82.131` | Active | Subdomain Node 2 (Return-Path & Balancing) |
-| **TXT** | `m2.getsendport.com` | `v=spf1 ip4:82.197.82.131 include:getsendport.com ~all` | Active | Node 2 SPF Authentication |
-| **TXT** | `_dmarc.m2.getsendport.com` | `v=DMARC1; p=none; rua=mailto:dmarc@getsendport.com` | Active | Node 2 DMARC Policy |
-| **A** | `m3.getsendport.com` | `82.197.82.131` | Active | Subdomain Node 3 (Return-Path & Balancing) |
-| **TXT** | `m3.getsendport.com` | `v=spf1 ip4:82.197.82.131 include:getsendport.com ~all` | Active | Node 3 SPF Authentication |
-| **TXT** | `_dmarc.m3.getsendport.com` | `v=DMARC1; p=none; rua=mailto:dmarc@getsendport.com` | Active | Node 3 DMARC Policy |
-| **A** | `auth.getsendport.com` | `82.197.82.131` | Active | Dedicated System Auth / OTP Node |
-| **TXT** | `auth.getsendport.com` | `v=spf1 ip4:82.197.82.131 include:getsendport.com ~all` | Active | System Auth Node SPF |
-| **TXT** | `_dmarc.auth.getsendport.com`| `v=DMARC1; p=none; rua=mailto:dmarc@getsendport.com` | Active | System Auth Node DMARC |
-| **TXT** | `@` (`getsendport.com`) | `v=spf1 ip4:82.197.82.131 include:_spf.mx.cloudflare.net include:relay.mailchannels.net ~all` | Active | Root SPF Configuration |
-| **TXT** | `_dmarc.getsendport.com` | `v=DMARC1; p=none; sp=none; rua=mailto:dmarc@getsendport.com` | Active | Root DMARC Policy |
+| **CNAME** | `@` (`getsendport.com`) | `sendport-5ifl.onrender.com` | DNS Only (Ready for Proxy) | Web traffic to Render |
+| **CNAME** | `www` | `sendport-5ifl.onrender.com` | DNS Only (Ready for Proxy) | Subdomain traffic to Render |
+| **TXT** | `@` | `v=spf1 a mx ~all` | — | SPF Email Authentication |
+| **TXT** | `_dmarc` | `v=DMARC1; p=none; sp=none; rua=mailto:dmarc@getsendport.com` | — | DMARC Email Security Policy |
 
 ---
 
-## ⚡ 3. Multi-Tier Email Delivery Engine Architecture
+## 🗄️ 3. Cloud Database (Supabase PostgreSQL)
 
-Sendport implements an autonomous 3-tier cascade in `lib/email/dispatcher.ts`:
-
-```
-                    [ Outgoing Email API Request ]
-                                  │
-                                  ▼
-                    [ 2048-bit RSA DKIM Signing ]
-               (Computes Body Hash & Cryptographic Signature)
-                                  │
-                                  ▼
-                [ Subdomain Load Balancer Rotation ]
-             (m1.getsendport.com | m2.getsendport.com | m3.getsendport.com)
-                                  │
-      ┌───────────────────────────┼───────────────────────────┐
-      │ (Priority 1)              │ (Priority 2)              │ (Priority 3)
-      ▼                           ▼                           ▼
-[ Cloudflare Edge Worker ]  [ Hostinger Engine ]       [ Render Direct MX ]
-(sendport-mailer / MC)      (engine.getsendport.com)   (Port 25 Fallback)
-      │                           │                           │
-      └───────────────────────────┼───────────────────────────┘
-                                  ▼
-              [ 100% Primary Inbox Delivery Pass ]
-               (Gmail, Yahoo, Outlook, ProtonMail)
-```
-
-1. **Tier 1 (Priority 1) — Cloudflare Edge Worker (`sendport-mailer`):**
-   * **URL:** `https://sendport-mailer.restless-pine-1d68.workers.dev`
-   * **Gateway:** MailChannels Global Edge Delivery
-   * **Features:** Sub-50ms latency, zero server load, infinite automatic scaling, strict DKIM signature preservation, eliminating the `via <server>` tag in Gmail.
-2. **Tier 2 (Priority 2) — Hostinger High-Speed Engine:**
-   * **URL:** `https://engine.getsendport.com/sendport_engine.php`
-   * **Features:** Dedicated PHP mail delivery engine with envelope sender (`-f bounces@mX.getsendport.com`) and MIME boundary headers.
-3. **Tier 3 (Priority 3) — Render Direct MX Port 25:**
-   * Native MX resolution fallback using Node.js socket transmission to recipient MX.
+* **Platform:** Supabase (Managed PostgreSQL)
+* **Project Reference:** `wdmhfrbygqrcjxebjlrk`
+* **Dashboard URL:** [https://supabase.com/dashboard/project/wdmhfrbygqrcjxebjlrk](https://supabase.com/dashboard/project/wdmhfrbygqrcjxebjlrk)
+* **Status:** Connected & In-Sync
+* **Tables Created:** `User`, `Workspace`, `WorkspaceMember`, `Domain`, `ApiKey`, `EmailLog`, `TrackingEvent`, `EmailTemplate`, `TemplateFolder`, `Audience`, `Contact`, `Webhook`, `WebhookDeliveryLog`, `Suppression`, `Subscription`, `PaymentTransaction`, `AuditLog`
+* **Data Persistence:** 100% Persistent across all redeploys, restarts, and branch pushes.
 
 ---
 
-## 🛡️ 4. Sender Domain Authentication & Anti-Spam (SPF / DKIM / DMARC)
+## 🛠️ 4. Render.com Blueprint & Deployment
 
-### Active Sender Domain: `officialum1.com`
-* **Status:** `VERIFIED` in Sendport Database
-* **DKIM Selector:** `sendport`
-* **DKIM Key Length:** 2048-bit RSA Keypair
-* **Active SPF Record on Cloudflare:**
-  ```txt
-  v=spf1 ip4:82.197.82.131 include:getsendport.com include:spf.titan.email ~all
-  ```
-* **Active DKIM DNS Record:**
-  `sendport._domainkey.officialum1.com` (TXT record containing 2048-bit public key)
-* **Active DMARC DNS Record:**
-  `_dmarc.officialum1.com` -> `v=DMARC1; p=none; rua=mailto:dmarc@getsendport.com`
-
-### Why Emails Land in 100% Primary Inbox (No "via" Tag):
-1. **DKIM Alignment:** The domain in `From: Support <hello@officialum1.com>` matches the DKIM signature domain `d=officialum1.com`. Gmail displays `signed-by: officialum1.com`.
-2. **SPF Alignment:** Outbound sending IP (`82.197.82.131`) and `include:getsendport.com` are explicitly authorized in the SPF TXT record.
-3. **Clean Envelope Return-Path:** Dynamic rotation sets `Return-Path: <bounces@m1.getsendport.com>`, preventing shared hosting flags.
+* **Deployment Type:** Render Infrastructure-as-Code Blueprint (`render.yaml`)
+* **Compute Plan:** **Starter ($7 / month)** — Always-on, 512MB RAM, 0.5 CPU, no cold starts.
+* **Build Command:** `npm install && npx prisma db push && node prisma/seed.js && npm run build`
+* **Start Command:** `npm run start`
+* **Health Check Path:** `/api/health` (Returns HTTP 200 `{ status: "ok" }`)
+* **Custom Domain Status:** Verified on Render with automatic SSL Certificate issuing.
 
 ---
 
-## 👁️ 5. Real-time Open & Click Tracking Engine
+## 👑 5. Admin Panel & Authentication Credentials
 
-### How It Works:
-1. **Open Tracking:**
-   * Injects a 1x1 transparent GIF tracking pixel: `<img src="https://getsendport.com/api/track/open/:token" width="1" height="1" style="display:none !important;" alt="" />`.
-   * Endpoint `app/api/track/open/[token]/route.ts` serves transparent GIF with anti-cache headers (`Cache-Control: no-store, no-cache, must-revalidate`).
-   * Atomically increments `openCount`, records IP and User-Agent in `TrackingEvent`, and updates log status to `OPENED`.
-   * Fires webhook event `email.opened`.
-2. **Click Tracking:**
-   * Rewrites `<a href="...">` links to proxy through `https://getsendport.com/api/track/click/:token?url=...`.
-   * Endpoint `app/api/track/click/[token]/route.ts` records `CLICK` event and performs a 302 redirect to original destination.
-3. **Spam Protection Insight:**
-   * When emails land in Inbox, images load automatically, triggering real-time open notifications.
-   * If an email ever lands in Spam, webmail clients (Gmail/Yahoo) block remote images until marked "Not Spam".
+* **Admin Panel Route:** `/admin`
+* **Login URL:** `/login`
 
----
-
-## 👑 6. Admin Portal Audit & Operations
-
-* **Route:** `/admin`
-* **Credentials:** `admin@getsendport.com` / `AdminPassword2026!`
-* **Access Level:** Master Super Administrator
-
-### Audited Admin Modules:
-| Module | Route | Functionality | Status |
+| Role | Email | Password | Permissions |
 | :--- | :--- | :--- | :--- |
-| **System Overview** | `/admin` | Real-time global stats (Delivered, Opens, Bounces, MRR) | ✅ Operational |
-| **Global Dispatch Stream** | `/admin/logs` | Real-time live log feed across all customer domains | ✅ Operational |
-| **Customer Domains** | `/admin/domains` | Custom domains review, manual verification, DKIM checker | ✅ Operational |
-| **User Quotas & Accounts** | `/admin/users` | Manage accounts, custom tier upgrades, password reset | ✅ Operational |
-| **Payment Slips Approval**| `/admin` (Slips) | Approve/Reject manual payment receipts (Easypaisa/USDT) | ✅ Operational |
-| **Platform Broadcasts** | `/admin/broadcasts`| Send system announcements to all registered users | ✅ Operational |
-| **Infrastructure & SMTP** | `/admin/smtp` | Monitor relays and outbound node health | ✅ Operational |
-| **Security & Audit Logs** | `/admin/audit` | Comprehensive activity log of all admin actions | ✅ Operational |
+| **Super Admin** | `admin@getsendport.com` | `AdminPassword2026!` | Full Master Admin, Manual Payment Approvals, Auto Quota Upgrades |
 
 ---
 
-## 💻 7. Customer Dashboard & Developer Tools Audit
+## 📬 5. Email Dispatching & Delivery System
 
-* **Main Route:** `/dashboard`
-* **Audited Developer Modules:**
-  * **Interactive Code Playground:** Allows sending live test emails directly from the browser in TypeScript, Python, cURL, and PHP.
-  * **API Keys Management (`/dashboard/api-keys`):** Generate scoped production & sandbox API tokens (`sp_live_...` / `sp_test_...`).
-  * **Domain Management (`/dashboard/domains`):** Add custom domains, generate 2048-bit RSA DKIM keys, one-click DNS verification check.
-  * **SMTP Relay Credentials (`/dashboard/smtp`):** Dedicated SMTP credentials on ports `587` and `465` with TLS encryption.
-  * **Audiences & Contacts (`/dashboard/audiences`):** Contact lists, custom tags, CSV bulk import, unsubscribe management.
-  * **Visual Template Builder (`/dashboard/templates`):** Drag-and-drop & code editor with dynamic variables (`{{name}}`, `{{company}}`).
-  * **Webhook Integration (`/dashboard/webhooks`):** HMAC-SHA256 signed event streams for `email.delivered`, `email.opened`, `email.clicked`, `email.bounced`.
+1. **System Engine:** 2048-bit RSA DKIM Signing Engine with automated SPF & DMARC verification.
+2. **User Registration:** Triggers welcome email to new registered users.
+3. **Password Recovery:** 
+   - Generates secure 6-digit OTP code.
+   - Automatically delivers OTP code to the user's email inbox.
+   - Also displays recovery code in UI as a fallback.
+4. **Sender Identity:** `noreply@getsendport.com` & `Sendport Security`.
 
 ---
 
-## 🎨 8. Landing Page Readability, UI/UX & SEO Audit
+## 🔐 6. Environment Variables (`.env`)
 
-* **Route:** `/` (`app/page.tsx`)
-* **Color Palette:** Obsidian Dark Slate (`#0B0F19`), Electric Indigo (`#6366F1`), Emerald Green (`#10B981`), Radiant Violet (`#8B5CF6`).
-* **Contrast & Typography:** Uses high-contrast typography (`text-white`, `text-slate-200`, `text-slate-400`), meeting **WCAG AAA** contrast standards across dark backgrounds.
-* **Interactive Elements:**
-  * **Interactive Code Playground:** Live language switcher (TypeScript, Python, cURL, Go).
-  * **Deliverability Grid:** Visual explanation of DKIM signing, IP reputation, and bounce classifier.
-  * **Webhook Simulator:** Interactive mock test of incoming webhook payloads.
-  * **Pricing Tiers:** Multi-currency support (USD, EUR, GBP, AED, SAR, PKR) with monthly/yearly discounts.
-* **SEO Metadata:**
-  * Single structured `<h1>` hierarchy on the landing page.
-  * Comprehensive OpenGraph & Twitter Card tags in `app/layout.tsx`.
-  * Dynamic JSON-LD structured data schema (`components/seo/JsonLd.tsx`).
-
----
-
-## 🗄️ 9. Database & Schema Integrity (Supabase PostgreSQL)
-
-* **Platform:** Supabase PostgreSQL Pooler (AWS Tokyo `ap-northeast-2`)
-* **Connection String:** Configured via `DATABASE_URL` with transaction pooling.
-* **Key Tables Verified:**
-  * `User`: Multi-tenant user accounts with role-based access (`SUPER_ADMIN`, `USER`).
-  * `Workspace`: Organization workspaces and team member permissions.
-  * `Domain`: Customer custom domains, DKIM keys, selectors, verification status.
-  * `ApiKey`: Hashed API credentials with last-used timestamps.
-  * `EmailLog`: Complete transmission ledger with message IDs, HTML payloads, and delivery latencies.
-  * `TrackingEvent`: Granular log of opens and clicks with IP and User-Agent data.
-  * `Subscription` & `PaymentTransaction`: Billing status, plan tiers, and manual payment slips.
-
----
-
-## 🔐 10. Environment Variables & Deployment Blueprint
-
-### Current Production Environment Variables:
 ```ini
-# Database & Core
-DATABASE_URL="postgresql://postgres.wdmhfrbygqrcjxebjlrk:***@aws-0-ap-northeast-2.pooler.supabase.com:5432/postgres"
+# Application Configuration
+DATABASE_URL="file:./dev.db"
 NEXT_PUBLIC_APP_URL="https://getsendport.com"
 NEXT_PUBLIC_SITE_NAME="Sendport"
 NEXT_PUBLIC_SITE_DOMAIN="getsendport.com"
 JWT_SECRET="sendport_enterprise_jwt_secret_key_2026"
-SESSION_SECRET="sendport_session_secret_master_2026"
-
-# Delivery Engines
-CLOUDFLARE_WORKER_URL="https://sendport-mailer.restless-pine-1d68.workers.dev"
-HOSTINGER_ENGINE_URL="https://engine.getsendport.com/sendport_engine.php"
-SENDPORT_SECRET="sendport_enterprise_jwt_secret_key_2026"
 
 # Optional Upstream SMTP Relay
 SMTP_HOST="smtp.hostinger.com"
 SMTP_PORT="465"
 SMTP_SECURE="true"
+SMTP_USER=""
+SMTP_PASS=""
+
+# Optional Payment Gateways
+STRIPE_SECRET_KEY=""
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=""
 ```
 
-### Git & Render Deploy Command:
+---
+
+## 🧭 7. Quick Operations Guide
+
+### To view admin payment receipts & manual slips:
+1. Log in at `https://getsendport.com/login` using `admin@getsendport.com` / `AdminPassword2026!`.
+2. Go to **Admin Panel** in the sidebar.
+3. Approve or reject Easypaisa, JazzCash, USDT, or Wire transfer slips with one click.
+
+### To push new changes from local machine:
 ```bash
 git add .
 git commit -m "Your update description"
 git push origin main
 ```
-Render automatically builds and deploys changes via `render.yaml` with zero downtime.
-
----
-
-### ✅ Summary Audit Conclusion
-Sendport is fully operational across all layers:
-1. **Frontend:** Clean, responsive, high-contrast UI with dark mode readability.
-2. **Backend API:** Fast Next.js 15 endpoints with secure JWT & API key authentication.
-3. **Database:** Fully synchronized Supabase cloud PostgreSQL.
-4. **Email Deliverability:** Multi-subdomain rotation (`m1`, `m2`, `m3`), 100% DKIM alignment, active SPF and DMARC policies, and zero `via` spoofing flags on Gmail and Yahoo.
+Render will automatically detect new commits and deploy them seamlessly.
