@@ -155,8 +155,45 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
   let deliveryStatus: "DELIVERED" | "FAILED" = "FAILED";
   let deliveryError: string | null = null;
 
-  // 6. Real-time Internet Delivery: Cloudflare Edge Loophole OR Autonomous Python MTA OR Configured Relay OR Direct MX
-  if (process.env.CLOUDFLARE_WORKER_URL) {
+  // 6. Real-time Internet Delivery: Self-Hosted Hostinger Engine OR Cloudflare Edge OR Autonomous Python MTA OR Relay
+  const hostingerEngineUrl = process.env.HOSTINGER_ENGINE_URL || "http://engine.getsendport.com/sendport_engine.php";
+  
+  if (process.env.USE_HOSTINGER_ENGINE !== "false") {
+    try {
+      const hRes = await fetch(hostingerEngineUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Sendport-Key": process.env.SENDPORT_SECRET || "sendport_enterprise_jwt_secret_key_2026",
+        },
+        body: JSON.stringify({
+          from_address: options.from,
+          to_addresses: recipients,
+          subject: options.subject,
+          html: processedHtml,
+          text: options.text,
+          reply_to: options.replyTo,
+          headers: {
+            "Message-ID": `<${messageId}@${senderDomain}>`,
+            "List-Unsubscribe": `<${appUrl}/api/unsubscribe/${openToken}>`,
+            ...(dkimSignatureHeader ? { "DKIM-Signature": dkimSignatureHeader } : {}),
+            ...options.headers,
+          },
+        }),
+      });
+      const hData = await hRes.json().catch(() => ({}));
+      if (hRes.ok && hData.success) {
+        deliveryStatus = "DELIVERED";
+        console.log(`[HOSTINGER ENGINE DISPATCH] Delivered to inbox via Self-Hosted getsendport.com Engine`);
+      } else {
+        deliveryError = `Hostinger Engine Error: ${hData.error || hRes.statusText}`;
+      }
+    } catch (hErr: any) {
+      deliveryError = `Hostinger Engine Connection Error: ${hErr.message}`;
+    }
+  }
+  
+  if (deliveryStatus !== "DELIVERED" && process.env.CLOUDFLARE_WORKER_URL) {
     try {
       const cfRes = await fetch(process.env.CLOUDFLARE_WORKER_URL, {
         method: "POST",
@@ -164,6 +201,7 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
           "Content-Type": "application/json",
           "X-Sendport-Key": process.env.CLOUDFLARE_WORKER_SECRET || "sendport_edge_master_key_2026",
         },
+
         body: JSON.stringify({
           from_address: options.from,
           to_addresses: recipients,
