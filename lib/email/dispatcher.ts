@@ -133,6 +133,13 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
     );
   }
 
+  // 4b. Dynamic Subdomain Rotation (m1, m2, m3 for custom domains, auth for system)
+  const isInternalSystemEmail = normalizedDomain === "getsendport.com" && (options.subject.includes("Security") || options.subject.includes("Welcome") || options.subject.includes("Verification") || options.subject.includes("Reset"));
+  const SUBDOMAIN_POOL = ["m1.getsendport.com", "m2.getsendport.com", "m3.getsendport.com"];
+  const assignedSubdomain = isInternalSystemEmail
+    ? "auth.getsendport.com"
+    : SUBDOMAIN_POOL[Math.floor(Math.random() * SUBDOMAIN_POOL.length)];
+
   // 5. Store in Database as PENDING
   const emailLog = await prisma.emailLog.create({
     data: {
@@ -173,9 +180,12 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
           html: processedHtml,
           text: options.text,
           reply_to: options.replyTo,
+          return_path: `bounces@${assignedSubdomain}`,
           headers: {
             "Message-ID": `<${messageId}@${senderDomain}>`,
             "List-Unsubscribe": `<${appUrl}/api/unsubscribe/${openToken}>`,
+            "Return-Path": `<bounces@${assignedSubdomain}>`,
+            "X-Sendport-Node": assignedSubdomain,
             ...(dkimSignatureHeader ? { "DKIM-Signature": dkimSignatureHeader } : {}),
             ...options.headers,
           },
