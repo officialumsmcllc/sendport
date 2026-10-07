@@ -155,8 +155,45 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
   let deliveryStatus: "DELIVERED" | "FAILED" = "FAILED";
   let deliveryError: string | null = null;
 
-  // 6. Real-time Internet Delivery: Autonomous Python MTA Daemon OR Direct MX
-  if (process.env.MTA_SERVER_URL) {
+  // 6. Real-time Internet Delivery: Hostinger High-Speed Engine OR Autonomous Python MTA OR Direct MX
+  const hostingerEngineUrl = process.env.HOSTINGER_ENGINE_URL || "https://engine.getsendport.com/sendport_engine.php";
+
+  if (process.env.USE_HOSTINGER_ENGINE !== "false") {
+    try {
+      const hRes = await fetch(hostingerEngineUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Sendport-Key": process.env.SENDPORT_SECRET || "sendport_enterprise_jwt_secret_key_2026",
+        },
+        body: JSON.stringify({
+          from_address: options.from,
+          to_addresses: recipients,
+          subject: options.subject,
+          html: processedHtml,
+          text: options.text,
+          reply_to: options.replyTo,
+          headers: {
+            "Message-ID": `<${messageId}@${senderDomain}>`,
+            "List-Unsubscribe": `<${appUrl}/api/unsubscribe/${openToken}>`,
+            ...(dkimSignatureHeader ? { "DKIM-Signature": dkimSignatureHeader } : {}),
+            ...options.headers,
+          },
+        }),
+      });
+      const hData = await hRes.json().catch(() => ({}));
+      if (hRes.ok && hData.success) {
+        deliveryStatus = "DELIVERED";
+        console.log(`[HOSTINGER ENGINE DISPATCH] Delivered directly to inbox via getsendport.com Engine`);
+      } else {
+        deliveryError = `Hostinger Engine Error: ${hData.error || hRes.statusText}`;
+      }
+    } catch (hErr: any) {
+      deliveryError = `Hostinger Engine Connection Error: ${hErr.message}`;
+    }
+  }
+
+  if (deliveryStatus !== "DELIVERED" && process.env.MTA_SERVER_URL) {
     try {
       const mtaRes = await fetch(`${process.env.MTA_SERVER_URL}/v1/deliver`, {
         method: "POST",
