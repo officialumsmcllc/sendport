@@ -32,9 +32,26 @@ services:
         value: "true"
       - key: SMTP_USER
         sync: false
-      - key: SMTP_PASS
-        sync: false
+      - key: MTA_SERVER_URL
+        value: http://sendport-mta:8000
+      - key: MTA_SECRET_KEY
+        value: sendport_mta_master_secret_key_2026
       - key: STRIPE_SECRET_KEY
         sync: false
       - key: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
         sync: false
+
+  - type: web
+    name: sendport-mta
+    runtime: docker
+    plan: starter
+    dockerContext: server
+    dockerfilePath: server/Dockerfile.mta
+    envVars:
+      - key: PORT
+        value: "8000"
+      - key: MTA_SECRET_KEY
+        value: sendport_mta_master_secret_key_2026
+      - key: MTA_HELO_HOST
+        value: mail.getsendport.com
+

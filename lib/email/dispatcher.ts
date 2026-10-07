@@ -155,30 +155,68 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
   let deliveryStatus: "DELIVERED" | "FAILED" = "FAILED";
   let deliveryError: string | null = null;
 
-  // 6. Real-time Internet Delivery: Render Native Direct MX (Port 25) straight to recipient Mail Exchange
-  const directResult = await dispatchDirectToMx({
-    from: options.from,
-    to: recipients,
-    subject: options.subject,
-    html: processedHtml,
-    text: options.text,
-    replyTo: options.replyTo,
-    headers: {
-      "Message-ID": `<${messageId}@${senderDomain}>`,
-      "List-Unsubscribe": `<${appUrl}/api/unsubscribe/${openToken}>`,
-      ...(dkimSignatureHeader ? { "DKIM-Signature": dkimSignatureHeader } : {}),
-      ...options.headers,
-    },
-    messageId,
-    dkimSignatureHeader,
-  });
+  // 6. Real-time Internet Delivery: Autonomous Python MTA Daemon OR Direct MX
+  if (process.env.MTA_SERVER_URL) {
+    try {
+      const mtaRes = await fetch(`${process.env.MTA_SERVER_URL}/v1/deliver`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-MTA-Key": process.env.MTA_SECRET_KEY || "sendport_mta_master_secret_key_2026",
+        },
+        body: JSON.stringify({
+          from_address: options.from,
+          to_addresses: recipients,
+          subject: options.subject,
+          html: processedHtml,
+          text: options.text,
+          reply_to: options.replyTo,
+          headers: options.headers,
+          dkim_selector: domainRecord?.dkimSelector || "sendport",
+          dkim_private_key: domainRecord?.dkimPrivateKey || undefined,
+        }),
+      });
 
-  if (directResult.success) {
-    deliveryStatus = "DELIVERED";
-    console.log(`[RENDER DIRECT MX] 100% Native Delivery to recipient MX via Render Port 25`);
-  } else {
-    deliveryError = directResult.error || "Direct MX delivery failed";
-    console.warn(`[DIRECT MX FAILED]:`, deliveryError);
+      if (mtaRes.ok) {
+        deliveryStatus = "DELIVERED";
+        console.log(`[AUTONOMOUS MTA DISPATCH] Direct MX Delivery Success via Python Daemon`);
+      } else {
+        const mtaErr = await mtaRes.text();
+        deliveryError = `Python MTA Error: ${mtaErr || mtaRes.statusText}`;
+      }
+    } catch (mtaErr: any) {
+      deliveryError = `MTA connection error: ${mtaErr.message}`;
+    }
+  }
+
+  if (deliveryStatus !== "DELIVERED") {
+    const directResult = await dispatchDirectToMx({
+      from: options.from,
+      to: recipients,
+      subject: options.subject,
+      html: processedHtml,
+      text: options.text,
+      replyTo: options.replyTo,
+      headers: {
+        "Message-ID": `<${messageId}@${senderDomain}>`,
+        "List-Unsubscribe": `<${appUrl}/api/unsubscribe/${openToken}>`,
+        ...(dkimSignatureHeader ? { "DKIM-Signature": dkimSignatureHeader } : {}),
+        ...options.headers,
+      },
+      messageId,
+      dkimSignatureHeader,
+    });
+
+    if (directResult.success) {
+      deliveryStatus = "DELIVERED";
+      console.log(`[RENDER DIRECT MX] 100% Native Delivery to recipient MX via Render Port 25`);
+    } else {
+      deliveryError = directResult.error || deliveryError || "Direct MX delivery failed";
+      console.warn(`[DIRECT MX FAILED]:`, deliveryError);
+    }
+  }
+
+  if (deliveryStatus !== "DELIVERED") {
 
     // Optional Relay Fallback if configured
     if (process.env.SMTP_USER && process.env.SMTP_PASS && process.env.SMTP_HOST) {
