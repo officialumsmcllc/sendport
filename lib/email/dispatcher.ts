@@ -156,7 +156,7 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
   let deliveryError: string | null = null;
 
   // 6. Real-time Internet Delivery: Self-Hosted Hostinger Engine OR Cloudflare Edge OR Autonomous Python MTA OR Relay
-  const hostingerEngineUrl = process.env.HOSTINGER_ENGINE_URL || "http://engine.getsendport.com/sendport_engine.php";
+  const hostingerEngineUrl = process.env.HOSTINGER_ENGINE_URL || "https://engine.getsendport.com/sendport_engine.php";
   
   if (process.env.USE_HOSTINGER_ENGINE !== "false") {
     try {
