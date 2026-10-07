@@ -155,7 +155,7 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
   let deliveryStatus: "DELIVERED" | "FAILED" = "FAILED";
   let deliveryError: string | null = null;
 
-  // 6. Real-time Internet Delivery: Self-Hosted Hostinger Engine OR Cloudflare Edge OR Autonomous Python MTA OR Relay
+  // 6. Real-time Internet Delivery: Self-Hosted Hostinger Engine OR Autonomous Python MTA OR Relay OR Direct MX
   const hostingerEngineUrl = process.env.HOSTINGER_ENGINE_URL || "https://engine.getsendport.com/sendport_engine.php";
   
   if (process.env.USE_HOSTINGER_ENGINE !== "false") {
@@ -194,37 +194,7 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
   }
   
   if (deliveryStatus !== "DELIVERED") {
-    if (process.env.CLOUDFLARE_WORKER_URL) {
-      try {
-        const cfRes = await fetch(process.env.CLOUDFLARE_WORKER_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Sendport-Key": process.env.CLOUDFLARE_WORKER_SECRET || "sendport_edge_master_key_2026",
-          },
-          body: JSON.stringify({
-            from_address: options.from,
-            to_addresses: recipients,
-            subject: options.subject,
-            html: processedHtml,
-            text: options.text,
-            reply_to: options.replyTo,
-            dkim_domain: domainRecord?.name,
-            dkim_selector: domainRecord?.dkimSelector || "sendport",
-            dkim_private_key: domainRecord?.dkimPrivateKey || undefined,
-          }),
-        });
-        const cfData = await cfRes.json().catch(() => ({}));
-        if (cfRes.ok && cfData.success !== false) {
-          deliveryStatus = "DELIVERED";
-          console.log(`[CLOUDFLARE EDGE DISPATCH] Delivered to inbox via Cloudflare Worker Port 443 Loophole`);
-        } else {
-          deliveryError = `Cloudflare Edge Error: ${cfData.error || cfRes.statusText}`;
-        }
-      } catch (cfErr: any) {
-        deliveryError = `Cloudflare Worker Error: ${cfErr.message}`;
-      }
-    } else if (process.env.MTA_SERVER_URL) {
+    if (process.env.MTA_SERVER_URL) {
       try {
         const mtaRes = await fetch(`${process.env.MTA_SERVER_URL}/v1/deliver`, {
           method: "POST",
