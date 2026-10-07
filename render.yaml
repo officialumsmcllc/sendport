@@ -37,7 +37,7 @@ services:
       - key: SENDPORT_SECRET
         value: sendport_enterprise_jwt_secret_key_2026
       - key: CLOUDFLARE_WORKER_URL
-        sync: false
+        value: https://sendport-mailer.restless-pine-1d68.workers.dev
       - key: STRIPE_SECRET_KEY
         sync: false
       - key: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
