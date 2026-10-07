@@ -182,6 +182,9 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
           text: options.text,
           reply_to: options.replyTo,
           return_path: `bounces@${assignedSubdomain}`,
+          dkim_private_key: domainRecord?.dkimPrivateKey || undefined,
+          dkim_selector: domainRecord?.dkimSelector || "sendport",
+          dkim_domain: domainRecord?.name || senderDomain,
           headers: {
             "Message-ID": `<${messageId}@${senderDomain}>`,
             "List-Unsubscribe": `<${appUrl}/api/unsubscribe/${openToken}>`,
