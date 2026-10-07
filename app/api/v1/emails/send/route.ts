@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { sendEmailEngine, parseFromHeader } from "@/lib/email/dispatcher";
-import { validateEmailAddress } from "@/lib/email/validator";
+import { validateEmailAddress, validateEmailWithMx } from "@/lib/email/validator";
 import { getCurrentUser } from "@/lib/auth/session";
 
 /**
@@ -13,6 +13,7 @@ export async function POST(req: NextRequest) {
     const authHeader = req.headers.get("Authorization") || req.headers.get("authorization");
     let workspace: any = null;
     let userId: string | null = null;
+    let authenticatedApiKeyId: string | null = null;
 
     // 1. Check API Key Header if present
     if (authHeader && authHeader.startsWith("Bearer ")) {
@@ -35,6 +36,18 @@ export async function POST(req: NextRequest) {
         if (apiKey?.workspace) {
           workspace = apiKey.workspace;
           userId = apiKey.userId;
+          authenticatedApiKeyId = apiKey.id;
+
+          // Asynchronously update lastUsedAt and usedToday on this API key
+          prisma.apiKey
+            .update({
+              where: { id: apiKey.id },
+              data: {
+                lastUsedAt: new Date(),
+                usedToday: { increment: 1 },
+              },
+            })
+            .catch((err) => console.error("Error updating apiKey lastUsedAt:", err));
         }
       }
     }
@@ -97,10 +110,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Validate recipient email syntax
+    // Pre-flight recipient syntax & DNS MX validation (prevents hard bounces and mailbox suspensions)
     const recipientList = Array.isArray(to) ? to : [to];
     for (const recipient of recipientList) {
-      const val = validateEmailAddress(recipient);
+      const val = await validateEmailWithMx(recipient);
       if (!val.isValid) {
         return NextResponse.json(
           { error: `Invalid recipient address '${recipient}': ${val.reason}` },
@@ -140,6 +153,16 @@ export async function POST(req: NextRequest) {
       headers,
       attachments,
     });
+
+    // Real-time Quota Increment
+    prisma.workspace
+      .update({
+        where: { id: workspace.id },
+        data: {
+          usedToday: { increment: recipientList.length },
+        },
+      })
+      .catch((err) => console.error("Error updating workspace usedToday:", err));
 
     return NextResponse.json(result, { status: 200 });
   } catch (error: any) {

@@ -61,6 +61,17 @@ export function createSendportSmtpServer() {
           return callback(new Error("452 4.4.5 Daily email quota exceeded for your workspace. Please upgrade your plan."));
         }
 
+        // Asynchronously update apiKey lastUsedAt
+        prisma.apiKey
+          .update({
+            where: { id: apiKey.id },
+            data: {
+              lastUsedAt: new Date(),
+              usedToday: { increment: 1 },
+            },
+          })
+          .catch((err) => console.error("Error updating SMTP apiKey lastUsedAt:", err));
+
         // Authentication successful
         return callback(null, {
           user: {

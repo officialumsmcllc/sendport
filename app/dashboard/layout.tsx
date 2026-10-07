@@ -67,21 +67,27 @@ export default function DashboardLayout({
   } | null>(null);
 
   React.useEffect(() => {
-    fetch("/api/auth/me")
-      .then((res) => {
-        if (!res.ok) {
-          router.push("/login");
-          return null;
-        }
-        return res.json();
-      })
-      .then((data) => {
-        if (data?.user) {
-          setUser(data.user);
-        }
-      })
-      .catch(() => {});
-  }, [router]);
+    const fetchUser = () => {
+      fetch("/api/auth/me")
+        .then((res) => {
+          if (!res.ok) {
+            router.push("/login");
+            return null;
+          }
+          return res.json();
+        })
+        .then((data) => {
+          if (data?.user) {
+            setUser(data.user);
+          }
+        })
+        .catch(() => {});
+    };
+
+    fetchUser();
+    const interval = setInterval(fetchUser, 15000);
+    return () => clearInterval(interval);
+  }, [router, pathname]);
 
   const navItems = [
     { label: "Overview", href: "/dashboard", icon: LayoutDashboard },

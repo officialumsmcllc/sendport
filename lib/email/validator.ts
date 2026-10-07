@@ -47,3 +47,36 @@ export function validateEmailAddress(email: string): EmailValidationResult {
     domain,
   };
 }
+
+/**
+ * Pre-flight MX record verification: guarantees recipient domain can accept email
+ * and prevents hard bounces before hitting physical SMTP relays.
+ */
+export async function validateEmailWithMx(email: string): Promise<EmailValidationResult> {
+  const base = validateEmailAddress(email);
+  if (!base.isValid) return base;
+
+  try {
+    const dns = await import("dns/promises");
+    const records = await dns.resolveMx(base.domain);
+    if (!records || records.length === 0) {
+      return {
+        email: base.email,
+        isValid: false,
+        isDisposable: false,
+        domain: base.domain,
+        reason: `Domain '${base.domain}' has no active Mail Exchange (MX) records.`,
+      };
+    }
+  } catch (err: any) {
+    return {
+      email: base.email,
+      isValid: false,
+      isDisposable: false,
+      domain: base.domain,
+      reason: `Domain '${base.domain}' does not exist or has no reachable mail servers.`,
+    };
+  }
+
+  return base;
+}

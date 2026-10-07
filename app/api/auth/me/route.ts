@@ -47,14 +47,17 @@ export async function GET() {
 
     let recentEmails: any[] = [];
     const workspaceIds = user.workspaces?.map((w) => w.workspace.id) || [];
+    const startOfToday = new Date();
+    startOfToday.setUTCHours(0, 0, 0, 0);
 
     if (workspaceIds.length > 0) {
-      const [total, delivered, opened, clicked, bounced, logs] = await Promise.all([
+      const [total, delivered, opened, clicked, bounced, todayCount, logs] = await Promise.all([
         prisma.emailLog.count({ where: { workspaceId: { in: workspaceIds } } }),
         prisma.emailLog.count({ where: { workspaceId: { in: workspaceIds }, status: "DELIVERED" } }),
         prisma.emailLog.count({ where: { workspaceId: { in: workspaceIds }, status: "OPENED" } }),
         prisma.emailLog.count({ where: { workspaceId: { in: workspaceIds }, status: "CLICKED" } }),
         prisma.emailLog.count({ where: { workspaceId: { in: workspaceIds }, status: "BOUNCED" } }),
+        prisma.emailLog.count({ where: { workspaceId: { in: workspaceIds }, createdAt: { gte: startOfToday } } }),
         prisma.emailLog.findMany({
           where: { workspaceId: { in: workspaceIds } },
           take: 50,
@@ -86,6 +89,17 @@ export async function GET() {
       stats.opened = opened + clicked;
       stats.clicked = clicked;
       stats.bounced = bounced;
+      stats.usedToday = todayCount;
+
+      if (primaryWorkspace) {
+        primaryWorkspace.usedToday = todayCount;
+        prisma.workspace
+          .update({
+            where: { id: primaryWorkspace.id },
+            data: { usedToday: todayCount },
+          })
+          .catch(() => {});
+      }
 
       if (total > 0) {
         stats.deliveredRate = `${Math.round(((delivered + opened + clicked) / total) * 100)}%`;

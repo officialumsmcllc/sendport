@@ -173,8 +173,8 @@ export default function ApiKeysPage() {
                         <Shield className="w-3 h-3" /> {k.scope.replace("_", " ")}
                       </span>
                     </td>
-                    <td className="px-5 py-4 text-slate-500">
-                      {k.lastUsedAt ? new Date(k.lastUsedAt).toLocaleDateString() : "Never"}
+                    <td className="px-5 py-4 text-slate-500 font-medium">
+                      {k.lastUsedAt ? new Date(k.lastUsedAt).toLocaleString([], { dateStyle: "short", timeStyle: "short" }) : "Never"}
                     </td>
                     <td className="px-5 py-4 text-slate-500">
                       {new Date(k.createdAt).toLocaleDateString()}

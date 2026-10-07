@@ -159,6 +159,14 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
     },
   });
 
+  // Increment workspace daily quota in real time
+  prisma.workspace
+    .update({
+      where: { id: options.workspaceId },
+      data: { usedToday: { increment: recipients.length } },
+    })
+    .catch(() => {});
+
   let deliveryStatus: "DELIVERED" | "FAILED" = "FAILED";
   let deliveryError: string | null = null;
 
