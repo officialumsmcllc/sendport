@@ -355,6 +355,7 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
     where: { id: emailLog.id },
     data: {
       status: deliveryStatus,
+      bounceReason: deliveryError || null,
       latencyMs: Date.now() - startTime,
     },
   });

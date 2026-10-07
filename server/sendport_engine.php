@@ -151,7 +151,9 @@ foreach ($recipients as $recipient) {
     if ($sent) {
         $successCount++;
     } else {
-        $errors[] = "Failed sending to {$recipient}";
+        $lastErr = error_get_last();
+        $detailMsg = !empty($lastErr['message']) ? $lastErr['message'] : 'Hostinger sendmail queue rejected or temporarily suspended by mail daemon';
+        $errors[] = "Failed sending to {$recipient}: {$detailMsg}";
     }
 }
 
