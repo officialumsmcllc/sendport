@@ -14,26 +14,26 @@ interface DirectMxOptions {
 }
 
 /**
- * Resolves the lowest-priority (best) MX host for a domain
+ * Resolves all MX hosts for a domain sorted by priority
  */
-export async function getBestMxHost(domain: string): Promise<string | null> {
+export async function getAllMxHosts(domain: string): Promise<string[]> {
   try {
     const mxRecords = await dns.resolveMx(domain);
     if (!mxRecords || mxRecords.length === 0) {
-      return null;
+      return [];
     }
     // Sort by priority ascending (lowest number = highest priority)
     mxRecords.sort((a, b) => a.priority - b.priority);
-    return mxRecords[0].exchange;
+    return mxRecords.map((r) => r.exchange);
   } catch (err) {
     console.warn(`[DNS MX LOOKUP FAILED] for ${domain}:`, err);
-    return null;
+    return [];
   }
 }
 
 /**
  * Dispatches email directly to recipient's Mail Exchange (MX) server
- * without requiring any 3rd party SMTP relay login!
+ * directly from Render without requiring any 3rd party SMTP relay login!
  */
 export async function dispatchDirectToMx(options: DirectMxOptions): Promise<{ success: boolean; error?: string }> {
   try {
@@ -44,46 +44,63 @@ export async function dispatchDirectToMx(options: DirectMxOptions): Promise<{ su
       return { success: false, error: "Invalid recipient email address domain." };
     }
 
-    // 1. Resolve Recipient MX Host (e.g. gmail-smtp-in.l.google.com)
-    const mxHost = await getBestMxHost(recipientDomain);
-    if (!mxHost) {
+    // 1. Resolve Recipient MX Hosts
+    const mxHosts = await getAllMxHosts(recipientDomain);
+    if (!mxHosts || mxHosts.length === 0) {
       return { success: false, error: `No MX records found for domain ${recipientDomain}` };
     }
 
-    console.log(`[DIRECT MX DISPATCH] Routing email to MX ${mxHost} for ${firstRecipient}`);
+    console.log(`[DIRECT MX DISPATCH] Found ${mxHosts.length} MX host(s) for ${recipientDomain}: ${mxHosts.join(", ")}`);
 
-    // 2. Connect directly to recipient MX server on standard SMTP port 25
-    const transporter = nodemailer.createTransport({
-      host: mxHost,
-      port: 25,
-      secure: false, // Direct MX uses opportunistic STARTTLS
-      name: "mail.getsendport.com",
-      tls: {
-        rejectUnauthorized: false,
-      },
-      connectionTimeout: 10000,
-      greetingTimeout: 10000,
-    });
+    let lastError = "";
 
-    // 3. Deliver DKIM signed RFC5322 MIME message
-    await transporter.sendMail({
-      from: options.from,
-      to: options.to,
-      subject: options.subject,
-      html: options.html,
-      text: options.text,
-      replyTo: options.replyTo,
-      headers: {
-        "Message-ID": `<${options.messageId}@getsendport.com>`,
-        ...(options.dkimSignatureHeader ? { "DKIM-Signature": options.dkimSignatureHeader } : {}),
-        ...options.headers,
-      },
-    });
+    // 2. Iterate through MX servers until one successfully accepts the email
+    for (const mxHost of mxHosts.slice(0, 3)) {
+      try {
+        console.log(`[DIRECT MX DISPATCH] Attempting direct Port 25 connection to ${mxHost}...`);
 
-    console.log(`[DIRECT MX SUCCESS] Delivered directly to ${mxHost}`);
-    return { success: true };
+        const transporter = nodemailer.createTransport({
+          host: mxHost,
+          port: 25,
+          secure: false, // Opportunistic STARTTLS
+          name: "getsendport.com",
+          family: 4, // Force IPv4 to avoid IPv6 cloud blackholes
+          tls: {
+            rejectUnauthorized: false,
+            minVersion: "TLSv1.2",
+          },
+          connectionTimeout: 8000,
+          greetingTimeout: 8000,
+          socketTimeout: 12000,
+        });
+
+        // 3. Deliver DKIM signed RFC5322 MIME message
+        await transporter.sendMail({
+          from: options.from,
+          to: options.to,
+          subject: options.subject,
+          html: options.html,
+          text: options.text,
+          replyTo: options.replyTo,
+          headers: {
+            "Message-ID": `<${options.messageId}@getsendport.com>`,
+            ...(options.dkimSignatureHeader ? { "DKIM-Signature": options.dkimSignatureHeader } : {}),
+            ...options.headers,
+          },
+        });
+
+        console.log(`[DIRECT MX SUCCESS] Delivered directly from Render to ${mxHost}`);
+        return { success: true };
+      } catch (attemptErr: any) {
+        lastError = attemptErr.message || "Unknown error";
+        console.warn(`[DIRECT MX ATTEMPT FAILED] for ${mxHost}:`, lastError);
+      }
+    }
+
+    return { success: false, error: lastError || "All MX host connection attempts failed." };
   } catch (err: any) {
-    console.warn(`[DIRECT MX FALLBACK/NOTICE] Port 25 direct send notice:`, err.message);
+    console.warn(`[DIRECT MX NOTICE]:`, err.message);
     return { success: false, error: err.message };
   }
 }
+
