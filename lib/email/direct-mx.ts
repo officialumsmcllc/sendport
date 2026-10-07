@@ -72,20 +72,26 @@ export async function dispatchDirectToMx(options: DirectMxOptions): Promise<{ su
           port: 25,
           secure: false, // Opportunistic STARTTLS
           name: "getsendport.com",
-          family: 4, // Force IPv4 to avoid IPv6 cloud blackholes
+          family: 4, // Force IPv4
           tls: {
             rejectUnauthorized: false,
             minVersion: "TLSv1.2",
           },
-          connectionTimeout: 8000,
-          greetingTimeout: 8000,
-          socketTimeout: 12000,
+          connectionTimeout: 15000,
+          greetingTimeout: 15000,
+          socketTimeout: 20000,
+          debug: true,
+          logger: true,
         } as any);
 
         // 3. Deliver DKIM signed RFC5322 MIME message
-        await transporter.sendMail({
+        const info = await transporter.sendMail({
           from: options.from,
           to: options.to,
+          envelope: {
+            from: options.from.match(/<([^>]+)>/)?.[1] || options.from,
+            to: options.to,
+          },
           subject: options.subject,
           html: options.html,
           text: options.text,
@@ -97,7 +103,7 @@ export async function dispatchDirectToMx(options: DirectMxOptions): Promise<{ su
           },
         });
 
-        console.log(`[DIRECT MX SUCCESS] Delivered directly from Render to ${mxHost}`);
+        console.log(`[DIRECT MX SUCCESS] Delivered directly from Render to ${mxHost}:`, info.response || "Accepted");
         return { success: true };
       } catch (attemptErr: any) {
         lastError = attemptErr.message || "Unknown error";
