@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const clientId = process.env.CLOUDFLARE_CLIENT_ID || "86333fde52ca339731b8f6593ecc3c40";
+    const clientId = process.env.CLOUDFLARE_CLIENT_ID || "86333fde52ca339731b8f6593edc3e40";
     const clientSecret = process.env.CLOUDFLARE_CLIENT_SECRET || "cfoc_rXUaIBdIyrg3xd74QSiqKQIcBaG2kqZZBkvtBVzi20336754";
 
     if (!clientId || !clientSecret) {

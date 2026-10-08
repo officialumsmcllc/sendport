@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const domainId = searchParams.get("domainId");
 
-    const clientId = process.env.CLOUDFLARE_CLIENT_ID || "86333fde52ca339731b8f6593ecc3c40";
+    const clientId = process.env.CLOUDFLARE_CLIENT_ID || "86333fde52ca339731b8f6593edc3e40";
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || (req.headers.get("host") ? `https://${req.headers.get("host")}` : "https://getsendport.com");
     const redirectUri = `${appUrl}/api/auth/cloudflare/callback`;
 
