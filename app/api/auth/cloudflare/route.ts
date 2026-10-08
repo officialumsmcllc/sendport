@@ -20,10 +20,11 @@ export async function GET(req: NextRequest) {
     const redirectUri = `${appUrl}/api/auth/cloudflare/callback`;
 
     if (!clientId) {
-      return NextResponse.json({
-        configured: false,
-        error: "CLOUDFLARE_CLIENT_ID is not configured in environment variables. Please use the Cloudflare API Token method or configure OAuth credentials.",
-      }, { status: 400 });
+      // Redirect cleanly back to dashboard with a clear friendly notice rather than raw JSON
+      const errorMsg = "CLOUDFLARE_CLIENT_ID Render environment mein set nahi hai. Barae meharbani neeche Cloudflare API Token paste kar ke 1-click verify karein.";
+      return NextResponse.redirect(
+        new URL(`/dashboard/domains?cf_error=${encodeURIComponent(errorMsg)}`, req.url)
+      );
     }
 
     const stateObj = {
@@ -44,6 +45,8 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.redirect(authUrl.toString());
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.redirect(
+      new URL(`/dashboard/domains?cf_error=${encodeURIComponent(error.message || "Failed to start Cloudflare OAuth")}`, req.url)
+    );
   }
 }

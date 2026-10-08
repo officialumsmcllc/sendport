@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Globe,
   Plus,
@@ -15,7 +15,8 @@ import {
   ExternalLink,
   Layers,
   ArrowRight,
-  Sparkles,
+  HelpCircle,
+  Key,
 } from "lucide-react";
 
 interface DomainItem {
@@ -44,6 +45,9 @@ export default function DomainsPage() {
   const [cfToken, setCfToken] = useState("");
   const [cfSyncing, setCfSyncing] = useState(false);
   const [cfSuccessMsg, setCfSuccessMsg] = useState<string | null>(null);
+  const [oauthConfigured, setOauthConfigured] = useState<boolean | null>(null);
+  const [showOauthSetupModal, setShowOauthSetupModal] = useState(false);
+  const tokenInputRef = useRef<HTMLInputElement>(null);
 
   // URL Banner feedback
   const [bannerNotice, setBannerNotice] = useState<{ type: "success" | "error"; message: string } | null>(null);
@@ -78,6 +82,12 @@ export default function DomainsPage() {
   useEffect(() => {
     fetchDomains();
 
+    // Check Cloudflare OAuth configuration status
+    fetch("/api/auth/cloudflare/config")
+      .then((res) => res.json())
+      .then((data) => setOauthConfigured(Boolean(data.configured)))
+      .catch(() => setOauthConfigured(false));
+
     // Check URL parameters for Cloudflare callback results
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
@@ -91,7 +101,7 @@ export default function DomainsPage() {
       } else if (params.get("cf_error")) {
         setBannerNotice({
           type: "error",
-          message: `Cloudflare OAuth Notice: ${params.get("cf_error")}`,
+          message: `Cloudflare Notice: ${params.get("cf_error")}`,
         });
         window.history.replaceState({}, document.title, window.location.pathname);
       }
@@ -123,6 +133,15 @@ export default function DomainsPage() {
       alert("Network error checking DNS.");
     } finally {
       setVerifyingId(null);
+    }
+  };
+
+  const handleCloudflareOAuthClick = () => {
+    if (!selectedDomain) return;
+    if (oauthConfigured) {
+      window.location.href = `/api/auth/cloudflare?domainId=${selectedDomain.id}`;
+    } else {
+      setShowOauthSetupModal(true);
     }
   };
 
@@ -472,20 +491,18 @@ export default function DomainsPage() {
                             <h4 className="text-sm font-black text-slate-900 flex items-center gap-1.5">
                               <span>Log in with Cloudflare</span>
                               <span className="rounded bg-amber-100 text-[#c25e0c] px-1.5 py-0.2 text-[10px] font-bold uppercase tracking-wider">
-                                Recommended
+                                {oauthConfigured ? "Connected" : "1-Click"}
                               </span>
                             </h4>
                             <p className="text-xs text-slate-600 mt-0.5">
-                              Cloudflare account se login karein, Sendport khud ba khud tamam DKIM, SPF, aur DMARC records configure kar dega.
+                              Cloudflare account se login karein, Sendport khud ba khud تمام DKIM, SPF, aur DMARC records configure kar dega.
                             </p>
                           </div>
                         </div>
                       </div>
 
                       <button
-                        onClick={() => {
-                          window.location.href = `/api/auth/cloudflare?domainId=${selectedDomain.id}`;
-                        }}
+                        onClick={handleCloudflareOAuthClick}
                         className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#F6821F] hover:bg-[#e27316] text-white font-bold text-xs shadow-md shadow-orange-500/20 transition-all hover:scale-[1.01]"
                       >
                         <Zap className="w-4 h-4 fill-white" />
@@ -498,18 +515,22 @@ export default function DomainsPage() {
                     <div className="relative flex py-1 items-center">
                       <div className="flex-grow border-t border-slate-200"></div>
                       <span className="flex-shrink mx-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                        or direct api token paste
+                        ⚡ ya 10-second fast token paste (Ready)
                       </span>
                       <div className="flex-grow border-t border-slate-200"></div>
                     </div>
 
-                    {/* FALLBACK: DIRECT API TOKEN */}
+                    {/* DIRECT API TOKEN */}
                     <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-3">
                       <div>
-                        <label className="block text-xs font-bold text-slate-700 mb-1">
-                          Cloudflare API Token
+                        <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
+                          <span>Cloudflare API Token</span>
+                          <span className="text-[11px] font-normal text-slate-500">
+                            (Zone:DNS:Edit permission)
+                          </span>
                         </label>
                         <input
+                          ref={tokenInputRef}
                           type="password"
                           placeholder="Paste your Cloudflare API Token here (e.g. 7abc89...)"
                           value={cfToken}
@@ -518,25 +539,34 @@ export default function DomainsPage() {
                         />
                       </div>
 
-                      <div className="text-[11px] text-slate-500 flex items-center justify-between">
-                        <span>
-                          Token with <strong>Zone:DNS:Edit</strong> permission
-                        </span>
-                        <a
-                          href="https://dash.cloudflare.com/profile/api-tokens"
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-primary-600 hover:underline font-bold inline-flex items-center gap-0.5"
-                        >
-                          Generate Token on Cloudflare <ExternalLink className="w-2.5 h-2.5" />
-                        </a>
+                      <div className="p-3 rounded-lg bg-amber-50/60 border border-amber-200/60 text-[11px] text-slate-700 space-y-1">
+                        <p className="font-bold text-amber-950 flex items-center gap-1">
+                          <Key className="w-3.5 h-3.5 text-amber-700" />
+                          Aapki dosri tab mein Cloudflare khula hua hai:
+                        </p>
+                        <ol className="list-decimal pl-4 space-y-0.5 text-slate-600">
+                          <li>
+                            Cloudflare tab mein jayein ya{" "}
+                            <a
+                              href="https://dash.cloudflare.com/profile/api-tokens"
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-primary-600 hover:underline font-bold inline-flex items-center gap-0.5"
+                            >
+                              My Profile → API Tokens <ExternalLink className="w-2.5 h-2.5" />
+                            </a>{" "}
+                            kholein.
+                          </li>
+                          <li><strong>&quot;Create Token&quot;</strong> dabayein aur <strong>&quot;Edit zone DNS&quot;</strong> template select karein.</li>
+                          <li>Zone Resources mein <strong>{selectedDomain.name}</strong> select kar ke Continue dabayein aur Token copy kar ke yahan paste karein.</li>
+                        </ol>
                       </div>
 
                       <div className="flex justify-end pt-1">
                         <button
                           onClick={handleCloudflareSync}
                           disabled={cfSyncing || !cfToken.trim()}
-                          className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 px-4 py-2 text-xs font-bold text-white shadow-sm disabled:opacity-50 transition-all"
+                          className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 px-5 py-2.5 text-xs font-bold text-white shadow-sm disabled:opacity-50 transition-all"
                         >
                           {cfSyncing ? (
                             <>
@@ -544,7 +574,7 @@ export default function DomainsPage() {
                             </>
                           ) : (
                             <>
-                              <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-400" /> Apply via Token
+                              <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-400" /> Auto-Configure & Verify Now
                             </>
                           )}
                         </button>
@@ -630,6 +660,72 @@ export default function DomainsPage() {
                   Done
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CLOUDFLARE OAUTH APP SETUP HELP MODAL */}
+      {showOauthSetupModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                <span className="text-lg">☁️</span>
+                <span>Cloudflare 1-Click OAuth Setup</span>
+              </h3>
+              <button
+                onClick={() => setShowOauthSetupModal(false)}
+                className="text-slate-400 hover:text-slate-600 text-xs font-bold"
+              >
+                ✕ Close
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs text-slate-600 leading-relaxed">
+              <p>
+                Direct <strong>&quot;Log in with Cloudflare&quot;</strong> button ko apne platform ke tamam users ke liye activate karne ke liye, Render dashboard mein yeh 2 environment variables add karein:
+              </p>
+
+              <div className="p-3 rounded-xl bg-slate-900 text-white font-mono text-[11px] space-y-1">
+                <div>CLOUDFLARE_CLIENT_ID=&quot;your_oauth_client_id&quot;</div>
+                <div>CLOUDFLARE_CLIENT_SECRET=&quot;your_oauth_client_secret&quot;</div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 space-y-1">
+                <p className="font-bold">Cloudflare par OAuth Client kaise banayein?</p>
+                <ol className="list-decimal pl-4 space-y-0.5 text-[11px]">
+                  <li>Cloudflare Dashboard → <strong>Manage Account</strong> → <strong>OAuth clients</strong> par jayein.</li>
+                  <li><strong>Create client</strong> dabayein.</li>
+                  <li>Redirect URI mein daalein: <code className="bg-amber-100 px-1 rounded">https://getsendport.com/api/auth/cloudflare/callback</code></li>
+                  <li>Scopes mein <code className="bg-amber-100 px-1 rounded">zone:read</code> aur <code className="bg-amber-100 px-1 rounded">dns:edit</code> add karein.</li>
+                </ol>
+              </div>
+
+              <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 flex items-center justify-between">
+                <div>
+                  <p className="font-bold text-[11px]">Right now bina kisi setup ke verify karna chahte hain?</p>
+                  <p className="text-[11px] text-emerald-800">Neeche mojood API Token paste kar ke foran verify karein!</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowOauthSetupModal(false);
+                    tokenInputRef.current?.focus();
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-emerald-700 text-white font-bold text-[11px] hover:bg-emerald-800 shrink-0 ml-2"
+                >
+                  Use Token
+                </button>
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-1">
+              <button
+                onClick={() => setShowOauthSetupModal(false)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg"
+              >
+                Dismiss
+              </button>
             </div>
           </div>
         </div>
