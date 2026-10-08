@@ -38,9 +38,11 @@ services:
         value: sendport_enterprise_jwt_secret_key_2026
       - key: CLOUDFLARE_WORKER_URL
         value: https://sendport-mailer.restless-pine-1d68.workers.dev
+      - key: CLOUDFLARE_CLIENT_ID
+        value: 86333fde52ca339731b8f6593ecc3c40
+      - key: CLOUDFLARE_CLIENT_SECRET
+        value: cfoc_rXUaIBdIyrg3xd74QSiqKQIcBaG2kqZZBkvtBVzi20336754
       - key: STRIPE_SECRET_KEY
         sync: false
       - key: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
         sync: false
-
-

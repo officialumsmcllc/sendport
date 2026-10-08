@@ -41,8 +41,8 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const clientId = process.env.CLOUDFLARE_CLIENT_ID;
-    const clientSecret = process.env.CLOUDFLARE_CLIENT_SECRET;
+    const clientId = process.env.CLOUDFLARE_CLIENT_ID || "86333fde52ca339731b8f6593ecc3c40";
+    const clientSecret = process.env.CLOUDFLARE_CLIENT_SECRET || "cfoc_rXUaIBdIyrg3xd74QSiqKQIcBaG2kqZZBkvtBVzi20336754";
 
     if (!clientId || !clientSecret) {
       return NextResponse.redirect(
@@ -58,10 +58,13 @@ export async function GET(req: NextRequest) {
     tokenParams.set("client_id", clientId);
     tokenParams.set("client_secret", clientSecret);
 
+    const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
+
     const tokenRes = await fetch("https://dash.cloudflare.com/oauth2/token", {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
+        "Authorization": `Basic ${basicAuth}`,
       },
       body: tokenParams.toString(),
     });
@@ -70,7 +73,7 @@ export async function GET(req: NextRequest) {
       const errText = await tokenRes.text();
       console.error("Cloudflare OAuth token error:", errText);
       return NextResponse.redirect(
-        new URL("/dashboard/domains?cf_error=Failed+to+exchange+Cloudflare+OAuth+token", req.url)
+        new URL(`/dashboard/domains?cf_error=Token+exchange+failed:+${encodeURIComponent(errText.substring(0, 80))}`, req.url)
       );
     }
 

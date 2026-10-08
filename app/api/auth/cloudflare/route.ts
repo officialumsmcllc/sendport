@@ -15,13 +15,12 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const domainId = searchParams.get("domainId");
 
-    const clientId = process.env.CLOUDFLARE_CLIENT_ID;
+    const clientId = process.env.CLOUDFLARE_CLIENT_ID || "86333fde52ca339731b8f6593ecc3c40";
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || (req.headers.get("host") ? `https://${req.headers.get("host")}` : "https://getsendport.com");
     const redirectUri = `${appUrl}/api/auth/cloudflare/callback`;
 
     if (!clientId) {
-      // Redirect cleanly back to dashboard with a clear friendly notice rather than raw JSON
-      const errorMsg = "CLOUDFLARE_CLIENT_ID Render environment mein set nahi hai. Barae meharbani neeche Cloudflare API Token paste kar ke 1-click verify karein.";
+      const errorMsg = "Cloudflare OAuth Client ID is not configured.";
       return NextResponse.redirect(
         new URL(`/dashboard/domains?cf_error=${encodeURIComponent(errorMsg)}`, req.url)
       );
