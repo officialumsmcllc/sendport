@@ -1,13 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { generateDkimKeyPair } from "@/lib/dns/dkim";
+import { getAuthContext } from "@/lib/auth/workspace-auth";
 
 /**
- * GET & POST /api/v1/domains
+ * GET, POST & DELETE /api/v1/domains
+ * Strictly isolated per user workspace.
  */
 export async function GET(req: NextRequest) {
   try {
+    const auth = await getAuthContext(req);
+    if (!auth) {
+      return NextResponse.json({ error: "Unauthorized. Please log in or provide an API key." }, { status: 401 });
+    }
+
     const domains = await prisma.domain.findMany({
+      where: {
+        workspaceId: auth.workspace.id,
+      },
       orderBy: { createdAt: "desc" },
     });
 
@@ -17,9 +27,13 @@ export async function GET(req: NextRequest) {
   }
 }
 
-
 export async function POST(req: NextRequest) {
   try {
+    const auth = await getAuthContext(req);
+    if (!auth) {
+      return NextResponse.json({ error: "Unauthorized. Please log in or provide an API key." }, { status: 401 });
+    }
+
     const body = await req.json();
     const { name } = body;
 
@@ -32,31 +46,17 @@ export async function POST(req: NextRequest) {
 
     const cleanDomain = name.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
 
-    let workspace = await prisma.workspace.findFirst();
-    if (!workspace) {
-      workspace = await prisma.workspace.create({
-        data: { name: "Default Workspace", slug: "default" },
-      });
-    }
-
-    let user = await prisma.user.findFirst();
-    if (!user) {
-      user = await prisma.user.create({
-        data: { email: "admin@getsendport.com", name: "Muhammad Umar", role: "ADMIN" },
-      });
-    }
-
-    // Check if domain already exists
+    // Check if domain already exists in THIS workspace
     const existing = await prisma.domain.findFirst({
       where: {
-        workspaceId: workspace.id,
+        workspaceId: auth.workspace.id,
         name: cleanDomain,
       },
     });
 
     if (existing) {
       return NextResponse.json(
-        { error: `Domain '${cleanDomain}' already exists in this workspace.` },
+        { error: `Domain '${cleanDomain}' already exists in your workspace.` },
         { status: 409 }
       );
     }
@@ -67,8 +67,8 @@ export async function POST(req: NextRequest) {
 
     const domain = await prisma.domain.create({
       data: {
-        workspaceId: workspace.id,
-        userId: user.id,
+        workspaceId: auth.workspace.id,
+        userId: auth.user.id,
         name: cleanDomain,
         status: "PENDING",
         dkimSelector: selector,
@@ -115,6 +115,43 @@ export async function POST(req: NextRequest) {
         },
       ],
       created_at: domain.createdAt,
+    });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const auth = await getAuthContext(req);
+    if (!auth) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+    if (!id) {
+      return NextResponse.json({ error: "Missing domain ID parameter." }, { status: 400 });
+    }
+
+    const existing = await prisma.domain.findFirst({
+      where: {
+        id,
+        workspaceId: auth.workspace.id,
+      },
+    });
+
+    if (!existing) {
+      return NextResponse.json({ error: "Domain not found in your workspace." }, { status: 404 });
+    }
+
+    await prisma.domain.delete({
+      where: { id: existing.id },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: `Domain '${existing.name}' was successfully removed from your workspace.`,
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

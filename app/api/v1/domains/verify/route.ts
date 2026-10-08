@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { verifyDomainDns } from "@/lib/dns/verifier";
+import { getAuthContext } from "@/lib/auth/workspace-auth";
 
 /**
  * POST /api/v1/domains/verify
@@ -8,17 +9,23 @@ import { verifyDomainDns } from "@/lib/dns/verifier";
  */
 export async function POST(req: NextRequest) {
   try {
+    const auth = await getAuthContext(req);
+    if (!auth) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await req.json();
     const { domainId, name } = body;
 
     const domain = await prisma.domain.findFirst({
       where: {
+        workspaceId: auth.workspace.id,
         OR: [{ id: domainId || undefined }, { name: name || undefined }],
       },
     });
 
     if (!domain) {
-      return NextResponse.json({ error: "Domain not found" }, { status: 404 });
+      return NextResponse.json({ error: "Domain not found in your workspace" }, { status: 404 });
     }
 
     // Run real DNS resolution check

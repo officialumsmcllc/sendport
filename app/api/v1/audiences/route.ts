@@ -1,36 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
+import { getAuthContext } from "@/lib/auth/workspace-auth";
 
 export async function GET(req: NextRequest) {
   try {
-    const authHeader = req.headers.get("authorization");
-    let workspaceId: string | null = null;
-
-    if (authHeader && authHeader.startsWith("Bearer ")) {
-      const apiKeyRaw = authHeader.replace("Bearer ", "").trim();
-      const key = await prisma.apiKey.findFirst({
-        where: {
-          OR: [
-            { keyHash: apiKeyRaw },
-            { keyPrefix: { startsWith: apiKeyRaw.substring(0, 12) } },
-          ],
-        },
-      });
-      if (key) workspaceId = key.workspaceId;
-    }
-
-    if (!workspaceId) {
-      // Fallback to primary workspace for dashboard session
-      const ws = await prisma.workspace.findFirst();
-      if (ws) workspaceId = ws.id;
-    }
-
-    if (!workspaceId) {
-      return NextResponse.json({ audiences: [] });
+    const auth = await getAuthContext(req);
+    if (!auth) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const audiences = await prisma.audience.findMany({
-      where: { workspaceId },
+      where: { workspaceId: auth.workspace.id },
       include: {
         _count: {
           select: { contacts: true },
@@ -56,8 +36,13 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const auth = await getAuthContext(req);
+    if (!auth) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await req.json();
-    const { name, description, workspaceId: providedWsId } = body;
+    const { name, description } = body;
 
     if (!name) {
       return NextResponse.json(
@@ -66,15 +51,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    let workspaceId = providedWsId;
-    if (!workspaceId) {
-      const ws = await prisma.workspace.findFirst();
-      if (ws) workspaceId = ws.id;
-    }
-
     const audience = await prisma.audience.create({
       data: {
-        workspaceId,
+        workspaceId: auth.workspace.id,
         name,
         description,
       },

@@ -1,12 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
+import { getAuthContext } from "@/lib/auth/workspace-auth";
 
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await getAuthContext(req);
+    if (!auth) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id } = await params;
+
+    // Verify audience belongs to this workspace
+    const audience = await prisma.audience.findFirst({
+      where: {
+        id,
+        workspaceId: auth.workspace.id,
+      },
+    });
+
+    if (!audience) {
+      return NextResponse.json({ error: "Audience not found in your workspace" }, { status: 404 });
+    }
+
     const contacts = await prisma.contact.findMany({
       where: { audienceId: id },
       orderBy: { createdAt: "desc" },
@@ -26,7 +45,25 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await getAuthContext(req);
+    if (!auth) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id: audienceId } = await params;
+
+    // Verify audience belongs to this workspace
+    const audience = await prisma.audience.findFirst({
+      where: {
+        id: audienceId,
+        workspaceId: auth.workspace.id,
+      },
+    });
+
+    if (!audience) {
+      return NextResponse.json({ error: "Audience not found in your workspace" }, { status: 404 });
+    }
+
     const body = await req.json();
 
     // Check for single contact or bulk contacts

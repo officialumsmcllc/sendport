@@ -1,27 +1,79 @@
 "use client";
 
-import React, { useState } from "react";
-import { Ban, Plus, Trash2, Search, UserX, AlertOctagon, MailCheck, ShieldCheck } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Plus, Trash2, Search, ShieldCheck } from "lucide-react";
+
+interface SuppressionItem {
+  id?: string;
+  email: string;
+  reason: string;
+  date: string;
+}
 
 export default function SuppressionsPage() {
-  const [suppressions, setSuppressions] = useState<{ email: string; reason: string; date: string }[]>([]);
+  const [suppressions, setSuppressions] = useState<SuppressionItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
   const [newEmail, setNewEmail] = useState("");
   const [newReason, setNewReason] = useState("MANUAL");
 
-  const handleAdd = () => {
-    if (!newEmail.trim()) return;
-    setSuppressions([
-      { email: newEmail.trim().toLowerCase(), reason: newReason, date: "Just now" },
-      ...suppressions,
-    ]);
-    setShowAddModal(false);
-    setNewEmail("");
+  const fetchSuppressions = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch("/api/v1/suppressions");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.suppressions) {
+          setSuppressions(data.suppressions);
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleRemove = (email: string) => {
-    setSuppressions(suppressions.filter((s) => s.email !== email));
+  useEffect(() => {
+    fetchSuppressions();
+  }, []);
+
+  const handleAdd = async () => {
+    if (!newEmail.trim()) return;
+    try {
+      const res = await fetch("/api/v1/suppressions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: newEmail.trim(), reason: newReason }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSuppressions((prev) => [data.suppression, ...prev.filter((p) => p.email !== newEmail.trim().toLowerCase())]);
+        setShowAddModal(false);
+        setNewEmail("");
+      } else {
+        const err = await res.json();
+        alert(err.error || "Failed to add suppression.");
+      }
+    } catch {
+      alert("Network error adding suppression.");
+    }
+  };
+
+  const handleRemove = async (email: string) => {
+    try {
+      const res = await fetch(`/api/v1/suppressions?email=${encodeURIComponent(email)}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setSuppressions((prev) => prev.filter((s) => s.email !== email));
+      } else {
+        alert("Failed to remove suppression.");
+      }
+    } catch {
+      alert("Network error removing suppression.");
+    }
   };
 
   const filtered = suppressions.filter((s) =>
@@ -48,7 +100,7 @@ export default function SuppressionsPage() {
 
       {/* SUPPRESSION TABLE OR EMPTY STATE */}
       <div className="rounded-2xl border border-slate-200 bg-white shadow-card overflow-hidden">
-        {filtered.length === 0 ? (
+        {filtered.length === 0 && !loading ? (
           <div className="p-12 text-center text-slate-500 space-y-3">
             <ShieldCheck className="w-10 h-10 mx-auto text-emerald-500/80" />
             <h3 className="text-sm font-bold text-slate-800">Your Suppression List is Clean</h3>

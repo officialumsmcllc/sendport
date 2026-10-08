@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
+import { getAuthContext } from "@/lib/auth/workspace-auth";
 
 export async function GET(req: NextRequest) {
   try {
-    const ws = await prisma.workspace.findFirst();
-    if (!ws) return NextResponse.json({ folders: [] });
+    const auth = await getAuthContext(req);
+    if (!auth) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const folders = await prisma.templateFolder.findMany({
-      where: { workspaceId: ws.id },
+      where: { workspaceId: auth.workspace.id },
       include: {
         _count: {
           select: { templates: true },
@@ -34,6 +37,11 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const auth = await getAuthContext(req);
+    if (!auth) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await req.json();
     const { name, color } = body;
 
@@ -44,17 +52,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const ws = await prisma.workspace.findFirst();
-    if (!ws) {
-      return NextResponse.json({ error: "Workspace not found" }, { status: 404 });
-    }
-
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
     const folder = await prisma.templateFolder.upsert({
       where: {
         workspaceId_slug: {
-          workspaceId: ws.id,
+          workspaceId: auth.workspace.id,
           slug,
         },
       },
@@ -63,7 +66,7 @@ export async function POST(req: NextRequest) {
         color: color || "#3b82f6",
       },
       create: {
-        workspaceId: ws.id,
+        workspaceId: auth.workspace.id,
         name,
         slug,
         color: color || "#3b82f6",
