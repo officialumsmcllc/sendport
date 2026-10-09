@@ -95,15 +95,16 @@ export default function AdminPaymentsPage() {
     try {
       setLoadingGateways(true);
       const res = await fetch("/api/admin/payment-methods");
+      const data = await res.json();
       if (res.ok) {
-        const data = await res.json();
         if (data.methods) {
           setGateways(data.methods);
         }
+      } else {
+        console.warn("fetchGateways warning:", data.error);
       }
     } catch (e: any) {
-      console.error(e);
-      setToast({ message: "Failed to load payment methods.", type: "error" });
+      console.error("fetchGateways error:", e);
     } finally {
       setLoadingGateways(false);
     }

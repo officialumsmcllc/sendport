@@ -86,12 +86,62 @@ const DEFAULT_METHODS = [
   },
 ];
 
+async function ensurePaymentMethodTable() {
+  try {
+    // Try PostgreSQL syntax first
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "PaymentMethodConfig" (
+        "id" TEXT NOT NULL,
+        "code" TEXT NOT NULL,
+        "name" TEXT NOT NULL,
+        "accountTitle" TEXT NOT NULL,
+        "accountNumber" TEXT NOT NULL,
+        "instructions" TEXT,
+        "qrCodeUrl" TEXT,
+        "currency" TEXT NOT NULL DEFAULT 'PKR',
+        "isActive" BOOLEAN NOT NULL DEFAULT true,
+        "displayOrder" INTEGER NOT NULL DEFAULT 0,
+        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT "PaymentMethodConfig_pkey" PRIMARY KEY ("id")
+      );
+    `);
+    await prisma.$executeRawUnsafe(`
+      CREATE UNIQUE INDEX IF NOT EXISTS "PaymentMethodConfig_code_key" ON "PaymentMethodConfig"("code");
+    `);
+  } catch (err: any) {
+    try {
+      // Fallback for SQLite if local
+      await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "PaymentMethodConfig" (
+          id TEXT PRIMARY KEY,
+          code TEXT UNIQUE,
+          name TEXT,
+          accountTitle TEXT,
+          accountNumber TEXT,
+          instructions TEXT,
+          qrCodeUrl TEXT,
+          currency TEXT DEFAULT 'PKR',
+          isActive BOOLEAN DEFAULT 1,
+          displayOrder INTEGER DEFAULT 0,
+          createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+    } catch (e2) {
+      console.warn("Table ensure warning:", e2);
+    }
+  }
+}
+
 export async function GET(req: NextRequest) {
   try {
     const session = await getCurrentUser();
     if (!session || session.role !== "ADMIN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
+
+    await ensurePaymentMethodTable();
 
     let methods = await prisma.paymentMethodConfig.findMany({
       orderBy: [{ displayOrder: "asc" }, { createdAt: "asc" }],
@@ -100,8 +150,10 @@ export async function GET(req: NextRequest) {
     // Seed defaults if empty
     if (methods.length === 0) {
       for (const def of DEFAULT_METHODS) {
-        await prisma.paymentMethodConfig.create({
-          data: def,
+        await prisma.paymentMethodConfig.upsert({
+          where: { code: def.code },
+          create: def,
+          update: {},
         });
       }
       methods = await prisma.paymentMethodConfig.findMany({
@@ -111,6 +163,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ methods });
   } catch (error: any) {
+    console.error("GET payment methods error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
@@ -121,6 +174,8 @@ export async function POST(req: NextRequest) {
     if (!session || session.role !== "ADMIN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
+
+    await ensurePaymentMethodTable();
 
     const body = await req.json();
     const { code, name, accountTitle, accountNumber, instructions, currency, isActive, displayOrder } = body;
@@ -134,20 +189,20 @@ export async function POST(req: NextRequest) {
 
     const cleanCode = code.trim().toUpperCase().replace(/[^A-Z0-9_]/g, "_");
 
-    const existing = await prisma.paymentMethodConfig.findUnique({
+    // Upsert: Create or update if code already exists
+    const method = await prisma.paymentMethodConfig.upsert({
       where: { code: cleanCode },
-    });
-
-    if (existing) {
-      return NextResponse.json(
-        { error: `Payment method code '${cleanCode}' already exists.` },
-        { status: 409 }
-      );
-    }
-
-    const method = await prisma.paymentMethodConfig.create({
-      data: {
+      create: {
         code: cleanCode,
+        name: name.trim(),
+        accountTitle: accountTitle.trim(),
+        accountNumber: accountNumber.trim(),
+        instructions: instructions ? instructions.trim() : null,
+        currency: currency ? currency.trim().toUpperCase() : "PKR",
+        isActive: isActive !== false,
+        displayOrder: Number(displayOrder) || 0,
+      },
+      update: {
         name: name.trim(),
         accountTitle: accountTitle.trim(),
         accountNumber: accountNumber.trim(),
