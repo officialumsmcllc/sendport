@@ -3,7 +3,7 @@ services:
     name: sendport
     runtime: node
     plan: starter
-    buildCommand: npm install && npx prisma db push && node prisma/seed.js && npm run build
+    buildCommand: npm install && npm run build
     startCommand: npm run start
     envVars:
       - key: NODE_VERSION
@@ -13,7 +13,7 @@ services:
       - key: PORT
         value: "10000"
       - key: DATABASE_URL
-        value: postgresql://postgres.wdmhfrbygqrcjxebjlrk:rf.%26HN%243im%23%2F2BK@aws-0-ap-northeast-2.pooler.supabase.com:5432/postgres
+        value: postgresql://postgres.wdmhfrbygqrcjxebjlrk:rf.%26HN%243im%23%2F2BK@aws-0-ap-northeast-2.pooler.supabase.com:5432/postgres?connection_limit=5
       - key: NEXT_PUBLIC_APP_URL
         value: https://getsendport.com
       - key: NEXT_PUBLIC_SITE_NAME
