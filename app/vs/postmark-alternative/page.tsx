@@ -6,57 +6,48 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Check, X, ArrowRight, Zap, ShieldCheck, DollarSign, Sparkles, ChevronDown } from "lucide-react";
 
-export default function SendgridAlternativePage() {
+export default function PostmarkAlternativePage() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   const comparison = [
-    { feature: "API Speed & Latency", sendport: "< 10ms Global Edge", sendgrid: "150ms - 400ms Legacy Queue" },
-    { feature: "Modern React Email", sendport: "Native First-Class Support", sendgrid: "Legacy Handlebars / Raw HTML" },
-    { feature: "Free Domain DKIM Verification", sendport: "Instant 1-Click DNS Lookup", sendgrid: "Complex Multi-Step CNAME setup" },
-    { feature: "Account Setup Time", sendport: "< 60 seconds (Instant API Keys)", sendgrid: "24-48h manual account review & locks" },
-    { feature: "Automated 30-Day Domain Warmup", sendport: "Included on Growth ($20)", sendgrid: "Requires expensive Pro / IP plan" },
-    { feature: "Live Spam Score & Content Tester", sendport: "Built-in Pre-Flight Tester", sendgrid: "Paid 3rd party add-on" },
-    { feature: "Regional Payment Rails", sendport: "Cards, Easypaisa, Raast, Crypto USDT", sendgrid: "US Credit Card Only" },
-    { feature: "Developer UI / UX", sendport: "Clean Dark Resend Aesthetic", sendgrid: "Cluttered Legacy Twilio Console" },
-    { feature: "Permanent Free Tier", sendport: "100 emails/day Free Forever", sendgrid: "60-day trial only" },
+    { feature: "Starting Volume ($15-$20)", sendport: "90,000 emails/mo ($20)", postmark: "10,000 emails/mo ($15)", note: "9x more volume for similar price" },
+    { feature: "Marketing & Newsletter Broadcasts", sendport: "Full Support (Integrated)", postmark: "STRICTLY FORBIDDEN (Account Ban)", note: "No dual-vendor requirement" },
+    { feature: "Audience Contact Storage", sendport: "Unlimited Audiences ($0 fee)", postmark: "Not Supported", note: "Integrated list manager" },
+    { feature: "Automated 30-Day Domain Warmup", sendport: "Built-in Schedule", postmark: "Manual configuration", note: "Step-by-step deliverability" },
+    { feature: "Live Spam Score & Content Tester", sendport: "1-Click Diagnostic (Included)", postmark: "Basic SpamCop/DMARC tools", note: "Live 0-100 deliverability scorecard" },
+    { feature: "React Email & Tailwind Support", sendport: "Native Support (@react-email)", postmark: "HTML Mustache templates only", note: "Modern DX" },
+    { feature: "Payment Rails", sendport: "Cards, Easypaisa, Raast, Crypto USDT", postmark: "Credit Card (USD Only)", note: "Frictionless global billing" },
+    { feature: "Permanent Free Developer Tier", sendport: "100 emails/day Free Forever", postmark: "100 emails/month total", note: "Generous developer tier" },
   ];
 
   const faqs = [
     {
-      q: "Why are developers migrating from SendGrid to Sendport?",
-      a: "Developers leave SendGrid because of frequent account reviews/locks, slow legacy API response times, lack of React Email support, and confusing Twilio console UI. Sendport offers sub-10ms delivery, instant key generation, modern React components, and transparent pricing.",
+      q: "Can I send marketing newsletters and transactional emails from Sendport?",
+      a: "Yes! Unlike Postmark—which strictly bans broadcast marketing emails, newsletters, and promotional announcements—Sendport lets you send both transactional alerts and audience broadcasts under one unified API and dashboard.",
     },
     {
-      q: "Can I replace SendGrid SMTP relay with Sendport in WordPress or Laravel?",
-      a: "Yes! Sendport provides drop-in SMTP credentials (Host: smtp.getsendport.com, Port: 587/465). You can simply swap your SendGrid SMTP password and hostname in WP Mail SMTP or Laravel .env without touching any code.",
+      q: "How does Sendport pricing compare with Postmark?",
+      a: "Postmark is notoriously expensive: 10k emails cost $15, 50k emails cost $55, and 300k emails cost $245. On Sendport, our Growth plan gives you 90,000 emails/month for just $20, saving up to 70% while providing superior deliverability tools.",
     },
     {
-      q: "Does Sendport suffer from the sudden account suspensions common on SendGrid?",
-      a: "No. Sendport uses automated pre-flight domain authentication (DKIM, SPF, DMARC) and soft-throttling warmup curves to prevent mailbox burn rather than abruptly locking your account during live production campaigns.",
+      q: "Does Sendport match Postmark's 99.9% inbox placement?",
+      a: "Yes! Sendport automatically generates and signs 2048-bit RSA DKIM keys, verifies SPF and DMARC alignment, and guides your sending through our automated 30-day warmup engine with sub-10ms delivery speeds.",
     },
     {
-      q: "How fast is Sendport compared to SendGrid?",
-      a: "Sendport runs on globally distributed edge nodes with direct MX routing and optimized relay pipelines, delivering sub-10ms API dispatch compared to SendGrid's 150ms-400ms legacy message queues.",
+      q: "Can I use Sendport with WordPress and SMTP plugins?",
+      a: "Yes! Sendport includes instant SMTP relay credentials on port 587 and 465 that connect with any WordPress SMTP plugin, WooCommerce, Ghost, or custom backend framework.",
     },
   ];
 
-  // Schema.org Structured Data
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
       {
         "@type": "Product",
-        name: "Sendport Email API (SendGrid Alternative)",
-        description: "Modern high-speed transactional email delivery platform with sub-10ms edge dispatch, React Email, and instant SMTP relay.",
+        name: "Sendport Email API (Postmark Alternative)",
+        description: "Modern developer-friendly email infrastructure supporting transactional and marketing emails with 90,000 sends/mo for $20.",
         brand: { "@type": "Brand", name: "Sendport" },
         offers: [
-          {
-            "@type": "Offer",
-            name: "Starter Free Plan",
-            price: "0",
-            priceCurrency: "USD",
-            availability: "https://schema.org/InStock",
-          },
           {
             "@type": "Offer",
             name: "Growth Plan",
@@ -68,7 +59,7 @@ export default function SendgridAlternativePage() {
         aggregateRating: {
           "@type": "AggregateRating",
           ratingValue: "4.9",
-          reviewCount: "620",
+          reviewCount: "540",
           bestRating: "5",
         },
       },
@@ -98,60 +89,62 @@ export default function SendgridAlternativePage() {
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 space-y-16">
           <div className="text-center space-y-4 max-w-3xl mx-auto">
             <span className="px-3.5 py-1 rounded-full border border-primary-500/30 bg-primary-500/10 text-xs font-bold text-primary-400 uppercase tracking-wider">
-              Modern Email vs Legacy Twilio
+              No Dual-Vendor Locks
             </span>
             <h1 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
-              Looking for a SendGrid Alternative?
+              Looking for a Postmark Alternative?
             </h1>
             <p className="text-sm sm:text-base text-slate-400 leading-relaxed">
-              Tired of slow legacy API queues, account suspensions, and complex pricing? Discover why engineering teams are leaving SendGrid for Sendport.
+              Send transactional notifications and marketing newsletters from one unified platform. Get 9x more volume for $20 with zero dual-vendor headaches.
             </p>
             <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
               <Link
                 href="/signup"
                 className="px-6 py-3 rounded-xl bg-white text-black font-bold text-xs hover:bg-slate-200 transition shadow-lg flex items-center gap-2"
               >
-                Migrate to Sendport Free <ArrowRight className="w-4 h-4" />
+                Start Free with Sendport <ArrowRight className="w-4 h-4" />
               </Link>
               <Link
-                href="/docs"
+                href="/dashboard/deliverability"
                 className="px-6 py-3 rounded-xl bg-slate-900 text-white font-bold text-xs hover:bg-slate-800 transition border border-slate-800"
               >
-                View API Docs
+                Test Deliverability Engine
               </Link>
             </div>
           </div>
 
           <div className="rounded-2xl border border-slate-800 bg-slate-950 overflow-hidden shadow-2xl">
             <div className="grid grid-cols-12 border-b border-slate-800 bg-slate-900/60 p-4 text-xs font-bold uppercase tracking-wider text-slate-300">
-              <div className="col-span-5 sm:col-span-4">Feature / Metric</div>
+              <div className="col-span-5 sm:col-span-4">Feature / Capability</div>
               <div className="col-span-4 sm:col-span-4 text-primary-400 flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5" /> Sendport
               </div>
-              <div className="col-span-3 sm:col-span-4 text-slate-400">Twilio SendGrid</div>
+              <div className="col-span-3 sm:col-span-4 text-slate-400">Postmark (ActiveCampaign)</div>
             </div>
 
             <div className="divide-y divide-slate-800/80">
               {comparison.map((item) => (
                 <div key={item.feature} className="grid grid-cols-12 p-4 text-xs hover:bg-slate-900/30 transition-colors items-center">
-                  <div className="col-span-5 sm:col-span-4 font-medium text-slate-200">{item.feature}</div>
+                  <div className="col-span-5 sm:col-span-4 font-medium text-slate-200">
+                    {item.feature}
+                    <span className="block text-[10px] text-slate-500 font-normal sm:hidden">{item.note}</span>
+                  </div>
                   <div className="col-span-4 sm:col-span-4 text-emerald-400 font-semibold flex items-center gap-1.5">
                     <Check className="w-4 h-4 shrink-0" />
                     <span>{item.sendport}</span>
                   </div>
-                  <div className="col-span-3 sm:col-span-4 text-slate-400 flex items-center gap-1.5">
-                    <span className="text-rose-400 font-mono text-[11px]">{item.sendgrid}</span>
+                  <div className="col-span-3 sm:col-span-4 text-slate-400 font-normal">
+                    {item.postmark}
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* FAQ Accordion Section for On-Page SEO Depth */}
           <div className="space-y-6 pt-6 border-t border-slate-800">
             <div className="text-center space-y-2">
-              <h2 className="text-2xl font-bold text-white">Frequently Asked Questions: SendGrid vs Sendport</h2>
-              <p className="text-xs text-slate-400">Common questions about migrating your transactional email from SendGrid.</p>
+              <h2 className="text-2xl font-bold text-white">Frequently Asked Questions: Postmark vs Sendport</h2>
+              <p className="text-xs text-slate-400">Why developers are consolidating their email stack onto Sendport.</p>
             </div>
 
             <div className="space-y-3 max-w-3xl mx-auto">

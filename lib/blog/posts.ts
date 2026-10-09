@@ -49,22 +49,24 @@ In this benchmark, we put **Sendport**, **Resend**, **SendGrid**, and **Postmark
 
 | Feature | Sendport | Resend | SendGrid (Twilio) | Postmark |
 | :--- | :--- | :--- | :--- | :--- |
-| **Free Tier** | **500 emails/day** (15,000/mo) | 100/day (3,000/mo) | 60-day trial only | 100 emails/mo |
-| **$19-$20 Plan** | **150,000 emails/mo** (5k/day) | 50,000 emails/mo | 50,000 emails/mo | 10,000 emails/mo ($15) |
-| **Enterprise / Scale** | **750,000 emails/mo** ($59) | Custom ($500+) | 100,000 emails/mo ($89.95) | 300,000 emails/mo ($245) |
-| **Multi-Domain Sending** | Unlimited verified domains | 1 on free, unlimited paid | Unlimited | Unlimited |
+| **Free Tier** | **100 emails/day** (3,000/mo) | 100/day (3,000/mo) | 60-day trial only | 100 emails/mo |
+| **$20 Growth Plan** | **90,000 emails/mo** (3k/day) | 30,000 emails/mo | 50,000 emails/mo | 10,000 emails/mo ($15) |
+| **Enterprise / Scale** | **750,000 emails/mo** ($79) | Custom ($500+) | 100,000 emails/mo ($89.95) | 300,000 emails/mo ($245) |
+| **Multi-Domain Sending** | 1 on Free, 5 on Growth, Unltd Scale | 1 on free, add-on fees | Unlimited | Unlimited |
 | **Audience Contacts Cost** | **$0 extra fees** | Charged per 1k contacts | Extra Marketing add-on | Not permitted (Transactional only) |
 | **Payment Options** | **Stripe, EasyPaisa, JazzCash, USDT, Wire** | Stripe / Credit Card only | Credit Card only | Credit Card only |
+| **Automated 30-Day Warmup** | **Built-in Schedule** | Manual / Enterprise | Paid add-on | Manual |
+| **Live Spam Tester** | **Built-in 0-100 Scorecard** | Not available | Paid 3rd party tool | Basic tools |
 | **DKIM & SPF Generation** | Instant RSA-2048 auto-gen | Auto-generated | Manual CNAME | DNS TXT |
 
 ---
 
 ## 2. Free Tier & Quota Breakdown
 
-- **Sendport**: Gives developers **500 emails per day** (up to 15,000 emails/month) completely free with custom domains and webhooks.
-- **Resend**: Caps you at **100 emails per day** (3,000/month) and restricts free accounts to a single verified domain.
-- **SendGrid**: Discontinued its free forever plan in 2025; new accounts only receive a temporary 60-day trial.
-- **Postmark**: Limits free developer tier to **100 emails per month total**, making testing in staging environments cumbersome.
+- **Sendport**: Gives developers **100 emails per day** (3,000 emails/month) free forever with 2048-bit DKIM, automated DNS verification, and full REST API access. Upgrading to the $20 Growth plan unlocks **90,000 emails/month (3,000/day)** with automated 30-day warmup.
+- **Resend**: Caps you at **100 emails per day** (3,000/month) and charges extra for marketing contacts once you scale.
+- **SendGrid**: Discontinued its free forever plan; new accounts only receive a temporary 60-day trial followed by forced upgrades.
+- **Postmark**: Limits free developer tier to **100 emails per month total** and strictly bans marketing or newsletter broadcasts.
 
 ---
 
@@ -72,7 +74,7 @@ In this benchmark, we put **Sendport**, **Resend**, **SendGrid**, and **Postmark
 
 Deliverability in 2026 requires strict compliance with Google and Yahoo's 2024+ DMARC requirements.
 
-Sendport isolates marketing and transactional sending reputations while maintaining dedicated IP warmup ramps. Every custom domain configured on Sendport automatically generates **RSA-2048 bit DKIM keys** and full DMARC alignments out of the box.
+Sendport provides an interactive **Deliverability & Warmup Engine** that monitors your sender score, calculates real bounce rates, and guides new domains through an automated 30-day warmup ramp. Every custom domain configured on Sendport automatically generates **RSA-2048 bit DKIM keys** and full DMARC alignments out of the box.
 
 \`\`\`typescript
 // Sending via Sendport in Next.js 15

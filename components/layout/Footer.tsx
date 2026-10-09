@@ -58,6 +58,7 @@ export function Footer({ dark = true }: { dark?: boolean }) {
               <li><Link href="/dashboard/playground" className="hover:text-white transition-colors">Interactive API Playground</Link></li>
               <li><Link href="/vs/resend-alternative" className="hover:text-white transition-colors">Sendport vs Resend</Link></li>
               <li><Link href="/vs/sendgrid-alternative" className="hover:text-white transition-colors">Sendport vs SendGrid</Link></li>
+              <li><Link href="/vs/postmark-alternative" className="hover:text-white transition-colors">Sendport vs Postmark</Link></li>
             </ul>
           </div>
 
