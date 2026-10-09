@@ -73,6 +73,29 @@ export default function SendgridAlternativePage() {
         },
       },
       {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Home",
+            item: "https://getsendport.com",
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: "Alternatives",
+            item: "https://getsendport.com/vs/sendgrid-alternative",
+          },
+          {
+            "@type": "ListItem",
+            position: 3,
+            name: "SendGrid Alternative",
+            item: "https://getsendport.com/vs/sendgrid-alternative",
+          },
+        ],
+      },
+      {
         "@type": "FAQPage",
         mainEntity: faqs.map((f) => ({
           "@type": "Question",

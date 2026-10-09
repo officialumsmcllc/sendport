@@ -64,6 +64,29 @@ export default function PostmarkAlternativePage() {
         },
       },
       {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Home",
+            item: "https://getsendport.com",
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: "Alternatives",
+            item: "https://getsendport.com/vs/postmark-alternative",
+          },
+          {
+            "@type": "ListItem",
+            position: 3,
+            name: "Postmark Alternative",
+            item: "https://getsendport.com/vs/postmark-alternative",
+          },
+        ],
+      },
+      {
         "@type": "FAQPage",
         mainEntity: faqs.map((f) => ({
           "@type": "Question",

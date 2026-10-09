@@ -136,10 +136,10 @@ export default function HomePage() {
               {/* Key Trust Signals */}
               <div className="flex flex-wrap items-center justify-center gap-6 pt-6 text-xs font-medium text-slate-400">
                 <span className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" /> 500 Free Emails / Day
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" /> 100 Free Emails / Day
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-emerald-400" /> 3 Free Custom Domains
+                  <ShieldCheck className="w-4 h-4 text-emerald-400" /> 1 Free Custom Domain
                 </span>
                 <span className="flex items-center gap-1.5">
                   <Zap className="w-4 h-4 text-emerald-400" /> 99.99% Primary Inbox Placement
@@ -190,6 +190,89 @@ export default function HomePage() {
 
         {/* 6. DELIVERABILITY & TRUST GRID */}
         <DeliverabilityGrid />
+
+        {/* 7. COMPETITOR COMPARISON SECTION (PageRank & High-Intent Conversion) */}
+        <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 border-t border-slate-900">
+          <div className="text-center max-w-3xl mx-auto mb-12">
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-primary-500/30 bg-primary-500/10 px-3 py-1 text-xs font-bold text-primary-400 mb-3 uppercase tracking-wider">
+              <span>Honest Side-by-Side Benchmark</span>
+            </div>
+            <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
+              Why Teams Are Leaving Resend & SendGrid
+            </h2>
+            <p className="text-sm sm:text-base text-slate-400 mt-3 leading-relaxed">
+              Compare Sendport side-by-side with industry legacy providers and see why developers switch for 3x higher volume, built-in 30-day warmup, and global payment rails.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Resend Card */}
+            <div className="rounded-2xl border border-slate-800 bg-slate-950 p-6 flex flex-col justify-between hover:border-slate-700 transition">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-mono font-bold text-slate-400 uppercase">Sendport vs Resend</span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">3x More Volume</span>
+                </div>
+                <h3 className="text-xl font-bold text-white">Looking for a Resend Alternative?</h3>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Resend gives you 30k emails for $20. Sendport gives you 90k emails/month, automated 30-day warmup, zero contact fees, and local/crypto payment rails.
+                </p>
+              </div>
+              <div className="pt-6">
+                <Link
+                  href="/vs/resend-alternative"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-primary-400 hover:text-primary-300 transition"
+                >
+                  Compare Sendport vs Resend <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+            </div>
+
+            {/* SendGrid Card */}
+            <div className="rounded-2xl border border-slate-800 bg-slate-950 p-6 flex flex-col justify-between hover:border-slate-700 transition">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-mono font-bold text-slate-400 uppercase">Sendport vs SendGrid</span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/20">Sub-10ms API</span>
+                </div>
+                <h3 className="text-xl font-bold text-white">Looking for a SendGrid Alternative?</h3>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Escape legacy 400ms queue latency, abrupt account review suspensions, and cluttered Twilio consoles. Sendport offers instant API keys and modern React Email.
+                </p>
+              </div>
+              <div className="pt-6">
+                <Link
+                  href="/vs/sendgrid-alternative"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-primary-400 hover:text-primary-300 transition"
+                >
+                  Compare Sendport vs SendGrid <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+            </div>
+
+            {/* Postmark Card */}
+            <div className="rounded-2xl border border-slate-800 bg-slate-950 p-6 flex flex-col justify-between hover:border-slate-700 transition">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-mono font-bold text-slate-400 uppercase">Sendport vs Postmark</span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">Zero Newsletter Bans</span>
+                </div>
+                <h3 className="text-xl font-bold text-white">Looking for a Postmark Alternative?</h3>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Postmark bans marketing broadcasts and charges $15 for just 10k emails. Sendport gives 90k sends for $20 and allows transactional + marketing under one unified roof.
+                </p>
+              </div>
+              <div className="pt-6">
+                <Link
+                  href="/vs/postmark-alternative"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-primary-400 hover:text-primary-300 transition"
+                >
+                  Compare Sendport vs Postmark <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
 
         {/* PRICING SECTION */}
         <section id="pricing" className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8 border-t border-slate-900">
