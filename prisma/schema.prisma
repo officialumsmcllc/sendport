@@ -48,6 +48,7 @@ model Workspace {
   webhooks    Webhook[]
   suppressions Suppression[]
   broadcasts  BroadcastBlast[]
+  experiments AbExperiment[]
 }
 
 model WorkspaceMember {
@@ -349,4 +350,22 @@ model ReferralReward {
   updatedAt       DateTime  @updatedAt
 
   user            User      @relation(fields: [referrerId], references: [id], onDelete: Cascade)
+}
+
+model AbExperiment {
+  id              String    @id @default(cuid())
+  workspaceId     String
+  title           String
+  subjectA        String
+  subjectB        String
+  split           Int       @default(50) // 50/50
+  status          String    @default("ACTIVE") // ACTIVE, PAUSED, COMPLETED
+  opensA          Int       @default(0)
+  opensB          Int       @default(0)
+  clicksA         Int       @default(0)
+  clicksB         Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  workspace       Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 }
