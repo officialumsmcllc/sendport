@@ -25,6 +25,7 @@ import {
   LogOut,
   ChevronRight,
   Activity,
+  Flame,
   UserCheck,
 } from "lucide-react";
 
@@ -101,7 +102,7 @@ export default function DashboardLayout({
     { label: "AI Spam Cleaner", href: "/dashboard/ai-assistant", icon: Sparkles },
     { label: "A/B Testing", href: "/dashboard/ab-testing", icon: Split },
     { label: "Inbound Routing", href: "/dashboard/inbound", icon: Inbox },
-    { label: "Deliverability & Warmup", href: "/dashboard/deliverability", icon: Activity },
+    { label: "Deliverability & Warmup", href: "/dashboard/deliverability", icon: Flame },
     { label: "Suppression List", href: "/dashboard/suppressions", icon: Ban },
     { label: "Live Delivery Logs", href: "/dashboard/logs", icon: ShieldCheck },
     { label: "Billing & Plans", href: "/dashboard/billing", icon: CreditCard },
