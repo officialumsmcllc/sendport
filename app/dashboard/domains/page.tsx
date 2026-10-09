@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 import {
   Globe,
   Plus,
@@ -17,6 +18,7 @@ import {
   ArrowRight,
   HelpCircle,
   Key,
+  Sparkles,
 } from "lucide-react";
 
 interface DomainItem {
@@ -36,6 +38,13 @@ export default function DomainsPage() {
   const [selectedDomain, setSelectedDomain] = useState<DomainItem | null>(null);
   const [modalTab, setModalTab] = useState<"cloudflare" | "manual">("cloudflare");
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [planInfo, setPlanInfo] = useState<{ plan: string; limit: number; count: number; canAddMore: boolean }>({
+    plan: "STARTER",
+    limit: 1,
+    count: 0,
+    canAddMore: true,
+  });
   const [newDomainName, setNewDomainName] = useState("");
   const [verifyingId, setVerifyingId] = useState<string | null>(null);
   const [scanAllVerifying, setScanAllVerifying] = useState(false);
@@ -58,6 +67,14 @@ export default function DomainsPage() {
       const res = await fetch("/api/v1/domains");
       if (res.ok) {
         const data = await res.json();
+        if (data.plan) {
+          setPlanInfo({
+            plan: data.plan,
+            limit: data.limit || 1,
+            count: data.count || data.domains?.length || 0,
+            canAddMore: Boolean(data.canAddMore),
+          });
+        }
         if (data.domains) {
           const mapped: DomainItem[] = data.domains.map((d: any) => ({
             id: d.id,
@@ -245,7 +262,12 @@ export default function DomainsPage() {
         setNewDomainName("");
       } else {
         const err = await res.json();
-        alert(err.error || "Failed to add domain.");
+        if (res.status === 403 || err.code === "DOMAIN_LIMIT_REACHED") {
+          setShowAddModal(false);
+          setShowUpgradeModal(true);
+        } else {
+          alert(err.error || "Failed to add domain.");
+        }
       }
     } catch {
       alert("Network error adding domain.");
@@ -283,8 +305,22 @@ export default function DomainsPage() {
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-slate-900">Domains & DNS Records</h1>
-          <p className="text-sm text-slate-500">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <h1 className="text-2xl font-black text-slate-900">Domains & DNS Records</h1>
+            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-700">
+              {domains.length} / {planInfo.limit >= 999 ? "∞" : planInfo.limit} Domains Connected
+              {planInfo.plan === "STARTER" && <span className="text-slate-400 font-normal ml-0.5">(Free Plan)</span>}
+            </span>
+            {domains.length >= planInfo.limit && planInfo.plan === "STARTER" && (
+              <Link
+                href="/dashboard/billing"
+                className="inline-flex items-center gap-1 rounded-full bg-primary-50 text-primary-700 border border-primary-200 px-2.5 py-0.5 text-[11px] font-bold hover:bg-primary-100 transition-all shadow-xs"
+              >
+                <Zap className="w-3 h-3 text-primary-600" /> Upgrade for more
+              </Link>
+            )}
+          </div>
+          <p className="text-sm text-slate-500 mt-1">
             Configure custom domains with 2048-bit RSA DKIM keys, SPF authentication, and 1-Click Cloudflare Login.
           </p>
         </div>
@@ -298,7 +334,13 @@ export default function DomainsPage() {
             Scan DNS Records
           </button>
           <button
-            onClick={() => setShowAddModal(true)}
+            onClick={() => {
+              if (domains.length >= planInfo.limit && planInfo.plan === "STARTER") {
+                setShowUpgradeModal(true);
+              } else {
+                setShowAddModal(true);
+              }
+            }}
             className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-slate-800"
           >
             <Plus className="w-3.5 h-3.5" /> Add Domain
@@ -762,6 +804,70 @@ export default function DomainsPage() {
               >
                 Generate Records
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* UPGRADE PLAN MODAL */}
+      {showUpgradeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl space-y-4 border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-50 text-primary-700 text-xs font-bold border border-primary-100">
+                <Sparkles className="w-3.5 h-3.5 text-primary-600" /> Growth Plan Required
+              </div>
+              <button
+                onClick={() => setShowUpgradeModal(false)}
+                className="text-slate-400 hover:text-slate-600 text-sm font-semibold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-1.5">
+              <h3 className="text-lg font-black text-slate-900">
+                Domain Limit Reached ({domains.length} / {planInfo.limit >= 999 ? "∞" : planInfo.limit})
+              </h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                The free <strong>Starter Plan</strong> allows 1 verified custom domain. To connect multiple domains, send up to 3,000 emails/day, and access 30-day logs, upgrade to the <strong>Growth Plan</strong>.
+              </p>
+            </div>
+
+            <div className="rounded-xl bg-slate-50 border border-slate-200 p-3.5 space-y-2 text-xs text-slate-700">
+              <div className="flex items-center justify-between font-bold text-slate-900">
+                <span>Growth Plan Features</span>
+                <span className="text-primary-600 font-extrabold">$20 / month</span>
+              </div>
+              <ul className="space-y-1.5 text-[11px] text-slate-600">
+                <li className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> Up to 5 Custom Verified Domains
+                </li>
+                <li className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> 3,000 Emails / Day (90,000 / month)
+                </li>
+                <li className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> Automated 30-Day Domain Warmup
+                </li>
+                <li className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> Audience Contact Manager & 30-Day Logs
+                </li>
+              </ul>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                onClick={() => setShowUpgradeModal(false)}
+                className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+              >
+                Maybe Later
+              </button>
+              <Link
+                href="/dashboard/billing"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-slate-800 transition-all"
+              >
+                Upgrade to Growth <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
             </div>
           </div>
         </div>

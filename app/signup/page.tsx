@@ -71,7 +71,7 @@ function SignupForm() {
 
         <div className="space-y-2 mb-6">
           <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-400 mb-1">
-            <Sparkles className="w-3 h-3" /> Starter Free Tier (500/day)
+            <Sparkles className="w-3 h-3" /> Starter Free Tier (100/day, 1 domain)
           </div>
           <h1 className="text-2xl font-extrabold text-white tracking-tight">Create your account</h1>
           <p className="text-xs text-slate-400">

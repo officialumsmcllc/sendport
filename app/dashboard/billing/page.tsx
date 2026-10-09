@@ -13,7 +13,7 @@ export default function BillingPage() {
   const [workspaceStats, setWorkspaceStats] = useState({
     plan: "STARTER",
     usedToday: 0,
-    dailyQuota: 500,
+    dailyQuota: 100,
   });
 
   useEffect(() => {
@@ -24,7 +24,7 @@ export default function BillingPage() {
           setWorkspaceStats({
             plan: data.stats.plan || "STARTER",
             usedToday: data.stats.usedToday || 0,
-            dailyQuota: data.stats.dailyQuota || 500,
+            dailyQuota: data.stats.dailyQuota || 100,
           });
         }
       })
@@ -42,26 +42,26 @@ export default function BillingPage() {
       id: "STARTER",
       name: "Starter",
       usdPrice: 0,
-      quota: "500 emails / day",
-      domains: "3 Domains",
-      features: ["2048-bit RSA DKIM", "REST API & SMTP Relay", "Realtime Webhooks"],
+      quota: "100 emails / day",
+      domains: "1 Domain",
+      features: ["2048-bit RSA DKIM", "REST API & SMTP Relay", "3 Days Log Retention"],
     },
     {
       id: "GROWTH",
       name: "Growth",
-      usdPrice: 29,
-      quota: "5,000 emails / day",
-      domains: "Unlimited Domains",
-      features: ["Pre-Flight Link Checker", "Audience Contact Manager", "30-Day Automated Warmup"],
+      usdPrice: 20,
+      quota: "3,000 emails / day",
+      domains: "Up to 5 Domains",
+      features: ["Automated 30-Day Warmup", "Audience Contact Manager", "30 Days Log Retention"],
       popular: true,
     },
     {
       id: "SCALE_PRO",
       name: "Scale Pro",
       usdPrice: 79,
-      quota: "20,000 emails / day",
+      quota: "25,000 emails / day",
       domains: "Unlimited Domains",
-      features: ["Managed Dedicated IP", "BIMI & VMC Checkmark", "Spamhaus Blocklist Monitoring"],
+      features: ["Managed Dedicated IP", "BIMI & VMC Checkmark", "90 Days Log Retention"],
     },
   ];
 
@@ -108,10 +108,10 @@ export default function BillingPage() {
           <span className="text-xs font-bold text-primary-600 uppercase tracking-wider">Current Plan</span>
           <h2 className="text-2xl font-black text-slate-900 mt-1">
             {workspaceStats.plan === "GROWTH"
-              ? "Growth Plan (5,000/day)"
+              ? "Growth Plan (3,000/day)"
               : workspaceStats.plan === "SCALE_PRO"
-              ? "Scale Pro Plan (20,000/day)"
-              : "Starter Plan (500/day)"}
+              ? "Scale Pro Plan (25,000/day)"
+              : "Starter Plan (100/day)"}
           </h2>
           <p className="text-xs text-slate-500 mt-1">Daily quota resets automatically at 00:00 UTC.</p>
         </div>

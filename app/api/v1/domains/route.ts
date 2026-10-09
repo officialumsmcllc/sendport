@@ -21,7 +21,16 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json({ domains });
+    const userPlan = (auth.workspace.plan || "STARTER").toUpperCase();
+    const limit = userPlan === "STARTER" ? 1 : userPlan === "GROWTH" ? 5 : 99999;
+
+    return NextResponse.json({
+      domains,
+      plan: userPlan,
+      limit,
+      count: domains.length,
+      canAddMore: domains.length < limit,
+    });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
@@ -32,6 +41,27 @@ export async function POST(req: NextRequest) {
     const auth = await getAuthContext(req);
     if (!auth) {
       return NextResponse.json({ error: "Unauthorized. Please log in or provide an API key." }, { status: 401 });
+    }
+
+    // Enforce Plan Domain Limits
+    const userPlan = (auth.workspace.plan || "STARTER").toUpperCase();
+    const maxDomainsAllowed = userPlan === "STARTER" ? 1 : userPlan === "GROWTH" ? 5 : 99999;
+
+    const existingDomainsCount = await prisma.domain.count({
+      where: { workspaceId: auth.workspace.id },
+    });
+
+    if (existingDomainsCount >= maxDomainsAllowed) {
+      const upgradePlan = userPlan === "STARTER" ? "Growth" : "Scale Pro";
+      return NextResponse.json(
+        {
+          error: `Domain limit reached (${existingDomainsCount}/${maxDomainsAllowed}) for ${userPlan} plan. Upgrade to ${upgradePlan} to connect more sending domains.`,
+          code: "DOMAIN_LIMIT_REACHED",
+          currentPlan: userPlan,
+          limit: maxDomainsAllowed,
+        },
+        { status: 403 }
+      );
     }
 
     const body = await req.json();

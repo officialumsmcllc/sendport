@@ -46,7 +46,7 @@ export default function HomePage() {
     },
     {
       q: "Is there a free tier for developers?",
-      a: "Yes! Our Starter plan is 100% Free Forever, giving you 500 emails/day (15,000/month), 3 verified domains, 2048-bit DKIM signing, live open/click tracking, and full REST API access.",
+      a: "Yes! Our Starter plan is 100% Free Forever, giving you 100 emails/day (3,000/month), 1 verified custom domain, 2048-bit DKIM signing, live open/click tracking, and full REST API access.",
     },
   ];
 
@@ -216,11 +216,11 @@ export default function HomePage() {
                   <span className="text-xs text-slate-500">/ month</span>
                 </div>
                 <ul className="mt-6 space-y-3 text-xs text-slate-300">
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> 500 emails / day (15,000/mo)</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> 3 Verified Domains</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> 100 emails / day (3,000/mo)</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> 1 Verified Custom Domain</li>
                   <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> 2048-bit RSA DKIM Signing</li>
                   <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> Developer REST API & SMTP Relay</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> Realtime Webhooks & Live Logs</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> Realtime Webhooks & 3 Days Logs</li>
                 </ul>
               </div>
               <Link href="/dashboard" className="mt-8 block w-full py-3.5 rounded-xl border border-slate-800 bg-slate-900 text-center text-xs font-semibold text-white hover:bg-slate-800 transition-all">
@@ -237,15 +237,15 @@ export default function HomePage() {
                 <h3 className="text-xl font-bold text-white">Growth</h3>
                 <p className="text-xs text-slate-400 mt-1">For growing SaaS apps and production businesses.</p>
                 <div className="mt-6 flex items-baseline gap-1">
-                  <span className="text-4xl font-black text-white">{formatPrice(29, currency)}</span>
+                  <span className="text-4xl font-black text-white">{formatPrice(20, currency)}</span>
                   <span className="text-xs text-slate-500">/ month</span>
                 </div>
                 <ul className="mt-6 space-y-3 text-xs text-slate-300">
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> 5,000 emails / day (50,000/mo)</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> Unlimited Custom Domains</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> 3,000 emails / day (90,000/mo)</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> Up to 5 Custom Verified Domains</li>
                   <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> Audience & Contact Manager (10k contacts)</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> Pre-Flight Broken Link Checker</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> AI Spam Score Reducer</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> Automated 30-Day Domain Warmup</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> Pre-Flight Broken Link Checker & 30 Days Logs</li>
                   <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> Priority 24/7 Developer Support</li>
                 </ul>
               </div>
