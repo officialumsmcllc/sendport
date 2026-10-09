@@ -1,13 +1,29 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { CreditCard, CheckCircle2, Upload, ShieldCheck, ArrowRight, Zap, Check } from "lucide-react";
+import { CreditCard, CheckCircle2, Upload, ShieldCheck, ArrowRight, Zap, Check, Copy } from "lucide-react";
 import { CURRENCIES, SupportedCurrency, formatPrice } from "@/lib/payments/currencies";
+
+interface PaymentGateway {
+  id: string;
+  code: string;
+  name: string;
+  accountTitle: string;
+  accountNumber: string;
+  instructions: string | null;
+  qrCodeUrl: string | null;
+  currency: string;
+}
 
 export default function BillingPage() {
   const [currency, setCurrency] = useState<SupportedCurrency>("USD");
   const [selectedPlan, setSelectedPlan] = useState<"STARTER" | "GROWTH" | "SCALE_PRO">("GROWTH");
   const [paymentMethod, setPaymentMethod] = useState<"STRIPE" | "MANUAL">("STRIPE");
+
+  // Dynamic admin-configured gateways
+  const [availableGateways, setAvailableGateways] = useState<PaymentGateway[]>([]);
+  const [loadingGateways, setLoadingGateways] = useState(true);
+  const [copiedText, setCopiedText] = useState(false);
 
   // Live workspace quota & usage
   const [workspaceStats, setWorkspaceStats] = useState({
@@ -29,6 +45,18 @@ export default function BillingPage() {
         }
       })
       .catch(() => {});
+
+    // Fetch live active gateways configured by Admin
+    fetch("/api/payments/methods")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.methods && data.methods.length > 0) {
+          setAvailableGateways(data.methods);
+          setManualMethod(data.methods[0].code);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoadingGateways(false));
   }, []);
 
   // Manual payment form states
@@ -262,22 +290,90 @@ export default function BillingPage() {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block font-semibold text-slate-700 mb-1">Transfer Gateway</label>
-                    <select
-                      value={manualMethod}
-                      onChange={(e) => setManualMethod(e.target.value)}
-                      className="w-full rounded-xl border border-slate-200 p-2.5 bg-white text-xs"
-                    >
-                      <option value="EASYPAISA">Easypaisa (0300-1234567)</option>
-                      <option value="JAZZCASH">JazzCash (0300-7654321)</option>
-                      <option value="RAAST">Raast Instant IBAN</option>
-                      <option value="USDT">Crypto USDT TRC-20 (Wallet: TXYZ...)</option>
-                      <option value="BANK">Bank Wire (Meezan Bank IBAN)</option>
-                    </select>
-                  </div>
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Select Transfer Gateway</label>
+                  <select
+                    value={manualMethod}
+                    onChange={(e) => setManualMethod(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 p-2.5 bg-white text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  >
+                    {availableGateways.length > 0 ? (
+                      availableGateways.map((gw) => (
+                        <option key={gw.code} value={gw.code}>
+                          {gw.name} ({gw.currency}) - {gw.accountTitle}
+                        </option>
+                      ))
+                    ) : (
+                      <>
+                        <option value="EASYPAISA">Easypaisa</option>
+                        <option value="JAZZCASH">JazzCash</option>
+                        <option value="RAAST">Raast Instant IBAN</option>
+                        <option value="USDT">Crypto USDT TRC-20</option>
+                        <option value="BANK">Bank Wire</option>
+                      </>
+                    )}
+                  </select>
+                </div>
 
+                {/* DYNAMIC ACCOUNT DETAILS CARD */}
+                {(() => {
+                  const activeGw = availableGateways.find((g) => g.code === manualMethod) || availableGateways[0];
+                  if (!activeGw) return null;
+                  return (
+                    <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs space-y-3">
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-slate-900">{activeGw.name}</span>
+                          <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                            {activeGw.currency}
+                          </span>
+                        </div>
+                        <span className="text-[11px] font-medium text-slate-500">
+                          Account Title: <strong className="text-slate-900">{activeGw.accountTitle}</strong>
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                        <div className="min-w-0 pr-2">
+                          <div className="text-[10px] uppercase font-bold text-slate-400">Account / IBAN / Wallet Address</div>
+                          <div className="font-mono text-xs font-bold text-slate-900 truncate select-all">
+                            {activeGw.accountNumber}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(activeGw.accountNumber);
+                            setCopiedText(true);
+                            setTimeout(() => setCopiedText(false), 2000);
+                          }}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors shrink-0 shadow-xs"
+                        >
+                          {copiedText ? (
+                            <>
+                              <Check className="w-3.5 h-3.5 text-emerald-600" />
+                              <span className="text-emerald-700">Copied</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3.5 h-3.5 text-slate-500" />
+                              <span>Copy</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+
+                      {activeGw.instructions && (
+                        <div className="text-[11px] text-slate-600 bg-amber-50/50 p-2.5 rounded-lg border border-amber-200/60 leading-relaxed">
+                          <strong className="text-amber-900 font-semibold">Payment Instructions: </strong>
+                          {activeGw.instructions}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block font-semibold text-slate-700 mb-1">Transaction ID / TxHash *</label>
                     <input
@@ -289,17 +385,17 @@ export default function BillingPage() {
                       className="w-full rounded-xl border border-slate-200 p-2.5 text-xs bg-white"
                     />
                   </div>
-                </div>
 
-                <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Sender Name / Phone</label>
-                  <input
-                    type="text"
-                    placeholder="Muhammad Umar / 0300..."
-                    value={senderName}
-                    onChange={(e) => setSenderName(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 p-2.5 text-xs bg-white"
-                  />
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">Sender Name / Phone</label>
+                    <input
+                      type="text"
+                      placeholder="Muhammad Umar / 0300..."
+                      value={senderName}
+                      onChange={(e) => setSenderName(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 p-2.5 text-xs bg-white"
+                    />
+                  </div>
                 </div>
 
                 {manualError && (

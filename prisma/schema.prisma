@@ -299,3 +299,18 @@ model AuditLog {
 
   user        User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
 }
+
+model PaymentMethodConfig {
+  id              String    @id @default(cuid())
+  code            String    @unique // EASYPAISA, JAZZCASH, RAAST, BANK_TRANSFER, USDT_TRC20, NAYAPAY, SADAPAY, WISE, etc.
+  name            String            // e.g. "Easypaisa Account", "JazzCash", "Binance USDT (TRC-20)"
+  accountTitle    String            // e.g. "Muhammad Umar" or "Sendport Technologies"
+  accountNumber   String            // e.g. "0300-1234567" or IBAN or Wallet Address
+  instructions    String?   @db.Text // Guidance for users
+  qrCodeUrl       String?           // Optional QR code image URL
+  currency        String    @default("PKR") // Primary currency: PKR, USD, EUR, etc.
+  isActive        Boolean   @default(true)
+  displayOrder    Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}

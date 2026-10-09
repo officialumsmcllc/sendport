@@ -1,0 +1,81 @@
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/db/prisma";
+
+export async function GET(req: NextRequest) {
+  try {
+    let methods = await prisma.paymentMethodConfig.findMany({
+      where: { isActive: true },
+      orderBy: [{ displayOrder: "asc" }, { createdAt: "asc" }],
+      select: {
+        id: true,
+        code: true,
+        name: true,
+        accountTitle: true,
+        accountNumber: true,
+        instructions: true,
+        qrCodeUrl: true,
+        currency: true,
+      },
+    });
+
+    // Fallback if none in database yet
+    if (methods.length === 0) {
+      methods = [
+        {
+          id: "def-1",
+          code: "EASYPAISA",
+          name: "Easypaisa Mobile Wallet",
+          accountTitle: "Muhammad Umar",
+          accountNumber: "0300-1234567",
+          instructions: "Transfer exact PKR amount via Easypaisa App or *786#. Paste Transaction ID / TID below.",
+          qrCodeUrl: null,
+          currency: "PKR",
+        },
+        {
+          id: "def-2",
+          code: "JAZZCASH",
+          name: "JazzCash Mobile Account",
+          accountTitle: "Muhammad Umar",
+          accountNumber: "0300-7654321",
+          instructions: "Send via JazzCash App or USSD *786#. Enter the 12-digit TID in the form.",
+          qrCodeUrl: null,
+          currency: "PKR",
+        },
+        {
+          id: "def-3",
+          code: "RAAST",
+          name: "Raast Instant IBAN (0% Fee)",
+          accountTitle: "Sendport Technologies",
+          accountNumber: "PK00MEZN00012345678901",
+          instructions: "Use Raast Instant Payment from any Pakistani bank app without any transfer fees.",
+          qrCodeUrl: null,
+          currency: "PKR",
+        },
+        {
+          id: "def-4",
+          code: "USDT_TRC20",
+          name: "Binance / Crypto USDT (TRC-20)",
+          accountTitle: "Official TRC20 Treasury",
+          accountNumber: "TXYZ9876543210AbCdEfGhIjKlMnOpQrStUv",
+          instructions: "Send only TRC-20 USDT. Minimum equivalent amount. Enter your 64-character TxHash.",
+          qrCodeUrl: null,
+          currency: "USD",
+        },
+        {
+          id: "def-5",
+          code: "BANK_TRANSFER",
+          name: "Meezan Bank Ltd (Direct Wire)",
+          accountTitle: "Official UM1 LLC",
+          accountNumber: "01020304050607 / IBAN: PK92MEZN0001020304050607",
+          instructions: "Transfer to Meezan Bank. Please attach transaction screenshot or enter Reference number.",
+          qrCodeUrl: null,
+          currency: "PKR",
+        },
+      ];
+    }
+
+    return NextResponse.json({ methods });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
