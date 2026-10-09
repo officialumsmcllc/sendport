@@ -42,7 +42,7 @@ export default function BillingPage() {
       id: "STARTER",
       name: "Starter",
       usdPrice: 0,
-      quota: "100 emails / day",
+      quota: `${workspaceStats.plan === "STARTER" && workspaceStats.dailyQuota > 100 ? workspaceStats.dailyQuota.toLocaleString() : "100"} emails / day`,
       domains: "1 Domain",
       features: ["2048-bit RSA DKIM", "REST API & SMTP Relay", "3 Days Log Retention"],
     },
@@ -108,17 +108,17 @@ export default function BillingPage() {
           <span className="text-xs font-bold text-primary-600 uppercase tracking-wider">Current Plan</span>
           <h2 className="text-2xl font-black text-slate-900 mt-1">
             {workspaceStats.plan === "GROWTH"
-              ? "Growth Plan (3,000/day)"
+              ? `Growth Plan (${workspaceStats.dailyQuota.toLocaleString()} emails/day)`
               : workspaceStats.plan === "SCALE_PRO"
-              ? "Scale Pro Plan (25,000/day)"
-              : "Starter Plan (100/day)"}
+              ? `Scale Pro Plan (${workspaceStats.dailyQuota.toLocaleString()} emails/day)`
+              : `Starter Plan (${workspaceStats.dailyQuota.toLocaleString()} emails/day)`}
           </h2>
           <p className="text-xs text-slate-500 mt-1">Daily quota resets automatically at 00:00 UTC.</p>
         </div>
         <div className="text-right">
           <span className="text-xs text-slate-400 block">Today&apos;s Usage</span>
           <span className="text-2xl font-black text-slate-900 font-mono">
-            {workspaceStats.usedToday} / {workspaceStats.dailyQuota}
+            {workspaceStats.usedToday.toLocaleString()} / {workspaceStats.dailyQuota.toLocaleString()}
           </span>
           <div className="w-48 h-2 bg-slate-100 rounded-full mt-2 overflow-hidden">
             <div
