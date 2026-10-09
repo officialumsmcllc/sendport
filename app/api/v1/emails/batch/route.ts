@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { sendEmailEngine } from "@/lib/email/dispatcher";
+import { getAuthContext } from "@/lib/auth/workspace-auth";
 
 /**
  * POST /api/v1/emails/batch
@@ -8,20 +9,15 @@ import { sendEmailEngine } from "@/lib/email/dispatcher";
  */
 export async function POST(req: NextRequest) {
   try {
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    const auth = await getAuthContext(req);
+    if (!auth) {
       return NextResponse.json(
-        { error: "Unauthorized. Missing 'Authorization: Bearer sk_live_...' header." },
+        { error: "Unauthorized. Missing or invalid 'Authorization: Bearer sk_live_...' header." },
         { status: 401 }
       );
     }
 
-    let workspace = await prisma.workspace.findFirst();
-    if (!workspace) {
-      workspace = await prisma.workspace.create({
-        data: { name: "Default Workspace", slug: "default", dailyQuota: 500 },
-      });
-    }
+    const workspace = auth.workspace;
 
     const body = await req.json();
     if (!Array.isArray(body)) {

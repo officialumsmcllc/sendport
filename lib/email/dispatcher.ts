@@ -53,32 +53,28 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
   const recipients = Array.isArray(options.to) ? options.to : [options.to];
   const { name: senderName, email: senderEmail, domain: senderDomain } = parseFromHeader(options.from);
 
-  // 1. Check if domain is verified in this workspace or platform
+  // 1. Strictly verify that the domain belongs to this user's workspace
   const normalizedDomain = senderDomain.toLowerCase().trim();
   const domainRecord = await prisma.domain.findFirst({
     where: {
-      OR: [
-        { workspaceId: options.workspaceId, name: { equals: normalizedDomain, mode: "insensitive" } },
-        { name: { equals: normalizedDomain, mode: "insensitive" } },
-      ],
+      workspaceId: options.workspaceId,
+      name: { equals: normalizedDomain, mode: "insensitive" },
     },
   });
 
-  const isDemoOrSandbox =
+  const isPlatformDefault =
     normalizedDomain === "getsendport.com" ||
-    normalizedDomain === "officialum1.com" ||
-    normalizedDomain === "resend.dev" ||
     normalizedDomain === "localhost";
 
-  if (!domainRecord && !isDemoOrSandbox) {
+  if (!domainRecord && !isPlatformDefault) {
     throw new Error(
-      `Domain "${senderDomain}" is not added in your Sendport account. Please add your domain in the dashboard before sending.`
+      `Domain "${senderDomain}" is not added or verified in your Sendport account. Please add and verify your domain in your dashboard before sending.`
     );
   }
 
-  if (domainRecord && domainRecord.status !== "VERIFIED" && !isDemoOrSandbox) {
+  if (domainRecord && domainRecord.status !== "VERIFIED" && !isPlatformDefault) {
     throw new Error(
-      `Domain "${senderDomain}" DNS records are pending verification. Please verify DKIM & SPF records in the dashboard.`
+      `Domain "${senderDomain}" DNS records are pending verification. Please verify DKIM & SPF records in your dashboard before sending.`
     );
   }
 

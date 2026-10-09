@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
-import { sendEmailEngine, parseFromHeader } from "@/lib/email/dispatcher";
-import { validateEmailAddress, validateEmailWithMx } from "@/lib/email/validator";
-import { getCurrentUser } from "@/lib/auth/session";
+import { sendEmailEngine } from "@/lib/email/dispatcher";
+import { validateEmailWithMx } from "@/lib/email/validator";
+import { getAuthContext } from "@/lib/auth/workspace-auth";
 
 /**
  * POST /api/v1/emails/send
@@ -10,94 +10,24 @@ import { getCurrentUser } from "@/lib/auth/session";
  */
 export async function POST(req: NextRequest) {
   try {
-    const authHeader = req.headers.get("Authorization") || req.headers.get("authorization");
-    let workspace: any = null;
-    let userId: string | null = null;
-    let authenticatedApiKeyId: string | null = null;
-
-    // 1. Check API Key Header if present
-    if (authHeader && authHeader.startsWith("Bearer ")) {
-      const apiKeyToken = authHeader.replace("Bearer ", "").trim();
-      if (apiKeyToken && apiKeyToken !== "undefined" && apiKeyToken !== "null") {
-        const apiKey = await prisma.apiKey.findFirst({
-          where: {
-            OR: [
-              { keyHash: apiKeyToken },
-              { keyPrefix: { startsWith: apiKeyToken.substring(0, 12) } },
-            ],
-          },
-          include: {
-            workspace: {
-              include: { apiKeys: true, domains: true },
-            },
-          },
-        });
-
-        if (apiKey?.workspace) {
-          workspace = apiKey.workspace;
-          userId = apiKey.userId;
-          authenticatedApiKeyId = apiKey.id;
-
-          // Asynchronously update lastUsedAt and usedToday on this API key
-          prisma.apiKey
-            .update({
-              where: { id: apiKey.id },
-              data: {
-                lastUsedAt: new Date(),
-                usedToday: { increment: 1 },
-              },
-            })
-            .catch((err) => console.error("Error updating apiKey lastUsedAt:", err));
-        }
-      }
+    const auth = await getAuthContext(req);
+    if (!auth) {
+      return NextResponse.json(
+        { error: "Unauthorized. Missing or invalid 'Authorization: Bearer sk_live_...' header or active session." },
+        { status: 401 }
+      );
     }
 
-    // 2. Fallback to Browser Session if request came from logged-in Dashboard/Playground
-    if (!workspace) {
-      const session = await getCurrentUser();
-      if (session) {
-        const user = await prisma.user.findUnique({
-          where: { id: session.userId },
-          include: {
-            workspaces: {
-              include: {
-                workspace: {
-                  include: { apiKeys: true, domains: true },
-                },
-              },
-            },
-          },
-        });
+    const workspace = auth.workspace;
 
-        workspace = user?.workspaces?.[0]?.workspace;
-        userId = session.userId;
-      }
-    }
-
-    // 3. Fallback for fresh local setup / default workspace if none found
-    if (!workspace) {
-      if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        return NextResponse.json(
-          { error: "Unauthorized. Missing or invalid 'Authorization: Bearer sk_live_...' header or active session." },
-          { status: 401 }
-        );
-      }
-
-      workspace = await prisma.workspace.findFirst({
-        include: { apiKeys: true, domains: true },
-      });
-
-      if (!workspace) {
-        workspace = await prisma.workspace.create({
-          data: {
-            name: "Default Workspace",
-            slug: "default",
-            plan: "STARTER",
-            dailyQuota: 500,
-          },
-          include: { apiKeys: true, domains: true },
-        });
-      }
+    // Daily Quota Enforcement
+    if (workspace.usedToday >= workspace.dailyQuota) {
+      return NextResponse.json(
+        {
+          error: `Daily email quota reached (${workspace.usedToday}/${workspace.dailyQuota}). Upgrade plan to send more.`,
+        },
+        { status: 429 }
+      );
     }
 
     const body = await req.json();

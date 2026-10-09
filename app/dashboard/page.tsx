@@ -242,6 +242,7 @@ export default function DashboardOverview() {
               <thead className="bg-slate-50 text-xs font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
                 <tr>
                   <th className="px-6 py-3.5">Recipient</th>
+                  <th className="px-6 py-3.5">Domain</th>
                   <th className="px-6 py-3.5">Subject</th>
                   <th className="px-6 py-3.5">Status</th>
                   <th className="px-6 py-3.5">DKIM</th>
@@ -252,6 +253,12 @@ export default function DashboardOverview() {
                 {recentEvents.map((evt) => (
                   <tr key={evt.id} className="hover:bg-slate-50/80 transition-colors">
                     <td className="px-6 py-4 font-semibold text-slate-900">{evt.to}</td>
+                    <td className="px-6 py-4">
+                      <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-mono text-slate-700 border border-slate-200">
+                        <Globe className="w-3 h-3 text-slate-500" />
+                        {evt.domain || "custom"}
+                      </span>
+                    </td>
                     <td className="px-6 py-4 text-slate-600 max-w-xs truncate">{evt.subject}</td>
                     <td className="px-6 py-4">
                       <span
