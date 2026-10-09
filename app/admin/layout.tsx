@@ -22,6 +22,7 @@ import {
   Globe2,
   Mail,
   Sparkles,
+  ShieldAlert,
 } from "lucide-react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -30,6 +31,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [adminUser, setAdminUser] = useState<{ id: string; email: string; name?: string; role: string } | null>(null);
   const [verifying, setVerifying] = useState(true);
+  const [pendingSlipsCount, setPendingSlipsCount] = useState<number>(0);
 
   useEffect(() => {
     // 1. Instant optimistic auth check from localStorage cache
@@ -71,7 +73,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       .finally(() => {
         setVerifying(false);
       });
-  }, [router]);
+
+    // 3. Fetch pending payment slips count for live badge
+    fetch("/api/admin/payments")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.transactions) {
+          const pending = data.transactions.filter((t: any) => t.status === "PENDING").length;
+          setPendingSlipsCount(pending);
+        }
+      })
+      .catch(() => {});
+  }, [router, pathname]);
 
   const handleLogout = async () => {
     try {
@@ -87,7 +100,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   };
 
   const navItems = [
-    { label: "Payment Slip Approvals", href: "/admin", icon: CreditCard },
+    { label: "Executive Mission Control", href: "/admin", icon: ShieldAlert },
+    { label: "Payment Slip Approvals", href: "/admin/payments", icon: CreditCard, badge: pendingSlipsCount },
     { label: "Global Analytics & Revenue", href: "/admin/analytics", icon: BarChart3 },
     { label: "Customer Domains", href: "/admin/domains", icon: Globe2 },
     { label: "Global Email Logs", href: "/admin/logs", icon: Mail },
@@ -134,7 +148,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </span>
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
             </div>
-            <p className="text-xs font-bold text-white truncate">{adminUser?.email || "admin@getsendport.com"}</p>
+            <p className="text-[11px] font-mono text-slate-300 truncate font-medium">
+              {adminUser?.email || "admin@getsendport.com"}
+            </p>
           </div>
 
           {/* Navigation Links */}
@@ -149,14 +165,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all ${
+                  className={`flex items-center justify-between rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all ${
                     isActive
                       ? "bg-amber-500 text-slate-950 font-bold shadow-md shadow-amber-500/20"
                       : "text-slate-300 hover:bg-slate-800 hover:text-white"
                   }`}
                 >
-                  <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-slate-950" : "text-amber-400"}`} />
-                  <span className="truncate">{item.label}</span>
+                  <div className="flex items-center gap-2.5 truncate">
+                    <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-slate-950" : "text-amber-400"}`} />
+                    <span className="truncate">{item.label}</span>
+                  </div>
+                  {item.badge !== undefined && item.badge > 0 && (
+                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold ${
+                      isActive ? "bg-slate-950 text-amber-400" : "bg-amber-500 text-slate-950"
+                    }`}>
+                      {item.badge}
+                    </span>
+                  )}
                 </Link>
               );
             })}
@@ -195,7 +220,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <nav className="mt-4 space-y-1 overflow-y-auto max-h-[70vh]">
+            <nav className="mt-4 space-y-1">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = pathname === item.href;
@@ -204,69 +229,52 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     key={item.href}
                     href={item.href}
                     onClick={() => setMobileNavOpen(false)}
-                    className={`flex items-center gap-3 rounded-lg px-3 py-2 text-xs font-semibold ${
-                      isActive ? "bg-amber-500 text-slate-950" : "text-slate-300 hover:bg-slate-900"
+                    className={`flex items-center justify-between rounded-lg px-3 py-2 text-xs font-semibold ${
+                      isActive ? "bg-amber-500 text-slate-950 font-bold" : "text-slate-300 hover:bg-slate-800"
                     }`}
                   >
-                    <Icon className="w-4 h-4" />
-                    <span>{item.label}</span>
+                    <div className="flex items-center gap-2.5">
+                      <Icon className="w-4 h-4 text-amber-400" />
+                      <span>{item.label}</span>
+                    </div>
+                    {item.badge !== undefined && item.badge > 0 && (
+                      <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold bg-amber-500 text-slate-950">
+                        {item.badge}
+                      </span>
+                    )}
                   </Link>
                 );
               })}
             </nav>
-            <div className="mt-auto pt-4 border-t border-slate-800 space-y-2">
-              <Link
-                href="/dashboard"
-                className="w-full flex items-center justify-center gap-1.5 py-2 text-xs font-semibold text-slate-400 hover:text-white"
-              >
-                <ArrowLeft className="w-3.5 h-3.5" /> Customer Dashboard
-              </Link>
-              <button
-                onClick={handleLogout}
-                className="w-full py-2 rounded-lg bg-rose-500/10 text-rose-300 border border-rose-500/30 text-xs font-semibold"
-              >
-                Admin Sign Out
-              </button>
-            </div>
           </div>
         </div>
       )}
 
-      {/* MAIN ADMIN CONTENT */}
-      <div className="flex flex-1 flex-col min-w-0">
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-slate-800/80 bg-slate-950/80 px-4 sm:px-6 backdrop-blur">
-          <div className="flex items-center gap-3">
+      {/* MAIN ADMIN CONTENT WRAPPER */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Mobile Header Bar */}
+        <header className="flex lg:hidden items-center justify-between p-4 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setMobileNavOpen(true)}
-              className="lg:hidden p-2 rounded-lg text-slate-400 hover:bg-slate-800"
+              className="p-1.5 rounded-lg border border-slate-800 text-slate-400 hover:text-white"
             >
               <Menu className="w-5 h-5" />
             </button>
-            <div className="flex items-center gap-2 text-xs font-semibold text-slate-400">
-              <span className="text-amber-400 font-bold">Admin Portal</span>
-              <ChevronRight className="w-3.5 h-3.5 text-slate-600" />
-              <span className="text-white capitalize">
-                {pathname === "/admin"
-                  ? "Payment Slip Verification"
-                  : pathname.split("/")[2]?.replace(/-/g, " ") || "Overview"}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:bg-slate-800 hover:text-white transition-all shadow-sm"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" /> Customer View
-            </Link>
-            <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 text-[11px] font-bold text-emerald-400">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" /> System Live
+            <SendportLogo size={24} dark={true} />
+            <span className="text-[10px] font-bold text-amber-400 border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 rounded">
+              ADMIN
             </span>
           </div>
+          <span className="text-[11px] font-mono text-slate-400 truncate max-w-[150px]">
+            {adminUser?.email}
+          </span>
         </header>
 
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">{children}</main>
+        {/* Content View */}
+        <main className="flex-1 p-4 sm:p-8 max-w-7xl mx-auto w-full overflow-y-auto">
+          {children}
+        </main>
       </div>
     </div>
   );
