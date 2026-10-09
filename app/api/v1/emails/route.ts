@@ -56,3 +56,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+// Re-export POST so developers can call either POST /api/v1/emails or POST /api/v1/emails/send
+export { POST } from "./send/route";
+

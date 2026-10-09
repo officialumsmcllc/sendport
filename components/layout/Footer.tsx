@@ -38,7 +38,7 @@ export function Footer({ dark = true }: { dark?: boolean }) {
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-200 mb-3">Product</h3>
             <ul className="space-y-2.5 text-xs text-slate-400">
               <li><Link href="/features" className="hover:text-white transition-colors">Features Overview</Link></li>
-              <li><Link href="#pricing" className="hover:text-white transition-colors">Pricing & Plans</Link></li>
+              <li><Link href="/#pricing" className="hover:text-white transition-colors">Pricing & Plans</Link></li>
 
               <li><Link href="/dashboard/audiences" className="hover:text-white transition-colors">Audiences & Contacts</Link></li>
               <li><Link href="/dashboard/link-checker" className="hover:text-white transition-colors">Pre-Flight Link Checker</Link></li>
