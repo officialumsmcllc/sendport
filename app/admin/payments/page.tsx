@@ -402,6 +402,38 @@ export default function AdminPaymentsPage() {
             </div>
 
             <form onSubmit={handleSaveGateway} className="p-5 space-y-4 text-xs">
+              {!editingGateway && (
+                <div className="bg-slate-950/80 p-3 rounded-xl border border-slate-800 space-y-2">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Quick Presets (Click to autofill):</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      { name: "Easypaisa Wallet", code: "EASYPAISA", currency: "PKR", instructions: "Transfer exact PKR amount via Easypaisa App or *786#. Paste Transaction ID / TID below." },
+                      { name: "JazzCash Account", code: "JAZZCASH", currency: "PKR", instructions: "Send via JazzCash App or USSD *786#. Enter the 12-digit TID in the form." },
+                      { name: "Raast Instant IBAN", code: "RAAST", currency: "PKR", instructions: "Use Raast Instant Payment from any Pakistani bank app without transfer fees." },
+                      { name: "Bank Wire (Meezan Bank)", code: "BANK_TRANSFER", currency: "PKR", instructions: "Transfer to bank account. Enter reference ID or Tx screenshot." },
+                      { name: "SadaPay Personal / Business", code: "SADAPAY", currency: "PKR", instructions: "Send via SadaPay App or IBAN transfer. Enter the SadaPay transaction ID in the field." },
+                      { name: "NayaPay Digital Wallet", code: "NAYAPAY", currency: "PKR", instructions: "Transfer to NayaPay wallet or IBAN. Enter your NayaPay Reference ID below." },
+                      { name: "Crypto USDT (TRC-20)", code: "USDT_TRC20", currency: "USD", instructions: "Send only TRC-20 USDT. Enter your 64-character TxHash." },
+                      { name: "Wise / Payoneer Transfer", code: "WISE_PAYONEER", currency: "USD", instructions: "Transfer via Wise or Payoneer directly. Enter Wise transfer reference number." },
+                    ].map((preset) => (
+                      <button
+                        key={preset.code}
+                        type="button"
+                        onClick={() => {
+                          setFormName(preset.name);
+                          setFormCode(preset.code);
+                          setFormCurrency(preset.currency);
+                          setFormInstructions(preset.instructions);
+                        }}
+                        className="px-2.5 py-1 rounded-lg text-[10px] font-medium bg-slate-800/80 text-slate-300 hover:bg-amber-400/20 hover:text-amber-300 transition-colors border border-slate-700/60"
+                      >
+                        + {preset.name.split(" ")[0]}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-slate-300 font-bold mb-1">Method Name *</label>

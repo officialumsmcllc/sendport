@@ -71,6 +71,36 @@ export async function GET(req: NextRequest) {
           qrCodeUrl: null,
           currency: "PKR",
         },
+        {
+          id: "def-6",
+          code: "SADAPAY",
+          name: "SadaPay Personal / Business",
+          accountTitle: "Muhammad Umar",
+          accountNumber: "0300-1234567 / IBAN: PK00SADA...",
+          instructions: "Send via SadaPay App or IBAN transfer. Enter the SadaPay transaction ID in the field.",
+          qrCodeUrl: null,
+          currency: "PKR",
+        },
+        {
+          id: "def-7",
+          code: "NAYAPAY",
+          name: "NayaPay Digital Wallet",
+          accountTitle: "Muhammad Umar",
+          accountNumber: "0300-1234567 / @nayapay_id",
+          instructions: "Transfer to NayaPay wallet or IBAN. Enter your NayaPay Reference ID below.",
+          qrCodeUrl: null,
+          currency: "PKR",
+        },
+        {
+          id: "def-8",
+          code: "WISE_PAYONEER",
+          name: "Wise / Payoneer Transfer (USD/EUR/GBP)",
+          accountTitle: "Official UM1 LLC",
+          accountNumber: "billing@sendport.io / Wise Account",
+          instructions: "Transfer via Wise or Payoneer directly. Enter Wise transfer reference number.",
+          qrCodeUrl: null,
+          currency: "USD",
+        },
       ];
     }
 
