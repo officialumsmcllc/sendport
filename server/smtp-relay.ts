@@ -40,10 +40,7 @@ export function createSendportSmtpServer() {
 
         const apiKey = await prisma.apiKey.findFirst({
           where: {
-            OR: [
-              { keyHash: rawApiKey },
-              { keyPrefix: { startsWith: rawApiKey.substring(0, 12) } },
-            ],
+            keyHash: rawApiKey,
           },
           include: {
             workspace: true,
@@ -55,8 +52,20 @@ export function createSendportSmtpServer() {
           return callback(new Error("535 5.7.8 Authentication credentials invalid. Please check your Sendport API Key."));
         }
 
-        // Check daily quota
+        // Check daily quota with automated midnight reset
         const workspace = apiKey.workspace;
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
+        if (!workspace.quotaResetAt || new Date(workspace.quotaResetAt) < startOfToday) {
+          try {
+            await prisma.workspace.update({
+              where: { id: workspace.id },
+              data: { usedToday: 0, quotaResetAt: new Date() },
+            });
+            workspace.usedToday = 0;
+          } catch (_) {}
+        }
+
         if (workspace.usedToday >= workspace.dailyQuota) {
           return callback(new Error("452 4.4.5 Daily email quota exceeded for your workspace. Please upgrade your plan."));
         }

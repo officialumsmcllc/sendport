@@ -16,7 +16,31 @@ export interface AuthContext {
     plan: string;
     dailyQuota: number;
     usedToday: number;
+    quotaResetAt?: Date;
   };
+}
+
+/**
+ * Ensures workspace daily quota automatically resets at midnight (00:00:00).
+ */
+async function autoResetDailyQuotaIfExpired(workspace: any) {
+  if (!workspace) return;
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+
+  if (!workspace.quotaResetAt || new Date(workspace.quotaResetAt) < startOfToday) {
+    try {
+      await prisma.workspace.update({
+        where: { id: workspace.id },
+        data: {
+          usedToday: 0,
+          quotaResetAt: new Date(),
+        },
+      });
+      workspace.usedToday = 0;
+      workspace.quotaResetAt = new Date();
+    } catch (_) {}
+  }
 }
 
 /**
@@ -33,10 +57,7 @@ export async function getAuthContext(req?: NextRequest): Promise<AuthContext | n
       if (apiKeyToken && apiKeyToken !== "undefined" && apiKeyToken !== "null") {
         const apiKey = await prisma.apiKey.findFirst({
           where: {
-            OR: [
-              { keyHash: apiKeyToken },
-              { keyPrefix: { startsWith: apiKeyToken.substring(0, 12) } },
-            ],
+            keyHash: apiKeyToken,
           },
           include: {
             workspace: true,
@@ -45,6 +66,8 @@ export async function getAuthContext(req?: NextRequest): Promise<AuthContext | n
         });
 
         if (apiKey?.workspace && apiKey?.user) {
+          await autoResetDailyQuotaIfExpired(apiKey.workspace);
+
           return {
             user: {
               id: apiKey.user.id,
@@ -95,6 +118,8 @@ export async function getAuthContext(req?: NextRequest): Promise<AuthContext | n
           },
         });
       }
+
+      await autoResetDailyQuotaIfExpired(workspace);
 
       return {
         user: {

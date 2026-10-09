@@ -36,6 +36,8 @@ export default function BillingPage() {
   const [txId, setTxId] = useState("");
   const [senderName, setSenderName] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [submittingManual, setSubmittingManual] = useState(false);
+  const [manualError, setManualError] = useState("");
 
   const plans = [
     {
@@ -65,10 +67,37 @@ export default function BillingPage() {
     },
   ];
 
-  const handleManualSubmit = (e: React.FormEvent) => {
+  const handleManualSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!txId) return;
-    setSubmitted(true);
+    if (!txId.trim()) return;
+    try {
+      setSubmittingManual(true);
+      setManualError("");
+      const activePlanObj = plans.find((p) => p.id === selectedPlan) || plans[1];
+      const res = await fetch("/api/payments/manual", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          plan: selectedPlan,
+          amount: activePlanObj.usdPrice,
+          currency,
+          method: manualMethod,
+          referenceId: txId.trim(),
+          senderName: senderName.trim(),
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setSubmitted(true);
+      } else {
+        setManualError(data.error || "Failed to submit payment transaction.");
+      }
+    } catch (err: any) {
+      setManualError(err.message || "Network error. Please try again.");
+    } finally {
+      setSubmittingManual(false);
+    }
   };
 
   const usagePercent = Math.min(
@@ -273,11 +302,18 @@ export default function BillingPage() {
                   />
                 </div>
 
+                {manualError && (
+                  <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold">
+                    {manualError}
+                  </div>
+                )}
+
                 <button
                   type="submit"
-                  className="rounded-xl bg-slate-900 px-6 py-2.5 text-xs font-semibold text-white hover:bg-slate-800 shadow-sm"
+                  disabled={submittingManual}
+                  className="rounded-xl bg-slate-900 px-6 py-2.5 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50 shadow-sm transition-all"
                 >
-                  Submit Payment Slip
+                  {submittingManual ? "Submitting Proof..." : "Submit Payment Slip"}
                 </button>
               </>
             )}

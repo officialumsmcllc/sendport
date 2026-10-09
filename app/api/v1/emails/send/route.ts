@@ -52,18 +52,19 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Check suppression list
+    // Check suppression list across all recipients
+    const lowerRecipients = recipientList.map((r: string) => r.toLowerCase().trim());
     const suppressed = await prisma.suppression.findFirst({
       where: {
         workspaceId: workspace.id,
-        email: recipientList[0].toLowerCase(),
+        email: { in: lowerRecipients },
       },
     });
 
     if (suppressed) {
       return NextResponse.json(
         {
-          error: `Recipient '${recipientList[0]}' is in your Suppression List (${suppressed.reason}). Email was not sent.`,
+          error: `Recipient '${suppressed.email}' is in your Suppression List (${suppressed.reason}). Email was not sent.`,
         },
         { status: 422 }
       );

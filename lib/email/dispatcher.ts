@@ -82,12 +82,27 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
   if (options.workspaceId) {
     const ws = await prisma.workspace.findUnique({
       where: { id: options.workspaceId },
-      select: { usedToday: true, dailyQuota: true, plan: true },
+      select: { usedToday: true, dailyQuota: true, plan: true, quotaResetAt: true },
     });
-    if (ws && (ws.usedToday + recipients.length) > ws.dailyQuota) {
-      throw new Error(
-        `Daily email quota exceeded (${ws.usedToday}/${ws.dailyQuota}). Please upgrade your workspace plan at /dashboard/billing to send more emails.`
-      );
+    if (ws) {
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
+      let currentUsed = ws.usedToday;
+      if (!ws.quotaResetAt || new Date(ws.quotaResetAt) < startOfToday) {
+        try {
+          await prisma.workspace.update({
+            where: { id: options.workspaceId },
+            data: { usedToday: 0, quotaResetAt: new Date() },
+          });
+          currentUsed = 0;
+        } catch (_) {}
+      }
+
+      if ((currentUsed + recipients.length) > ws.dailyQuota) {
+        throw new Error(
+          `Daily email quota exceeded (${currentUsed}/${ws.dailyQuota}). Please upgrade your workspace plan at /dashboard/billing to send more emails.`
+        );
+      }
     }
   }
 
