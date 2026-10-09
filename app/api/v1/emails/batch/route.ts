@@ -34,6 +34,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (workspace.usedToday + body.length > workspace.dailyQuota) {
+      return NextResponse.json(
+        {
+          error: `Daily email quota would be exceeded (${workspace.usedToday}/${workspace.dailyQuota}). Batch requires ${body.length} sends. Upgrade your plan at /dashboard/billing to increase limits.`,
+        },
+        { status: 429 }
+      );
+    }
+
     const results = [];
     for (const item of body) {
       try {

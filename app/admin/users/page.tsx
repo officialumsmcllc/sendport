@@ -51,7 +51,7 @@ export default function AdminUsersPage() {
     setEditRole(user.role);
     const ws = user.workspaces?.[0]?.workspace;
     setEditPlan(ws?.plan || "STARTER");
-    setEditQuota(ws?.dailyQuota || 500);
+    setEditQuota(ws?.dailyQuota || 100);
   };
 
   const handleSaveUser = async (e: React.FormEvent) => {
@@ -257,7 +257,7 @@ export default function AdminUsersPage() {
                       </td>
                       <td className="p-4">
                         <p className="font-bold text-amber-400">
-                          {ws?.dailyQuota ? ws.dailyQuota.toLocaleString() : "500"} emails/day
+                          {ws?.dailyQuota ? ws.dailyQuota.toLocaleString() : "100"} emails/day
                         </p>
                         <p className="text-[10px] text-slate-500">Used today: {ws?.usedToday || 0}</p>
                       </td>

@@ -1,48 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
+import { getAuthContext } from "@/lib/auth/workspace-auth";
 
 export async function GET(req: NextRequest) {
   try {
-    const authHeader = req.headers.get("authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    const auth = await getAuthContext(req);
+    if (!auth) {
       return NextResponse.json(
-        { error: "Unauthorized", message: "Missing or invalid Authorization header" },
+        { error: "Unauthorized", message: "Missing or invalid Authorization header or active session." },
         { status: 401 }
       );
     }
 
-    const apiKeyRaw = authHeader.replace("Bearer ", "").trim();
-    const apiKey = await prisma.apiKey.findFirst({
-      where: {
-        OR: [
-          { keyHash: apiKeyRaw },
-          { keyPrefix: { startsWith: apiKeyRaw.substring(0, 12) } },
-        ],
-      },
+    const workspaceData = await prisma.workspace.findUnique({
+      where: { id: auth.workspace.id },
       include: {
-        workspace: {
+        domains: true,
+        audiences: {
           include: {
-            domains: true,
-            audiences: {
-              include: {
-                _count: {
-                  select: { contacts: true },
-                },
-              },
+            _count: {
+              select: { contacts: true },
             },
           },
         },
       },
     });
 
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: "Forbidden", message: "Invalid API Key" },
-        { status: 403 }
-      );
+    if (!workspaceData) {
+      return NextResponse.json({ error: "WorkspaceNotFound" }, { status: 404 });
     }
 
-    const workspace = apiKey.workspace;
+    const workspace = workspaceData;
     const remainingToday = Math.max(0, workspace.dailyQuota - workspace.usedToday);
     const totalContacts = workspace.audiences.reduce(
       (sum, aud) => sum + (aud._count?.contacts || 0),

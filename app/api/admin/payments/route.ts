@@ -55,14 +55,22 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      // Automatically upgrade workspace daily quota based on plan
-      const quota = tx.plan === "SCALE_PRO" ? 25000 : tx.plan === "GROWTH" ? 5000 : 500;
-      await prisma.workspace.updateMany({
-        data: {
-          plan: tx.plan,
-          dailyQuota: quota,
-        },
+      // Automatically upgrade user's workspace daily quota based on plan
+      const quota = tx.plan === "SCALE_PRO" ? 25000 : tx.plan === "GROWTH" ? 3000 : 100;
+      
+      const userWorkspaces = await prisma.workspaceMember.findMany({
+        where: { userId: tx.userId },
       });
+
+      for (const wm of userWorkspaces) {
+        await prisma.workspace.update({
+          where: { id: wm.workspaceId },
+          data: {
+            plan: tx.plan,
+            dailyQuota: quota,
+          },
+        });
+      }
 
       logSecurityAudit("PAYMENT_APPROVED", tx.userId, {
         transactionId: tx.id,

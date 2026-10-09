@@ -78,6 +78,19 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
     );
   }
 
+  // 1b. Strictly verify workspace daily quota
+  if (options.workspaceId) {
+    const ws = await prisma.workspace.findUnique({
+      where: { id: options.workspaceId },
+      select: { usedToday: true, dailyQuota: true, plan: true },
+    });
+    if (ws && (ws.usedToday + recipients.length) > ws.dailyQuota) {
+      throw new Error(
+        `Daily email quota exceeded (${ws.usedToday}/${ws.dailyQuota}). Please upgrade your workspace plan at /dashboard/billing to send more emails.`
+      );
+    }
+  }
+
   // 2. Generate unique Message-ID and tracking tokens
   const messageId = `msg_${crypto.randomBytes(8).toString("hex")}`;
   const openToken = crypto.randomBytes(16).toString("hex");

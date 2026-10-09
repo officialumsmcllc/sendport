@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "User ID and plan are required." }, { status: 400 });
     }
 
-    const quota = Number(dailyLimit) || (plan === "SCALE_PRO" ? 25000 : plan === "GROWTH" ? 5000 : 500);
+    const quota = Number(dailyLimit) || (plan === "SCALE_PRO" ? 25000 : plan === "GROWTH" ? 3000 : 100);
     const expiresAt = expiryDays ? new Date(Date.now() + Number(expiryDays) * 24 * 60 * 60 * 1000) : null;
 
     // Create or update subscription record
@@ -136,6 +136,25 @@ export async function PATCH(req: NextRequest) {
         ...(dailyLimit && { dailyLimit: Number(dailyLimit) }),
       },
     });
+
+    if (plan || dailyLimit) {
+      const user = await prisma.user.findUnique({
+        where: { id: sub.userId },
+        include: { workspaces: true },
+      });
+      if (user?.workspaces) {
+        const newQuota = Number(dailyLimit) || (plan === "SCALE_PRO" ? 25000 : plan === "GROWTH" ? 3000 : 100);
+        for (const wm of user.workspaces) {
+          await prisma.workspace.update({
+            where: { id: wm.workspaceId },
+            data: {
+              ...(plan && { plan }),
+              dailyQuota: newQuota,
+            },
+          });
+        }
+      }
+    }
 
     return NextResponse.json({
       success: true,

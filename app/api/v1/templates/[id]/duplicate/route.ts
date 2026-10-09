@@ -1,20 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
+import { getAuthContext } from "@/lib/auth/workspace-auth";
 
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await getAuthContext(req);
+    if (!auth) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id } = await params;
 
-    const original = await prisma.emailTemplate.findUnique({
-      where: { id },
+    const original = await prisma.emailTemplate.findFirst({
+      where: { id, workspaceId: auth.workspace.id },
     });
 
     if (!original) {
       return NextResponse.json(
-        { error: "NotFound", message: "Template not found" },
+        { error: "NotFound", message: "Template not found in your workspace" },
         { status: 404 }
       );
     }

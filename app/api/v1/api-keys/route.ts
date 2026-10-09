@@ -1,38 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { prisma } from "@/lib/db/prisma";
-import { getCurrentUser } from "@/lib/auth/session";
+import { getAuthContext } from "@/lib/auth/workspace-auth";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const session = await getCurrentUser();
-    if (!session) {
+    const auth = await getAuthContext(req);
+    if (!auth) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: session.userId },
-      include: {
-        workspaces: {
-          include: {
-            workspace: {
-              include: {
-                apiKeys: {
-                  orderBy: { createdAt: "desc" },
-                },
-              },
-            },
-          },
-        },
-      },
+    const apiKeys = await prisma.apiKey.findMany({
+      where: { workspaceId: auth.workspace.id },
+      orderBy: { createdAt: "desc" },
     });
 
-    const workspace = user?.workspaces?.[0]?.workspace;
-    const apiKeys = (workspace?.apiKeys || []).map((k) => ({
+    const mapped = apiKeys.map((k) => ({
       ...k,
       token: k.keyHash,
     }));
-    return NextResponse.json({ apiKeys });
+    return NextResponse.json({ apiKeys: mapped });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
@@ -40,29 +27,13 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getCurrentUser();
-    if (!session) {
+    const auth = await getAuthContext(req);
+    if (!auth) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await req.json();
     const { name, scope } = body;
-
-    const user = await prisma.user.findUnique({
-      where: { id: session.userId },
-      include: {
-        workspaces: {
-          include: {
-            workspace: true,
-          },
-        },
-      },
-    });
-
-    const workspace = user?.workspaces?.[0]?.workspace;
-    if (!workspace) {
-      return NextResponse.json({ error: "No workspace found for user" }, { status: 404 });
-    }
 
     // Generate sk_live_... key
     const rawSecret = crypto.randomBytes(24).toString("hex");
@@ -71,8 +42,8 @@ export async function POST(req: NextRequest) {
 
     const apiKey = await prisma.apiKey.create({
       data: {
-        workspaceId: workspace.id,
-        userId: session.userId,
+        workspaceId: auth.workspace.id,
+        userId: auth.user.id,
         name: name || "Production Key",
         keyHash: fullKey,
         keyPrefix,
@@ -95,8 +66,8 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    const session = await getCurrentUser();
-    if (!session) {
+    const auth = await getAuthContext(req);
+    if (!auth) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -106,8 +77,19 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: "Missing key ID" }, { status: 400 });
     }
 
+    const existingKey = await prisma.apiKey.findFirst({
+      where: {
+        id,
+        workspaceId: auth.workspace.id,
+      },
+    });
+
+    if (!existingKey) {
+      return NextResponse.json({ error: "API Key not found in your workspace" }, { status: 404 });
+    }
+
     await prisma.apiKey.delete({
-      where: { id },
+      where: { id: existingKey.id },
     });
 
     return NextResponse.json({ success: true, message: "API Key revoked successfully." });
