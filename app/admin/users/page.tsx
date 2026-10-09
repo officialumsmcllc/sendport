@@ -51,7 +51,7 @@ export default function AdminUsersPage() {
     setEditRole(user.role);
     const ws = user.workspaces?.[0]?.workspace;
     setEditPlan(ws?.plan || "STARTER");
-    setEditQuota(ws?.dailyQuota || 100);
+    setEditQuota(ws?.dailyQuota || 500);
   };
 
   const handleSaveUser = async (e: React.FormEvent) => {

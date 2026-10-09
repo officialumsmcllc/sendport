@@ -49,7 +49,7 @@ In this benchmark, we put **Sendport**, **Resend**, **SendGrid**, and **Postmark
 
 | Feature | Sendport | Resend | SendGrid (Twilio) | Postmark |
 | :--- | :--- | :--- | :--- | :--- |
-| **Free Tier** | **100 emails/day** (3,000/mo) | 100/day (3,000/mo) | 60-day trial only | 100 emails/mo |
+| **Free Tier** | **500 emails/day** (15,000/mo) | 100/day (3,000/mo) | 60-day trial only | 100 emails/mo |
 | **$20 Growth Plan** | **90,000 emails/mo** (3k/day) | 30,000 emails/mo | 50,000 emails/mo | 10,000 emails/mo ($15) |
 | **Enterprise / Scale** | **750,000 emails/mo** ($79) | Custom ($500+) | 100,000 emails/mo ($89.95) | 300,000 emails/mo ($245) |
 | **Multi-Domain Sending** | 1 on Free, 5 on Growth, Unltd Scale | 1 on free, add-on fees | Unlimited | Unlimited |
@@ -63,7 +63,7 @@ In this benchmark, we put **Sendport**, **Resend**, **SendGrid**, and **Postmark
 
 ## 2. Free Tier & Quota Breakdown
 
-- **Sendport**: Gives developers **100 emails per day** (3,000 emails/month) free forever with 2048-bit DKIM, automated DNS verification, and full REST API access. Upgrading to the $20 Growth plan unlocks **90,000 emails/month (3,000/day)** with automated 30-day warmup.
+- **Sendport**: Gives developers **500 emails per day** (15,000 emails/month) free forever with 2048-bit DKIM, automated DNS verification, and full REST API access. Upgrading to the $20 Growth plan unlocks **90,000 emails/month (3,000/day)** with automated 30-day warmup.
 - **Resend**: Caps you at **100 emails per day** (3,000/month) and charges extra for marketing contacts once you scale.
 - **SendGrid**: Discontinued its free forever plan; new accounts only receive a temporary 60-day trial followed by forced upgrades.
 - **Postmark**: Limits free developer tier to **100 emails per month total** and strictly bans marketing or newsletter broadcasts.

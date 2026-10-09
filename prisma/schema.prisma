@@ -31,7 +31,7 @@ model Workspace {
   name        String
   slug        String            @unique
   plan        String            @default("STARTER") // STARTER, GROWTH, SCALE_PRO
-  dailyQuota  Int               @default(100)
+  dailyQuota  Int               @default(500)
   usedToday   Int               @default(0)
   quotaResetAt DateTime         @default(now())
   createdAt   DateTime          @default(now())

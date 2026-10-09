@@ -31,7 +31,7 @@ export default function DashboardOverview() {
     bounced: 0,
     bounceRate: "0%",
     quotaToday: 0,
-    quotaTotal: 100,
+    quotaTotal: 500,
     plan: "STARTER",
   });
 

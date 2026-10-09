@@ -13,7 +13,7 @@ export default function BillingPage() {
   const [workspaceStats, setWorkspaceStats] = useState({
     plan: "STARTER",
     usedToday: 0,
-    dailyQuota: 100,
+    dailyQuota: 500,
   });
 
   useEffect(() => {
@@ -24,7 +24,7 @@ export default function BillingPage() {
           setWorkspaceStats({
             plan: data.stats.plan || "STARTER",
             usedToday: data.stats.usedToday || 0,
-            dailyQuota: data.stats.dailyQuota || 100,
+            dailyQuota: data.stats.dailyQuota || 500,
           });
         }
       })
@@ -42,7 +42,7 @@ export default function BillingPage() {
       id: "STARTER",
       name: "Starter",
       usdPrice: 0,
-      quota: `${workspaceStats.plan === "STARTER" && workspaceStats.dailyQuota > 100 ? workspaceStats.dailyQuota.toLocaleString() : "100"} emails / day`,
+      quota: "500 emails / day",
       domains: "1 Domain",
       features: ["2048-bit RSA DKIM", "REST API & SMTP Relay", "3 Days Log Retention"],
     },

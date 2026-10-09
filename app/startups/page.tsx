@@ -84,14 +84,14 @@ export default function StartupsPage() {
               <h3 className="text-base font-semibold text-white">Program Status: Inactive</h3>
               <p className="text-sm text-slate-300 mt-1 leading-relaxed">
                 Our founders cohort review is closed. You can still use Sendport's permanent free tier 
-                (100 emails/day free forever) or join the waitlist below to get notified when the next credit batch opens.
+                (500 emails/day free forever) or join the waitlist below to get notified when the next credit batch opens.
               </p>
               <div className="mt-4 flex flex-wrap gap-3">
                 <Link
                   href="/signup"
                   className="inline-flex items-center gap-2 text-xs font-semibold bg-emerald-500 hover:bg-emerald-400 text-white px-4 py-2 rounded-lg transition-colors"
                 >
-                  <span>Start with Free Tier (100 emails/day)</span>
+                  <span>Start with Free Tier (500 emails/day)</span>
                   <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
                 <Link
