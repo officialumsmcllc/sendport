@@ -167,7 +167,7 @@ export default function LoginPage() {
               <p className="text-xs text-slate-400">
                 New to Sendport?{" "}
                 <Link href="/signup" className="text-white font-bold hover:underline">
-                  Create an account (500 free emails/day)
+                  Create an account (100 free emails/day)
                 </Link>
               </p>
             </div>

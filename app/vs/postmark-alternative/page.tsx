@@ -17,7 +17,7 @@ export default function PostmarkAlternativePage() {
     { feature: "Live Spam Score & Content Tester", sendport: "1-Click Diagnostic (Included)", postmark: "Basic SpamCop/DMARC tools", note: "Live 0-100 deliverability scorecard" },
     { feature: "React Email & Tailwind Support", sendport: "Native Support (@react-email)", postmark: "HTML Mustache templates only", note: "Modern DX" },
     { feature: "Payment Rails", sendport: "Cards, Easypaisa, Raast, Crypto USDT", postmark: "Credit Card (USD Only)", note: "Frictionless global billing" },
-    { feature: "Permanent Free Developer Tier", sendport: "500 emails/day Free Forever", postmark: "100 emails/month total", note: "Generous developer tier" },
+    { feature: "Permanent Free Developer Tier", sendport: "100 emails/day Free Forever", postmark: "100 emails/month total", note: "Generous developer tier" },
   ];
 
   const faqs = [

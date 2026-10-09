@@ -36,8 +36,8 @@ export const siteConfig = {
         SAR: 0,
         PKR: 0,
       },
-      dailyLimit: "500 emails / day",
-      monthlyLimit: "15,000 / month",
+      dailyLimit: "100 emails / day",
+      monthlyLimit: "3,000 / month",
       features: [
         "1 Verified Sending Domain",
         "2048-bit RSA DKIM Signing",

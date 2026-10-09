@@ -18,7 +18,7 @@ export default function SendgridAlternativePage() {
     { feature: "Live Spam Score & Content Tester", sendport: "Built-in Pre-Flight Tester", sendgrid: "Paid 3rd party add-on" },
     { feature: "Regional Payment Rails", sendport: "Cards, Easypaisa, Raast, Crypto USDT", sendgrid: "US Credit Card Only" },
     { feature: "Developer UI / UX", sendport: "Clean Dark Resend Aesthetic", sendgrid: "Cluttered Legacy Twilio Console" },
-    { feature: "Permanent Free Tier", sendport: "500 emails/day Free Forever", sendgrid: "60-day trial only" },
+    { feature: "Permanent Free Tier", sendport: "100 emails/day Free Forever", sendgrid: "60-day trial only" },
   ];
 
   const faqs = [

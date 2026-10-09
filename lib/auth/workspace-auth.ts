@@ -85,7 +85,7 @@ export async function getAuthContext(req?: NextRequest): Promise<AuthContext | n
             name: `${user.name || user.email.split("@")[0]}'s Workspace`,
             slug,
             plan: "STARTER",
-            dailyQuota: 500,
+            dailyQuota: 100,
             members: {
               create: {
                 userId: user.id,

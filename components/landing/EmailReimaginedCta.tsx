@@ -21,7 +21,7 @@ export function EmailReimaginedCta() {
         </h2>
 
         <p className="mt-4 text-base sm:text-lg text-slate-400 max-w-xl mx-auto">
-          Start sending transactional and marketing emails in minutes. Generous free tier with 3 custom verified domains.
+          Start sending transactional and marketing emails in minutes. Generous free tier with 1 custom verified domain.
         </p>
 
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">

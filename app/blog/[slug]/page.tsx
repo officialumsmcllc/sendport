@@ -184,7 +184,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                 Start sending with 99.8% inbox placement today
               </h3>
               <p className="text-xs text-slate-300 max-w-md">
-                500 free emails every single day. No credit card required. Instant RSA-2048 DKIM setup.
+                100 free emails every single day. No credit card required. Instant RSA-2048 DKIM setup.
               </p>
             </div>
             <Link

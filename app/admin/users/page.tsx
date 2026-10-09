@@ -51,7 +51,7 @@ export default function AdminUsersPage() {
     setEditRole(user.role);
     const ws = user.workspaces?.[0]?.workspace;
     setEditPlan(ws?.plan || "STARTER");
-    setEditQuota(ws?.dailyQuota || 500);
+    setEditQuota(ws?.dailyQuota || 100);
   };
 
   const handleSaveUser = async (e: React.FormEvent) => {
@@ -337,14 +337,14 @@ export default function AdminUsersPage() {
                     const p = e.target.value;
                     setEditPlan(p);
                     if (p === "SCALE_PRO") setEditQuota(25000);
-                    else if (p === "GROWTH") setEditQuota(5000);
-                    else setEditQuota(500);
+                    else if (p === "GROWTH") setEditQuota(3000);
+                    else setEditQuota(100);
                   }}
                   className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-white font-bold focus:border-amber-500 focus:outline-none"
                 >
-                  <option value="STARTER">STARTER (Free - 500 emails/day)</option>
-                  <option value="GROWTH">GROWTH ($19/mo - 5,000 emails/day)</option>
-                  <option value="SCALE_PRO">SCALE_PRO ($59/mo - 25,000 emails/day)</option>
+                  <option value="STARTER">STARTER (Free - 100 emails/day)</option>
+                  <option value="GROWTH">GROWTH ($20/mo - 3,000 emails/day)</option>
+                  <option value="SCALE_PRO">SCALE_PRO ($79/mo - 25,000 emails/day)</option>
                 </select>
               </div>
 

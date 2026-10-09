@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
         name: `${user.name}'s Workspace`,
         slug,
         plan: "STARTER",
-        dailyQuota: 500,
+        dailyQuota: 100,
         members: {
           create: {
             userId: user.id,
@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
               <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 20px 0;">
                 <p style="margin: 0 0 8px 0; font-size: 13px; font-weight: bold; color: #1e293b;">Your Starter Plan Includes:</p>
                 <ul style="margin: 0; padding-left: 20px; font-size: 13px; color: #64748b;">
-                  <li>500 Free Emails / Day (15,000 / month)</li>
+                  <li>100 Free Emails / Day (3,000 / month)</li>
                   <li>1 Verified Custom Domain + DKIM & SPF</li>
                   <li>SMTP Relay & Developer REST API</li>
                 </ul>

@@ -177,7 +177,7 @@ export default function BlogIndexPage() {
             Ready to upgrade your email infrastructure?
           </h2>
           <p className="text-xs sm:text-sm text-slate-300 max-w-xl mx-auto">
-            Get 500 emails/day completely free. Set up custom domains with automated RSA-2048 DKIM in under 3 minutes.
+            Get 100 emails/day completely free. Set up a custom domain with automated RSA-2048 DKIM in under 3 minutes.
           </p>
           <div className="pt-2">
             <Link

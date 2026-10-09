@@ -251,7 +251,7 @@ export default function AdminAnalyticsPage() {
                 <div className="w-3 h-3 rounded-full bg-slate-400" />
                 <div>
                   <p className="text-xs font-bold text-white">Starter Free</p>
-                  <p className="text-[10px] text-slate-400">500 emails/day</p>
+                  <p className="text-[10px] text-slate-400">100 emails/day</p>
                 </div>
               </div>
               <span className="text-sm font-bold text-white">{metrics?.plans?.starter || 0}</span>
@@ -262,7 +262,7 @@ export default function AdminAnalyticsPage() {
                 <div className="w-3 h-3 rounded-full bg-blue-400" />
                 <div>
                   <p className="text-xs font-bold text-blue-300">Growth Pro</p>
-                  <p className="text-[10px] text-slate-400">5,000 emails/day ($19/mo)</p>
+                  <p className="text-[10px] text-slate-400">3,000 emails/day ($20/mo)</p>
                 </div>
               </div>
               <span className="text-sm font-bold text-blue-400">{metrics?.plans?.growth || 0}</span>
@@ -273,7 +273,7 @@ export default function AdminAnalyticsPage() {
                 <div className="w-3 h-3 rounded-full bg-amber-400" />
                 <div>
                   <p className="text-xs font-bold text-amber-300">Scale Enterprise</p>
-                  <p className="text-[10px] text-slate-400">25,000 emails/day ($59/mo)</p>
+                  <p className="text-[10px] text-slate-400">25,000 emails/day ($79/mo)</p>
                 </div>
               </div>
               <span className="text-sm font-bold text-amber-400">{metrics?.plans?.scale || 0}</span>

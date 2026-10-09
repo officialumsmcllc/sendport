@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
       });
 
       // Automatically upgrade user's workspace daily quota based on plan
-      const quota = tx.plan === "SCALE_PRO" ? 25000 : tx.plan === "GROWTH" ? 3000 : 500;
+      const quota = tx.plan === "SCALE_PRO" ? 25000 : tx.plan === "GROWTH" ? 3000 : 100;
       
       const userWorkspaces = await prisma.workspaceMember.findMany({
         where: { userId: tx.userId },

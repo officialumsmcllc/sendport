@@ -46,7 +46,7 @@ export default function HomePage() {
     },
     {
       q: "Is there a free tier for developers?",
-      a: "Yes! Our Starter plan is 100% Free Forever, giving you 500 emails/day (15,000/month), 1 verified custom domain, 2048-bit DKIM signing, live open/click tracking, and full REST API access.",
+      a: "Yes! Our Starter plan is 100% Free Forever, giving you 100 emails/day (3,000/month), 1 verified custom domain, 2048-bit DKIM signing, live open/click tracking, and full REST API access.",
     },
   ];
 
@@ -136,7 +136,7 @@ export default function HomePage() {
               {/* Key Trust Signals */}
               <div className="flex flex-wrap items-center justify-center gap-6 pt-6 text-xs font-medium text-slate-400">
                 <span className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" /> 500 Free Emails / Day
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" /> 100 Free Emails / Day
                 </span>
                 <span className="flex items-center gap-1.5">
                   <ShieldCheck className="w-4 h-4 text-emerald-400" /> 1 Free Custom Domain
@@ -284,7 +284,7 @@ export default function HomePage() {
               Start free, scale as you grow
             </h2>
             <p className="mt-3 text-base text-slate-400 max-w-lg mx-auto">
-              Zero hidden fees. Generous free tier with 3 custom verified domains included.
+              Zero hidden fees. Generous free tier with 1 custom verified domain included.
             </p>
           </div>
 
@@ -299,7 +299,7 @@ export default function HomePage() {
                   <span className="text-xs text-slate-500">/ month</span>
                 </div>
                 <ul className="mt-6 space-y-3 text-xs text-slate-300">
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> 500 emails / day (15,000/mo)</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> 100 emails / day (3,000/mo)</li>
                   <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> 1 Verified Custom Domain</li>
                   <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> 2048-bit RSA DKIM Signing</li>
                   <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> Developer REST API & SMTP Relay</li>
@@ -347,7 +347,7 @@ export default function HomePage() {
                   <span className="text-xs text-slate-500">/ month</span>
                 </div>
                 <ul className="mt-6 space-y-3 text-xs text-slate-300">
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> 20,000 emails / day (250,000/mo)</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> 25,000 emails / day (750,000/mo)</li>
                   <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> Managed Dedicated Clean IP</li>
                   <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> BIMI & VMC Checkmark Advisor</li>
                   <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> Spamhaus Blocklist Proactive Monitoring</li>

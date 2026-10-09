@@ -51,12 +51,12 @@ export default function AdminSubscriptionsPage() {
     setPlan(p);
     if (p === "SCALE_PRO") {
       setDailyLimit(25000);
-      setAmount("59");
+      setAmount("79");
     } else if (p === "GROWTH") {
-      setDailyLimit(5000);
-      setAmount("19");
+      setDailyLimit(3000);
+      setAmount("20");
     } else {
-      setDailyLimit(500);
+      setDailyLimit(100);
       setAmount("0");
     }
   };
@@ -259,9 +259,9 @@ export default function AdminSubscriptionsPage() {
                   onChange={(e) => handlePlanChange(e.target.value)}
                   className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-white font-bold focus:border-amber-500 focus:outline-none"
                 >
-                  <option value="STARTER">STARTER (Free - 500 emails/day)</option>
-                  <option value="GROWTH">GROWTH PRO ($19/mo - 5,000 emails/day)</option>
-                  <option value="SCALE_PRO">SCALE ENTERPRISE ($59/mo - 25,000 emails/day)</option>
+                  <option value="STARTER">STARTER (Free - 100 emails/day)</option>
+                  <option value="GROWTH">GROWTH ($20/mo - 3,000 emails/day)</option>
+                  <option value="SCALE_PRO">SCALE PRO ($79/mo - 25,000 emails/day)</option>
                 </select>
               </div>
 

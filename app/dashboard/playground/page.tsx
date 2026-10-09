@@ -66,7 +66,7 @@ const EMAIL_TEMPLATES = [
   {
     id: "receipt",
     name: "🧾 Payment Receipt",
-    subject: "Receipt for Sendport Scale Plan ($19.00 USD)",
+    subject: "Receipt for Sendport Growth Plan ($20.00 USD)",
     html: `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 540px; margin: 0 auto; padding: 28px; background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0;">
   <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding-bottom: 16px; margin-bottom: 20px;">
     <div>
@@ -74,11 +74,11 @@ const EMAIL_TEMPLATES = [
       <p style="margin: 4px 0 0 0; color: #64748b; font-size: 12px;">Invoice #INV-2026-0894</p>
     </div>
     <div style="text-align: right;">
-      <span style="font-size: 20px; font-weight: 800; color: #059669;">$19.00</span>
+      <span style="font-size: 20px; font-weight: 800; color: #059669;">$20.00</span>
     </div>
   </div>
   <table style="width: 100%; border-collapse: collapse; font-size: 13px; color: #334155; margin-bottom: 20px;">
-    <tr><td style="padding: 8px 0; border-bottom: 1px solid #f8fafc;">Plan</td><td style="text-align: right; font-weight: 600;">Scale (150,000 Emails/mo)</td></tr>
+    <tr><td style="padding: 8px 0; border-bottom: 1px solid #f8fafc;">Plan</td><td style="text-align: right; font-weight: 600;">Growth (90,000 Emails/mo)</td></tr>
     <tr><td style="padding: 8px 0; border-bottom: 1px solid #f8fafc;">Status</td><td style="text-align: right; color: #059669; font-weight: 600;">Paid</td></tr>
     <tr><td style="padding: 8px 0;">Method</td><td style="text-align: right; font-weight: 600;">Automated Billing</td></tr>
   </table>

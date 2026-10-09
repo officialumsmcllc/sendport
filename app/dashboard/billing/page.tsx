@@ -13,7 +13,7 @@ export default function BillingPage() {
   const [workspaceStats, setWorkspaceStats] = useState({
     plan: "STARTER",
     usedToday: 0,
-    dailyQuota: 500,
+    dailyQuota: 100,
   });
 
   useEffect(() => {
@@ -24,7 +24,7 @@ export default function BillingPage() {
           setWorkspaceStats({
             plan: data.stats.plan || "STARTER",
             usedToday: data.stats.usedToday || 0,
-            dailyQuota: data.stats.dailyQuota || 500,
+            dailyQuota: data.stats.dailyQuota || 100,
           });
         }
       })
@@ -42,7 +42,7 @@ export default function BillingPage() {
       id: "STARTER",
       name: "Starter",
       usdPrice: 0,
-      quota: "500 emails / day",
+      quota: "100 emails / day",
       domains: "1 Domain",
       features: ["2048-bit RSA DKIM", "REST API & SMTP Relay", "3 Days Log Retention"],
     },
