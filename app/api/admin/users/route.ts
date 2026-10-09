@@ -96,6 +96,34 @@ export async function PATCH(req: NextRequest) {
       logSecurityAudit("WORKSPACE_ADMIN_MODIFIED", session.userId, { workspaceId, updateData });
     }
 
+    // 3. Keep Subscription record in sync with workspace plan
+    if (userId && plan) {
+      try {
+        const existingSub = await prisma.subscription.findFirst({
+          where: { userId },
+        });
+        if (existingSub) {
+          await prisma.subscription.update({
+            where: { id: existingSub.id },
+            data: {
+              plan,
+              dailyLimit: dailyQuota !== undefined ? Number(dailyQuota) : existingSub.dailyLimit,
+              status: "ACTIVE",
+            },
+          });
+        } else {
+          await prisma.subscription.create({
+            data: {
+              userId,
+              plan,
+              dailyLimit: dailyQuota !== undefined ? Number(dailyQuota) : 500,
+              status: "ACTIVE",
+            },
+          });
+        }
+      } catch (_) {}
+    }
+
     return NextResponse.json({
       success: true,
       message: "Account settings updated successfully.",
