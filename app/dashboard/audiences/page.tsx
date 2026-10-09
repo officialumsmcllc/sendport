@@ -90,6 +90,22 @@ export default function AudiencesPage() {
   const [importing, setImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Broadcast Campaign Modal State
+  const [showBroadcastModal, setShowBroadcastModal] = useState(false);
+  const [broadcastSubject, setBroadcastSubject] = useState("");
+  const [broadcastFromName, setBroadcastFromName] = useState("Sendport Team");
+  const [broadcastFromEmail, setBroadcastFromEmail] = useState("");
+  const [broadcastHtml, setBroadcastHtml] = useState(
+    "<h1>Hello {{first_name}},</h1>\n<p>We're thrilled to share our latest product updates with you.</p>\n<p>Best regards,<br/>Team</p>"
+  );
+  const [broadcastSending, setBroadcastSending] = useState(false);
+  const [broadcastProgress, setBroadcastProgress] = useState<{
+    sent: number;
+    failed: number;
+    total: number;
+    finished: boolean;
+  } | null>(null);
+
   // Toast feedback
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
@@ -509,6 +525,55 @@ export default function AudiencesPage() {
     }
   };
 
+  const handleLaunchBroadcast = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedAudience || !broadcastSubject.trim() || !broadcastFromEmail.trim() || !broadcastHtml.trim()) {
+      showToast("Please provide subject, sender email, and HTML message.", "error");
+      return;
+    }
+
+    try {
+      setBroadcastSending(true);
+      setBroadcastProgress({
+        sent: 0,
+        failed: 0,
+        total: totalSubscribed,
+        finished: false,
+      });
+
+      const res = await fetch("/api/v1/broadcasts/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          audienceId: selectedAudience,
+          subject: broadcastSubject.trim(),
+          fromName: broadcastFromName.trim() || undefined,
+          fromEmail: broadcastFromEmail.trim(),
+          htmlContent: broadcastHtml,
+        }),
+      });
+
+      const json = await res.json();
+      if (res.ok) {
+        setBroadcastProgress({
+          sent: json.sentCount || 0,
+          failed: json.failedCount || 0,
+          total: json.totalRecipients || 0,
+          finished: true,
+        });
+        showToast(json.message || "Broadcast successfully sent to your audience!");
+      } else {
+        showToast(json.error || "Failed to launch broadcast.", "error");
+        setBroadcastProgress(null);
+      }
+    } catch (err: any) {
+      showToast(err.message || "Failed to dispatch broadcast.", "error");
+      setBroadcastProgress(null);
+    } finally {
+      setBroadcastSending(false);
+    }
+  };
+
   // --- FILTERED CONTACTS ---
   const filteredContacts = contacts.filter((c) => {
     const matchesSearch =
@@ -584,9 +649,18 @@ export default function AudiencesPage() {
               setContactTag("Newsletter");
               setShowAddContact(true);
             }}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-slate-800 transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 transition-colors"
           >
             <Plus className="w-3.5 h-3.5" /> Add Contact
+          </button>
+          <button
+            onClick={() => {
+              setBroadcastProgress(null);
+              setShowBroadcastModal(true);
+            }}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 transition-colors"
+          >
+            <Send className="w-3.5 h-3.5" /> Send Broadcast
           </button>
         </div>
       </div>
@@ -1404,6 +1478,160 @@ export default function AudiencesPage() {
                 Save Changes
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: LAUNCH EMAIL BROADCAST */}
+      {showBroadcastModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
+          <div className="w-full max-w-2xl rounded-3xl bg-white border border-slate-200 p-6 sm:p-7 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
+                    <Send className="w-4 h-4" />
+                  </div>
+                  <h3 className="text-base font-bold text-slate-900">Launch Email Broadcast</h3>
+                </div>
+                <p className="text-xs text-slate-500 mt-1">
+                  Send a personalized email campaign directly to all subscribed contacts in this list.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowBroadcastModal(false)}
+                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Audience & Subscriber Summary Badge */}
+            <div className="p-3.5 rounded-2xl bg-indigo-50/60 border border-indigo-100/80 flex items-center justify-between">
+              <div className="space-y-0.5">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-900">Target Audience</span>
+                <div className="text-xs font-extrabold text-indigo-950">
+                  {activeAudienceObj?.name || "Selected Audience"}
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800">Recipients</span>
+                <div className="text-xs font-black text-emerald-700">
+                  {totalSubscribed} Subscribed Contacts
+                </div>
+              </div>
+            </div>
+
+            {broadcastProgress && (
+              <div
+                className={`p-4 rounded-2xl border text-xs space-y-1.5 ${
+                  broadcastProgress.finished
+                    ? "bg-emerald-50 border-emerald-200 text-emerald-900"
+                    : "bg-amber-50 border-amber-200 text-amber-900"
+                }`}
+              >
+                <div className="font-bold flex items-center gap-2">
+                  {broadcastProgress.finished ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  ) : (
+                    <div className="w-4 h-4 border-2 border-amber-600 border-t-transparent rounded-full animate-spin" />
+                  )}
+                  <span>
+                    {broadcastProgress.finished
+                      ? "Broadcast Dispatch Complete!"
+                      : "Dispatching batch emails across high-speed MTA..."}
+                  </span>
+                </div>
+                <div className="flex gap-4 text-[11px] font-semibold text-slate-700 pt-1">
+                  <span>Sent: <strong className="text-emerald-700">{broadcastProgress.sent}</strong></span>
+                  <span>Failed: <strong className="text-rose-600">{broadcastProgress.failed}</strong></span>
+                  <span>Total: <strong>{broadcastProgress.total}</strong></span>
+                </div>
+              </div>
+            )}
+
+            <form onSubmit={handleLaunchBroadcast} className="space-y-4 text-xs">
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Campaign Subject Line *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Major Product Update: What's new in Sendport 2.0"
+                  value={broadcastSubject}
+                  onChange={(e) => setBroadcastSubject(e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Sender Name</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Muhammad from Sendport"
+                    value={broadcastFromName}
+                    onChange={(e) => setBroadcastFromName(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Sender Email Address *</label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="e.g. team@yourdomain.com"
+                    value={broadcastFromEmail}
+                    onChange={(e) => setBroadcastFromEmail(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="font-bold text-slate-700">HTML Message Body *</label>
+                  <span className="text-[10px] text-indigo-600 font-medium">
+                    Available tags: <code>{"{{first_name}}"}</code>, <code>{"{{email}}"}</code>
+                  </span>
+                </div>
+                <textarea
+                  rows={6}
+                  required
+                  value={broadcastHtml}
+                  onChange={(e) => setBroadcastHtml(e.target.value)}
+                  className="w-full font-mono text-[11px] rounded-xl border border-slate-200 p-3 text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20"
+                  placeholder="<p>Hi {{first_name}},</p><p>Your message content here...</p>"
+                />
+              </div>
+
+              <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowBroadcastModal(false)}
+                  className="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+                >
+                  Close
+                </button>
+                <button
+                  type="submit"
+                  disabled={broadcastSending || totalSubscribed === 0}
+                  className="rounded-xl bg-indigo-600 hover:bg-indigo-700 px-6 py-2.5 text-xs font-bold text-white shadow-xs transition-colors flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+                >
+                  {broadcastSending ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Sending Broadcast...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-3.5 h-3.5" />
+                      <span>Dispatch Campaign ({totalSubscribed})</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

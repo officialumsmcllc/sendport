@@ -27,6 +27,7 @@ import {
   Activity,
   Flame,
   UserCheck,
+  Gift,
 } from "lucide-react";
 
 export default function DashboardLayout({
@@ -106,6 +107,7 @@ export default function DashboardLayout({
     { label: "Suppression List", href: "/dashboard/suppressions", icon: Ban },
     { label: "Live Delivery Logs", href: "/dashboard/logs", icon: ShieldCheck },
     { label: "Billing & Plans", href: "/dashboard/billing", icon: CreditCard },
+    { label: "Refer & Earn (20%)", href: "/dashboard/referrals", icon: Gift },
     { label: "2FA & Audit Logs", href: "/dashboard/security", icon: Lock },
   ];
 

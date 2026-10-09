@@ -24,6 +24,7 @@ model User {
   subscriptions Subscription[]
   payments      PaymentTransaction[]
   auditLogs     AuditLog[]
+  referrals     ReferralReward[]
 }
 
 model Workspace {
@@ -46,6 +47,7 @@ model Workspace {
   audiences   Audience[]
   webhooks    Webhook[]
   suppressions Suppression[]
+  broadcasts  BroadcastBlast[]
 }
 
 model WorkspaceMember {
@@ -313,4 +315,38 @@ model PaymentMethodConfig {
   displayOrder    Int       @default(0)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+}
+
+model BroadcastBlast {
+  id              String    @id @default(cuid())
+  workspaceId     String
+  audienceId      String
+  subject         String
+  fromName        String?
+  fromEmail       String
+  htmlContent     String    @db.Text
+  totalRecipients Int       @default(0)
+  sentCount       Int       @default(0)
+  failedCount     Int       @default(0)
+  status          String    @default("COMPLETED") // SENDING, COMPLETED, FAILED
+  createdAt       DateTime  @default(now())
+
+  workspace       Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+model ReferralReward {
+  id              String    @id @default(cuid())
+  referrerId      String
+  referredEmail   String?
+  code            String
+  commissionRate  Float     @default(0.20) // 20%
+  amountEarned    Float     @default(0)
+  currency        String    @default("USD")
+  status          String    @default("PENDING") // PENDING, PAID, CANCELLED
+  payoutMethod    String?   // EASYPAISA, JAZZCASH, USDT, BANK
+  payoutAccount   String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user            User      @relation(fields: [referrerId], references: [id], onDelete: Cascade)
 }
