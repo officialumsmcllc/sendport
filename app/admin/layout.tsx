@@ -190,15 +190,26 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         {/* Footer actions */}
         <div className="border-t border-slate-800/80 pt-3 space-y-2 px-1">
-          <Link
-            href="/dashboard"
-            className="w-full flex items-center justify-between py-1.5 px-2.5 rounded-lg border border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-800 hover:text-white text-xs font-semibold transition-colors"
-          >
-            <span className="flex items-center gap-1.5 text-[11px]">
-              <ArrowLeft className="w-3.5 h-3.5" /> Customer Dashboard
-            </span>
-            <ExternalLink className="w-3 h-3 text-slate-400" />
-          </Link>
+          <div className="flex items-center gap-1.5">
+            <Link
+              href="/dashboard"
+              className="flex-1 flex items-center justify-between py-1.5 px-2.5 rounded-lg border border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-800 hover:text-white text-xs font-semibold transition-colors"
+            >
+              <span className="flex items-center gap-1.5 text-[11px]">
+                <ArrowLeft className="w-3.5 h-3.5" /> Dashboard
+              </span>
+              <ExternalLink className="w-3 h-3 text-slate-400" />
+            </Link>
+
+            <Link
+              href="/"
+              className="flex items-center gap-1 py-1.5 px-2.5 rounded-lg border border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-800 hover:text-white text-xs font-semibold transition-colors"
+              title="Visit Public Website"
+            >
+              <Globe2 className="w-3.5 h-3.5 text-slate-400" />
+              <span className="text-[11px]">Site</span>
+            </Link>
+          </div>
 
           <button
             onClick={handleLogout}
@@ -213,39 +224,66 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {mobileNavOpen && (
         <div className="fixed inset-0 z-50 flex lg:hidden">
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileNavOpen(false)} />
-          <div className="relative flex w-4/5 max-w-xs flex-1 flex-col bg-slate-950 p-4 border-r border-slate-800">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-800">
-              <SendportLogo size={26} dark={true} />
-              <button onClick={() => setMobileNavOpen(false)} className="p-1 text-slate-400">
-                <X className="w-5 h-5" />
+          <div className="relative flex w-4/5 max-w-xs flex-1 flex-col bg-slate-950 p-4 border-r border-slate-800 justify-between">
+            <div>
+              <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+                <SendportLogo size={26} dark={true} />
+                <button onClick={() => setMobileNavOpen(false)} className="p-1 text-slate-400">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <nav className="mt-4 space-y-1">
+                {navItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = pathname === item.href;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setMobileNavOpen(false)}
+                      className={`flex items-center justify-between rounded-lg px-3 py-2 text-xs font-semibold ${
+                        isActive ? "bg-amber-500 text-slate-950 font-bold" : "text-slate-300 hover:bg-slate-800"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Icon className="w-4 h-4 text-amber-400" />
+                        <span>{item.label}</span>
+                      </div>
+                      {item.badge !== undefined && item.badge > 0 && (
+                        <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold bg-amber-500 text-slate-950">
+                          {item.badge}
+                        </span>
+                      )}
+                    </Link>
+                  );
+                })}
+              </nav>
+            </div>
+
+            <div className="border-t border-slate-800 pt-3 space-y-2">
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/dashboard"
+                  onClick={() => setMobileNavOpen(false)}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-lg border border-slate-700 bg-slate-800/50 text-slate-300 text-xs font-semibold"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" /> Dashboard
+                </Link>
+                <Link
+                  href="/"
+                  onClick={() => setMobileNavOpen(false)}
+                  className="flex items-center justify-center gap-1 py-1.5 px-3 rounded-lg border border-slate-700 bg-slate-800/50 text-slate-300 text-xs font-semibold"
+                >
+                  <Globe2 className="w-3.5 h-3.5" /> Site
+                </Link>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-300 text-xs font-semibold"
+              >
+                <LogOut className="w-3.5 h-3.5" /> Sign Out
               </button>
             </div>
-            <nav className="mt-4 space-y-1">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = pathname === item.href;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setMobileNavOpen(false)}
-                    className={`flex items-center justify-between rounded-lg px-3 py-2 text-xs font-semibold ${
-                      isActive ? "bg-amber-500 text-slate-950 font-bold" : "text-slate-300 hover:bg-slate-800"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <Icon className="w-4 h-4 text-amber-400" />
-                      <span>{item.label}</span>
-                    </div>
-                    {item.badge !== undefined && item.badge > 0 && (
-                      <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold bg-amber-500 text-slate-950">
-                        {item.badge}
-                      </span>
-                    )}
-                  </Link>
-                );
-              })}
-            </nav>
           </div>
         </div>
       )}
