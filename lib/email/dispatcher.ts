@@ -5,6 +5,7 @@ import { signDkimHeader } from "@/lib/dns/dkim";
 import { dispatchWebhookEvents } from "@/lib/webhooks/dispatcher";
 import { siteConfig } from "@/lib/config/site";
 import { dispatchDirectToMx } from "@/lib/email/direct-mx";
+import { generatePlainTextFromHtml } from "@/lib/deliverability/spam-checker";
 
 export interface SendEmailOptions {
   workspaceId: string;
@@ -139,7 +140,16 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
     );
   }
 
-  // 4. DKIM Signing
+  // 3b. Automatic Plain Text Generation (Protects against SpamAssassin HTML_ONLY penalty)
+  const plainTextBody = options.text || generatePlainTextFromHtml(processedHtml);
+
+  // 3c. RFC 8058 One-Click List-Unsubscribe Headers (Mandated by Google & Yahoo since 2024)
+  const unsubscribeUrl = `${appUrl}/api/unsubscribe/${openToken}`;
+  const unsubscribeMailto = `mailto:unsubscribe@${senderDomain}?subject=unsubscribe-${openToken}`;
+  const listUnsubscribeHeader = `<${unsubscribeUrl}>, <${unsubscribeMailto}>`;
+  const listUnsubscribePostHeader = "List-Unsubscribe=One-Click";
+
+  // 4. DKIM Signing (RFC-6376 with RFC 8058 Header Protection)
   let dkimSignatureHeader = "";
   if (domainRecord && domainRecord.dkimPrivateKey) {
     dkimSignatureHeader = signDkimHeader(
@@ -152,6 +162,8 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
         Subject: options.subject,
         Date: new Date().toUTCString(),
         "Message-ID": `<${messageId}@${senderDomain}>`,
+        "List-Unsubscribe": listUnsubscribeHeader,
+        "List-Unsubscribe-Post": listUnsubscribePostHeader,
       },
       processedHtml
     );
@@ -174,7 +186,7 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
       to: recipients.join(", "),
       subject: options.subject,
       htmlBody: processedHtml,
-      textBody: options.text || "",
+      textBody: plainTextBody,
       status: "PENDING",
       openToken,
       clickToken,
@@ -211,15 +223,15 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
           to_addresses: recipients,
           subject: options.subject,
           html: processedHtml,
-          text: options.text,
+          text: plainTextBody,
           return_path: `bounces@${senderDomain}`,
           dkim_private_key: domainRecord?.dkimPrivateKey || undefined,
           dkim_selector: domainRecord?.dkimSelector || "sendport",
           dkim_domain: domainRecord?.name || senderDomain,
           headers: {
             "Message-ID": `<${messageId}@${senderDomain}>`,
-            "List-Unsubscribe": `<${appUrl}/api/unsubscribe/${openToken}>`,
-            "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+            "List-Unsubscribe": listUnsubscribeHeader,
+            "List-Unsubscribe-Post": listUnsubscribePostHeader,
             "Return-Path": `<bounces@${senderDomain}>`,
             "X-Entity-Ref-ID": messageId,
             "X-Sendport-Node": assignedSubdomain,
@@ -254,12 +266,13 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
           to_addresses: recipients,
           subject: options.subject,
           html: processedHtml,
-          text: options.text,
+          text: plainTextBody,
           reply_to: options.replyTo,
           return_path: `bounces@${assignedSubdomain}`,
           headers: {
             "Message-ID": `<${messageId}@${senderDomain}>`,
-            "List-Unsubscribe": `<${appUrl}/api/unsubscribe/${openToken}>`,
+            "List-Unsubscribe": listUnsubscribeHeader,
+            "List-Unsubscribe-Post": listUnsubscribePostHeader,
             "Return-Path": `<bounces@${assignedSubdomain}>`,
             "X-Sendport-Node": assignedSubdomain,
             ...(dkimSignatureHeader ? { "DKIM-Signature": dkimSignatureHeader } : {}),
@@ -292,9 +305,13 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
           to_addresses: recipients,
           subject: options.subject,
           html: processedHtml,
-          text: options.text,
+          text: plainTextBody,
           reply_to: options.replyTo,
-          headers: options.headers,
+          headers: {
+            "List-Unsubscribe": listUnsubscribeHeader,
+            "List-Unsubscribe-Post": listUnsubscribePostHeader,
+            ...options.headers,
+          },
           dkim_selector: domainRecord?.dkimSelector || "sendport",
           dkim_private_key: domainRecord?.dkimPrivateKey || undefined,
         }),
@@ -318,11 +335,12 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
       to: recipients,
       subject: options.subject,
       html: processedHtml,
-      text: options.text,
+      text: plainTextBody,
       replyTo: options.replyTo,
       headers: {
         "Message-ID": `<${messageId}@${senderDomain}>`,
-        "List-Unsubscribe": `<${appUrl}/api/unsubscribe/${openToken}>`,
+        "List-Unsubscribe": listUnsubscribeHeader,
+        "List-Unsubscribe-Post": listUnsubscribePostHeader,
         ...(dkimSignatureHeader ? { "DKIM-Signature": dkimSignatureHeader } : {}),
         ...options.headers,
       },
@@ -359,11 +377,12 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
           to: recipients,
           subject: options.subject,
           html: processedHtml,
-          text: options.text,
+          text: plainTextBody,
           replyTo: options.replyTo,
           headers: {
             "Message-ID": `<${messageId}@${senderDomain}>`,
-            "List-Unsubscribe": `<${appUrl}/api/unsubscribe/${openToken}>`,
+            "List-Unsubscribe": listUnsubscribeHeader,
+            "List-Unsubscribe-Post": listUnsubscribePostHeader,
             ...(dkimSignatureHeader ? { "DKIM-Signature": dkimSignatureHeader } : {}),
             ...options.headers,
           },

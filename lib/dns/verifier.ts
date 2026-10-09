@@ -67,7 +67,7 @@ async function resolveTxtWithFallback(hostname: string): Promise<string[]> {
 export async function verifyDomainDns(
   domainName: string,
   dkimSelector: string = "sendport",
-  expectedPublicKey: string
+  expectedPublicKey: string = ""
 ): Promise<DnsVerificationResult> {
   const cleanDomain = domainName.trim().toLowerCase();
   const dkimHostname = `${dkimSelector}._domainkey.${cleanDomain}`;
