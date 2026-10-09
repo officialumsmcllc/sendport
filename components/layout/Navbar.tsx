@@ -106,15 +106,7 @@ export function Navbar({
           <Link href="/blog" className="hover:text-primary-400 transition-colors">
             Blog
           </Link>
-          <Link
-            href="/startups"
-            className="text-emerald-400 hover:text-emerald-300 transition-colors flex items-center gap-1.5 font-semibold"
-          >
-            <span>Startups</span>
-            <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-1.5 py-0.2 rounded-full font-bold">
-              $1k
-            </span>
-          </Link>
+
           <Link
             href="/status"
             className="hover:text-primary-400 transition-colors flex items-center gap-1.5"
@@ -280,9 +272,7 @@ export function Navbar({
           <Link href="/blog" className="block text-sm py-1 font-medium hover:text-primary-400">
             Blog & Guides
           </Link>
-          <Link href="/startups" className="block text-sm py-1 font-semibold text-emerald-400 hover:text-emerald-300">
-            🚀 Sendport for Startups ($1,000 Credits)
-          </Link>
+
           <Link href="/status" className="block text-sm py-1 font-medium hover:text-primary-400">
 
             Uptime Status
