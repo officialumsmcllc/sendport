@@ -58,9 +58,9 @@ export function AudienceWidget() {
             {/* Mock Contacts List */}
             <div className="space-y-2">
               {[
-                { email: "sarah.connor@cyberdyne.com", status: "Subscribed", tag: "Enterprise" },
-                { email: "john.wick@continental.hotel", status: "Subscribed", tag: "VIP" },
-                { email: "tony.stark@starkindustries.io", status: "Subscribed", tag: "SaaS Pro" },
+                { email: "alex@saasapp.io", status: "Subscribed", tag: "Developer" },
+                { email: "sarah@startup.com", status: "Subscribed", tag: "Growth" },
+                { email: "billing@ecommerce.co", status: "Subscribed", tag: "Customer" },
               ].map((c, i) => (
                 <div key={i} className="flex items-center justify-between p-2.5 rounded-lg bg-slate-900/40 border border-slate-800/60 text-xs">
                   <span className="font-mono text-slate-300">{c.email}</span>

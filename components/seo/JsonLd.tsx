@@ -51,13 +51,6 @@ export function SendportJsonLd() {
       description: tier.description,
       availability: "https://schema.org/InStock",
     })),
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: "4.9",
-      ratingCount: "2840",
-      bestRating: "5",
-      worstRating: "1",
-    },
     featureList: [
       "2048-bit RSA DKIM Key Generation & Signing",
       "Sub-10ms REST API Gateway",

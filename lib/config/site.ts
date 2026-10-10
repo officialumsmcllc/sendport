@@ -12,15 +12,15 @@ export const siteConfig = {
   supportEmail: "support@getsendport.com",
   social: {
     twitter: "https://twitter.com/getsendport",
-    github: "https://github.com/sendport/sendport",
+    github: "https://github.com/officialumsmcllc/sendport",
     linkedin: "https://linkedin.com/company/sendport",
   },
   stats: {
-    uptime: "99.99%",
-    avgLatency: "8.4ms",
-    deliverability: "99.98%",
-    emailsDelivered: "50M+",
-    activeSenders: "12,000+",
+    uptime: "99.9%",
+    avgLatency: "< 10ms",
+    deliverability: "99.9%",
+    dkimStandard: "2048-bit RSA",
+    freeTierDaily: "100 sends/day",
   },
   pricingTiers: [
     {

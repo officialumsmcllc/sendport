@@ -56,12 +56,6 @@ export default function PostmarkAlternativePage() {
             availability: "https://schema.org/InStock",
           },
         ],
-        aggregateRating: {
-          "@type": "AggregateRating",
-          ratingValue: "4.9",
-          reviewCount: "540",
-          bestRating: "5",
-        },
       },
       {
         "@type": "BreadcrumbList",

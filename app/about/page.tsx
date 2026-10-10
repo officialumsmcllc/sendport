@@ -62,8 +62,8 @@ export default function AboutPage() {
           {/* Join CTA */}
           <div className="p-8 rounded-2xl border border-slate-800 bg-slate-900/40 flex flex-col sm:flex-row items-center justify-between gap-6">
             <div>
-              <h3 className="text-lg font-bold text-white">Ready to join thousands of developers?</h3>
-              <p className="text-xs text-slate-400 mt-1">Get started for free today. No credit card required.</p>
+              <h3 className="text-lg font-bold text-white">Ready to elevate your email delivery?</h3>
+              <p className="text-xs text-slate-400 mt-1">Get started with 100 free sends every day. No credit card required.</p>
             </div>
             <Link
               href="/dashboard"

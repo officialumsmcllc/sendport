@@ -37,10 +37,10 @@ export default function StatusPage() {
           {/* Metrics Overview Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[
-              { label: "Overall Uptime (90d)", val: "99.994%", icon: Activity },
-              { label: "Average Dispatch Latency", val: "9.2 ms", icon: Zap },
-              { label: "Primary Inbox Rate", val: "99.98%", icon: ShieldCheck },
-              { label: "Active Edge POPs", val: "28 Global", icon: Globe },
+              { label: "Overall Uptime", val: "99.9%", icon: Activity },
+              { label: "Average Dispatch Latency", val: "< 10 ms", icon: Zap },
+              { label: "Inbox Target Rate", val: "99.9%", icon: ShieldCheck },
+              { label: "Edge Relay Architecture", val: "Multi-Region", icon: Globe },
             ].map((m) => {
               const Icon = m.icon;
               return (

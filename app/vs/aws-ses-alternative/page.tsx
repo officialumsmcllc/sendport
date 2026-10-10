@@ -66,12 +66,6 @@ export default function AwsSesAlternativePage() {
             availability: "https://schema.org/InStock",
           },
         ],
-        aggregateRating: {
-          "@type": "AggregateRating",
-          ratingValue: "4.9",
-          reviewCount: "980",
-          bestRating: "5",
-        },
       },
       {
         "@type": "BreadcrumbList",

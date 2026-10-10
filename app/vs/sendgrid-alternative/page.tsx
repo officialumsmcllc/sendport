@@ -65,12 +65,6 @@ export default function SendgridAlternativePage() {
             availability: "https://schema.org/InStock",
           },
         ],
-        aggregateRating: {
-          "@type": "AggregateRating",
-          ratingValue: "4.9",
-          reviewCount: "620",
-          bestRating: "5",
-        },
       },
       {
         "@type": "BreadcrumbList",

@@ -66,12 +66,6 @@ export default function MailgunAlternativePage() {
             availability: "https://schema.org/InStock",
           },
         ],
-        aggregateRating: {
-          "@type": "AggregateRating",
-          ratingValue: "4.9",
-          reviewCount: "1240",
-          bestRating: "5",
-        },
       },
       {
         "@type": "BreadcrumbList",

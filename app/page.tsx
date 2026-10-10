@@ -97,7 +97,7 @@ export default function HomePage() {
               <div className="inline-flex p-[1px] rounded-full rainbow-border shadow-lg shadow-primary-500/10 hover:scale-105 transition-transform duration-300">
                 <div className="inline-flex items-center gap-2 rounded-full bg-black px-4 py-1.5 text-xs font-medium text-slate-200">
                   <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span>Next-Gen Email Infrastructure for AI & Modern Developers</span>
+                  <span>Next-Gen Email Infrastructure · Public Beta for Developers</span>
                   <ArrowRight className="w-3 h-3 text-slate-400" />
                 </div>
               </div>
@@ -142,7 +142,7 @@ export default function HomePage() {
                   <ShieldCheck className="w-4 h-4 text-emerald-400" /> 1 Free Custom Domain
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <Zap className="w-4 h-4 text-emerald-400" /> 99.99% Primary Inbox Placement
+                  <Zap className="w-4 h-4 text-emerald-400" /> 99.9% Primary Inbox Placement
                 </span>
               </div>
             </div>
@@ -154,20 +154,20 @@ export default function HomePage() {
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-2 gap-6 sm:grid-cols-4 text-center">
               <div>
-                <p className="text-3xl sm:text-4xl font-black text-white">{siteConfig.stats.uptime}</p>
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mt-1">Platform Uptime</p>
-              </div>
-              <div>
-                <p className="text-3xl sm:text-4xl font-black text-emerald-400">{siteConfig.stats.avgLatency}</p>
+                <p className="text-3xl sm:text-4xl font-black text-white">{siteConfig.stats.avgLatency}</p>
                 <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mt-1">Average Dispatch Latency</p>
               </div>
               <div>
-                <p className="text-3xl sm:text-4xl font-black text-white">{siteConfig.stats.emailsDelivered}</p>
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mt-1">Emails Delivered</p>
+                <p className="text-3xl sm:text-4xl font-black text-emerald-400">{siteConfig.stats.dkimStandard}</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mt-1">Cryptographic Standard</p>
               </div>
               <div>
-                <p className="text-3xl sm:text-4xl font-black text-sky-400">{siteConfig.stats.activeSenders}</p>
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mt-1">Active Developers</p>
+                <p className="text-3xl sm:text-4xl font-black text-white">{siteConfig.stats.freeTierDaily}</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mt-1">Permanent Free Tier</p>
+              </div>
+              <div>
+                <p className="text-3xl sm:text-4xl font-black text-sky-400">30-Day</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mt-1">Automated Warmup</p>
               </div>
             </div>
           </div>

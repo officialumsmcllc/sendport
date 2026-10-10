@@ -66,12 +66,6 @@ export default function BrevoAlternativePage() {
             availability: "https://schema.org/InStock",
           },
         ],
-        aggregateRating: {
-          "@type": "AggregateRating",
-          ratingValue: "4.9",
-          reviewCount: "760",
-          bestRating: "5",
-        },
       },
       {
         "@type": "BreadcrumbList",

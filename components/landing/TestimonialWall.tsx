@@ -1,112 +1,129 @@
 "use client";
 
 import React from "react";
-import { Quote } from "lucide-react";
+import Link from "next/link";
+import {
+  ShieldCheck,
+  Zap,
+  CheckCircle2,
+  Lock,
+  Mail,
+  ArrowRight,
+  Terminal,
+  Sparkles,
+  CreditCard,
+  Heart,
+} from "lucide-react";
+import { siteConfig } from "@/lib/config/site";
 
 export function TestimonialWall() {
-  const testimonials = [
+  const pillars = [
     {
-      quote:
-        "We're a small team with a lot on our plates. Email infrastructure is something we don't want to think about, and with Sendport we don't have to.",
-      author: "Peter Suhm",
-      role: "Ops at Tailwind",
-      avatar: "PS",
+      icon: ShieldCheck,
+      badge: "Cryptographic Trust",
+      title: "2048-bit RSA DKIM & DMARC",
+      desc: "Every domain configured on Sendport is automatically provisioned with 2048-bit RSA keys and strict SPF alignment to protect inbox reputation.",
     },
     {
-      quote:
-        "The best part about taking Sendport into production was that there was no friction at all. Sub-10ms delivery and 2048-bit DKIM right out of the box.",
-      author: "Tara Nagar",
-      role: "Software Engineer at Braintrust",
-      avatar: "TN",
+      icon: Zap,
+      badge: "Edge Architecture",
+      title: "Sub-10ms API & Direct SMTP",
+      desc: "Send transactional dispatches through clean edge nodes. Supports both modern REST endpoints and standard SMTP on ports 587/465.",
     },
     {
-      quote:
-        "After we switched to Sendport's dedicated IPs, our deliverability improved tremendously and we don't hear complaints about spam anymore.",
-      author: "Vlad Matsiiako",
-      role: "Co-founder of Infisical",
-      avatar: "VM",
+      icon: CreditCard,
+      badge: "Frictionless Billing",
+      title: "Global & Regional Payment Rails",
+      desc: "Built for international developers. In addition to Stripe cards, we support direct bank transfers, USDT crypto, and regional mobile wallets.",
     },
     {
-      quote:
-        "Sendport is email with simpler APIs, better modular webhooks, and best-in-class debugging tools for modern engineering teams.",
-      author: "Dan Farrelly",
-      role: "CTO & Co-Founder at Inngest",
-      avatar: "DF",
+      icon: Lock,
+      badge: "Developer Freedom",
+      title: "Zero Contact Penalties",
+      desc: "Store contacts and manage marketing audiences without surprise penalty bills. Transactional and broadcast emails live together seamlessly.",
     },
-    {
-      quote:
-        "Switching over from SendGrid marked a huge improvement. We migrated our entire transactional email flow in less than 30 minutes.",
-      author: "Thomas Mann",
-      role: "CEO at Raycast",
-      avatar: "TM",
-    },
-    {
-      quote:
-        "The simplicity and reliability of Sendport allowed our engineers to focus on building features rather than troubleshooting SMTP infrastructure.",
-      author: "Amadeo Pellicce",
-      role: "Engineering Lead at Replit",
-      avatar: "AP",
-    },
-  ];
-
-  const clientLogos = [
-    "WARNER BROS.",
-    "RAYCAST",
-    "TURSO",
-    "INNGEST",
-    "MINTLIFY",
-    "GUMROAD",
-    "REPLIT",
-    "INFISICAL",
-    "TAILWIND",
-    "BRAINTRUST",
   ];
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 border-t border-slate-900 overflow-hidden">
-      {/* Logos Strip with Infinite Marquee */}
-      <div className="text-center mb-16">
-        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-8">
-          Companies of all sizes trust Sendport to deliver their most important emails
-        </p>
-
-        {/* Marquee Wrapper */}
-        <div className="relative overflow-hidden w-full py-4 mask-[linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
-          <div className="animate-marquee flex items-center justify-around gap-12 text-slate-400 font-mono text-sm font-black tracking-widest opacity-70">
-            {clientLogos.concat(clientLogos).map((logo, i) => (
-              <span key={i} className="hover:text-white transition-colors cursor-default whitespace-nowrap">
-                {logo}
-              </span>
-            ))}
-          </div>
+      {/* Section Header */}
+      <div className="text-center max-w-3xl mx-auto mb-16">
+        <div className="inline-flex items-center gap-1.5 rounded-full border border-primary-500/30 bg-primary-500/10 px-3.5 py-1 text-xs font-semibold text-primary-400 mb-4">
+          <Sparkles className="w-3.5 h-3.5" />
+          <span>The Sendport Commitment</span>
         </div>
+        <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
+          Built for builders. <br />
+          <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">
+            No compromises, no hidden gotchas.
+          </span>
+        </h2>
+        <p className="mt-4 text-sm sm:text-base text-slate-400 leading-relaxed">
+          We founded Sendport because modern developers deserve fast, reliable email infrastructure with transparent pricing, generous volume, and direct engineering support.
+        </p>
       </div>
 
-      {/* Testimonials Grid with Hover Lift & Glow */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {testimonials.map((t, idx) => (
-          <div
-            key={idx}
-            className="rounded-2xl border border-slate-800/80 bg-slate-950 p-6 flex flex-col justify-between shadow-xl hover:border-slate-600 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-primary-500/5 relative group"
-          >
-            <div>
-              <Quote className="w-6 h-6 text-slate-700 mb-3 group-hover:text-primary-400 transition-colors" />
-              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed italic">
-                &ldquo;{t.quote}&rdquo;
-              </p>
-            </div>
-
-            <div className="mt-6 pt-4 border-t border-slate-800/60 flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-primary-600 to-sky-400 flex items-center justify-center font-bold text-xs text-white shrink-0 shadow-sm">
-                {t.avatar}
-              </div>
+      {/* 4 Core Pillars Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+        {pillars.map((p, idx) => {
+          const Icon = p.icon;
+          return (
+            <div
+              key={idx}
+              className="rounded-2xl border border-slate-800/80 bg-slate-950 p-6 flex flex-col justify-between shadow-xl hover:border-slate-700 transition-all duration-300 group"
+            >
               <div>
-                <p className="text-xs font-bold text-white group-hover:text-primary-300 transition-colors">{t.author}</p>
-                <p className="text-[11px] text-slate-400">{t.role}</p>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-primary-400 group-hover:border-primary-500/40 transition-colors">
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-slate-900 text-slate-400 border border-slate-800">
+                    {p.badge}
+                  </span>
+                </div>
+                <h3 className="text-base font-bold text-white mb-2">{p.title}</h3>
+                <p className="text-xs text-slate-400 leading-relaxed">{p.desc}</p>
               </div>
             </div>
+          );
+        })}
+      </div>
+
+      {/* Founder Guarantee & Public Beta Callout Card */}
+      <div className="rounded-2xl border border-slate-800 bg-gradient-to-b from-slate-900/60 to-slate-950 p-8 shadow-2xl flex flex-col lg:flex-row items-center justify-between gap-8">
+        <div className="space-y-3 text-center lg:text-left max-w-xl">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-semibold">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            Public Beta · Open to all developers
           </div>
-        ))}
+          <h3 className="text-xl sm:text-2xl font-bold text-white">
+            Direct access to the core engineering team
+          </h3>
+          <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+            Have a question about DNS records, deliverability warmup, or high-volume sending? 
+            Reach out directly to <span className="text-white font-semibold">{siteConfig.founder.name}</span> and the engineering team at{" "}
+            <a href={`mailto:${siteConfig.supportEmail}`} className="text-primary-400 hover:underline font-mono">
+              {siteConfig.supportEmail}
+            </a>.
+          </p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full lg:w-auto">
+          <Link
+            href="/signup"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-white px-6 py-3 text-xs font-semibold text-black hover:bg-slate-200 transition-all shadow-md"
+          >
+            <span>Start Free (100 sends/day)</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+          <Link
+            href="/docs"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl border border-slate-800 bg-slate-900 px-6 py-3 text-xs font-semibold text-slate-300 hover:bg-slate-800 transition-all"
+          >
+            <Terminal className="w-3.5 h-3.5 text-slate-400" />
+            <span>Read API Reference</span>
+          </Link>
+        </div>
       </div>
     </section>
   );
