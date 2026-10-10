@@ -245,13 +245,13 @@ export default function DeliverabilityPage() {
       {/* Toast Notification */}
       {toast && (
         <div
-          className={`fixed bottom-6 right-6 z-50 flex items-center gap-2.5 rounded-xl px-4 py-3 text-xs font-bold shadow-2xl transition-all ${
+          className={`fixed bottom-6 right-6 z-50 flex items-center gap-2.5 rounded-xl px-4 py-3 text-xs font-bold shadow-xl border transition-all ${
             toast.type === "success"
-              ? "bg-slate-900 text-emerald-300 border border-emerald-500/30"
-              : "bg-slate-900 text-rose-300 border border-rose-500/30"
+              ? "bg-white text-slate-900 border-emerald-300 shadow-emerald-500/10"
+              : "bg-white text-slate-900 border-rose-300 shadow-rose-500/10"
           }`}
         >
-          {toast.type === "success" ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <AlertTriangle className="w-4 h-4 text-rose-400" />}
+          {toast.type === "success" ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <AlertTriangle className="w-4 h-4 text-rose-600" />}
           <span>{toast.message}</span>
         </div>
       )}
@@ -401,59 +401,59 @@ export default function DeliverabilityPage() {
       )}
 
       {/* 100% INBOX PLACEMENT MASTER ARCHITECTURE (GMAIL & YAHOO 2026 MANDATES) */}
-      <div className="rounded-3xl border border-indigo-900/40 bg-linear-to-r from-slate-900 via-indigo-950 to-slate-900 p-6 sm:p-7 text-white shadow-xl space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-indigo-800/40 pb-4">
+      <div className="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-7 shadow-sm space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-500/30">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
               <span>100% Inbox Placement Architecture</span>
             </div>
-            <h2 className="text-xl font-black text-white mt-2">
+            <h2 className="text-xl font-black text-slate-900 mt-2">
               Google, Yahoo & Microsoft Deliverability Compliance
             </h2>
-            <p className="text-xs text-slate-300 mt-1">
+            <p className="text-xs text-slate-500 mt-1">
               Active standards enforced across Sendport to bypass spam filters and land in the Primary Inbox.
             </p>
           </div>
-          <div className="text-right">
+          <div className="text-left sm:text-right">
             <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Target Placement</span>
-            <span className="text-2xl font-black text-emerald-400">99.8% Inbox Rate</span>
+            <span className="text-2xl font-black text-emerald-600">99.8% Inbox Rate</span>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-1.5">
+          <div className="p-4 rounded-2xl bg-slate-50/70 border border-slate-200/80 space-y-1.5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-white">SPF & DKIM 2048-bit</span>
-              <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+              <span className="text-xs font-bold text-slate-900">SPF & DKIM 2048-bit</span>
+              <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
                 Active
               </span>
             </div>
-            <p className="text-[11px] text-slate-300 leading-relaxed">
+            <p className="text-[11px] text-slate-600 leading-relaxed">
               Cryptographic RSA 2048-bit key signs message body, timestamp, and headers. DMARC strict alignment verified.
             </p>
           </div>
 
-          <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-1.5">
+          <div className="p-4 rounded-2xl bg-slate-50/70 border border-slate-200/80 space-y-1.5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-white">RFC 8058 One-Click Opt-Out</span>
-              <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+              <span className="text-xs font-bold text-slate-900">RFC 8058 One-Click Opt-Out</span>
+              <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
                 Enforced
               </span>
             </div>
-            <p className="text-[11px] text-slate-300 leading-relaxed">
-              Auto-injects <code>List-Unsubscribe=One-Click</code>. Generates native Gmail & Yahoo top-bar unsubscribe button.
+            <p className="text-[11px] text-slate-600 leading-relaxed">
+              Auto-injects <code className="bg-slate-200/70 px-1 py-0.5 rounded text-slate-800 font-mono">List-Unsubscribe=One-Click</code>. Generates native Gmail & Yahoo top-bar unsubscribe button.
             </p>
           </div>
 
-          <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-1.5">
+          <div className="p-4 rounded-2xl bg-slate-50/70 border border-slate-200/80 space-y-1.5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-white">Multi-Part MIME (HTML+Text)</span>
-              <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+              <span className="text-xs font-bold text-slate-900">Multi-Part MIME (HTML+Text)</span>
+              <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
                 Zero Penalty
               </span>
             </div>
-            <p className="text-[11px] text-slate-300 leading-relaxed">
+            <p className="text-[11px] text-slate-600 leading-relaxed">
               Generates balanced clean plain-text alongside HTML. Completely eliminates SpamAssassin HTML_ONLY penalty.
             </p>
           </div>
@@ -536,7 +536,7 @@ export default function DeliverabilityPage() {
                   placeholder="e.g. yourname@gmail.com"
                   value={testEmailRecipient}
                   onChange={(e) => setTestEmailRecipient(e.target.value)}
-                  className="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 bg-white font-medium focus:outline-hidden focus:ring-2 focus:ring-primary-500/20"
+                  className="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 bg-white font-medium focus:outline-none focus:ring-2 focus:ring-primary-500/20"
                 />
                 <button
                   type="button"

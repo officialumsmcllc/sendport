@@ -247,7 +247,7 @@ echo $response;`,
               setTestModalOpen(true);
               setTestFeedback(null);
             }}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 px-3.5 py-2 text-xs font-bold text-slate-950 shadow-sm transition-all active:scale-95"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-primary-600 hover:bg-primary-700 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition-all active:scale-95 cursor-pointer"
           >
             <Zap className="w-3.5 h-3.5" /> 1-Click Test Email
           </button>
@@ -268,16 +268,16 @@ echo $response;`,
 
       {/* 🚀 60-SECOND DEVELOPER ONBOARDING & ACTIVATION WIZARD */}
       {!wizardDismissed && (
-        <div className="rounded-3xl border border-amber-500/30 bg-gradient-to-br from-amber-500/5 via-slate-900/5 to-white p-6 sm:p-7 shadow-sm relative overflow-hidden">
+        <div className="rounded-3xl border border-primary-200/90 bg-gradient-to-br from-primary-50/40 via-white to-slate-50 p-6 sm:p-7 shadow-sm relative overflow-hidden">
           {/* Header & Progress */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-200/80">
             <div>
               <div className="flex items-center gap-2">
-                <span className="flex h-2.5 w-2.5 rounded-full bg-amber-500 animate-pulse" />
+                <span className="flex h-2.5 w-2.5 rounded-full bg-primary-600 animate-pulse" />
                 <h3 className="text-base font-black text-slate-900">
                   60-Second Developer Quickstart
                 </h3>
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-amber-100 text-amber-800 border border-amber-200">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-primary-50 text-primary-700 border border-primary-200">
                   {completedStepsCount} of 4 Complete ({progressPercent}%)
                 </span>
               </div>
@@ -289,7 +289,7 @@ echo $response;`,
             <div className="flex items-center gap-3">
               <div className="w-36 sm:w-48 bg-slate-200 rounded-full h-2.5 overflow-hidden">
                 <div
-                  className="bg-gradient-to-r from-amber-500 to-emerald-500 h-2.5 rounded-full transition-all duration-500"
+                  className="bg-gradient-to-r from-primary-600 to-emerald-500 h-2.5 rounded-full transition-all duration-500"
                   style={{ width: `${progressPercent}%` }}
                 />
               </div>
@@ -330,7 +330,7 @@ echo $response;`,
             {/* Step 2: Secret API Key */}
             <div
               className={`p-4 rounded-2xl bg-white border shadow-xs flex flex-col justify-between ${
-                step2 ? "border-slate-200/80" : "border-amber-300 ring-1 ring-amber-300/40"
+                step2 ? "border-slate-200/80" : "border-primary-200 ring-1 ring-primary-200/50"
               }`}
             >
               <div>
@@ -341,7 +341,7 @@ echo $response;`,
                       <Check className="w-3.5 h-3.5" />
                     </span>
                   ) : (
-                    <span className="p-1 rounded-full bg-amber-100 text-amber-700">
+                    <span className="p-1 rounded-full bg-primary-50 text-primary-600">
                       <Key className="w-3.5 h-3.5" />
                     </span>
                   )}
@@ -359,7 +359,7 @@ echo $response;`,
                 ) : (
                   <Link
                     href="/dashboard/api-keys"
-                    className="inline-flex items-center gap-1 text-xs font-bold text-amber-700 hover:text-amber-800"
+                    className="inline-flex items-center gap-1 text-xs font-bold text-primary-600 hover:text-primary-700"
                   >
                     <span>Create API Key</span>
                     <ChevronRight className="w-3.5 h-3.5" />
@@ -371,7 +371,7 @@ echo $response;`,
             {/* Step 3: Verified Domain */}
             <div
               className={`p-4 rounded-2xl bg-white border shadow-xs flex flex-col justify-between ${
-                step3 ? "border-slate-200/80" : step2 ? "border-amber-300 ring-1 ring-amber-300/40" : "border-slate-200/80"
+                step3 ? "border-slate-200/80" : step2 ? "border-primary-200 ring-1 ring-primary-200/50" : "border-slate-200/80"
               }`}
             >
               <div>
@@ -412,7 +412,7 @@ echo $response;`,
             {/* Step 4: Dispatch First Email */}
             <div
               className={`p-4 rounded-2xl bg-white border shadow-xs flex flex-col justify-between ${
-                step4 ? "border-slate-200/80" : step3 ? "border-amber-300 ring-1 ring-amber-300/40" : "border-slate-200/80"
+                step4 ? "border-slate-200/80" : step3 ? "border-primary-200 ring-1 ring-primary-200/50" : "border-slate-200/80"
               }`}
             >
               <div>
@@ -423,7 +423,7 @@ echo $response;`,
                       <Check className="w-3.5 h-3.5" />
                     </span>
                   ) : (
-                    <span className="p-1 rounded-full bg-amber-100 text-amber-700">
+                    <span className="p-1 rounded-full bg-primary-50 text-primary-600">
                       <Send className="w-3.5 h-3.5" />
                     </span>
                   )}
@@ -444,7 +444,7 @@ echo $response;`,
                       setTestModalOpen(true);
                       setTestFeedback(null);
                     }}
-                    className="inline-flex items-center gap-1 text-xs font-bold text-amber-700 hover:text-amber-800"
+                    className="inline-flex items-center gap-1 text-xs font-bold text-primary-600 hover:text-primary-700 cursor-pointer"
                   >
                     <span>1-Click Test Dispatch</span>
                     <ChevronRight className="w-3.5 h-3.5" />
@@ -458,7 +458,7 @@ echo $response;`,
           <div className="mt-6 pt-5 border-t border-slate-200/80">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
               <span className="text-xs font-bold text-slate-800 flex items-center gap-2">
-                <Code2 className="w-4 h-4 text-amber-600" />
+                <Code2 className="w-4 h-4 text-primary-600" />
                 Integrate into your codebase in 30 seconds:
               </span>
 
@@ -479,15 +479,15 @@ echo $response;`,
               </div>
             </div>
 
-            <div className="relative rounded-2xl bg-slate-950 p-4 font-mono text-xs text-amber-300 overflow-x-auto shadow-inner">
+            <div className="relative rounded-2xl bg-slate-950 p-4 font-mono text-xs text-slate-200 overflow-x-auto shadow-inner border border-slate-800">
               <button
                 onClick={() => copyCode(codeSnippets[codeLang])}
-                className="absolute top-3 right-3 inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold transition-all border border-slate-700"
+                className="absolute top-3 right-3 inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold transition-all border border-slate-700 cursor-pointer"
               >
-                <Copy className="w-3 h-3 text-amber-400" />
+                <Copy className="w-3 h-3 text-slate-300" />
                 <span>{copiedCode ? "Copied!" : "Copy"}</span>
               </button>
-              <pre className="pr-16 whitespace-pre">{codeSnippets[codeLang]}</pre>
+              <pre className="pr-16 whitespace-pre font-mono text-[11px] leading-relaxed">{codeSnippets[codeLang]}</pre>
             </div>
           </div>
         </div>
@@ -614,7 +614,7 @@ echo $response;`,
                   setTestModalOpen(true);
                   setTestFeedback(null);
                 }}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 px-3.5 py-2 text-xs font-bold text-slate-950 shadow-sm transition-all"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-primary-600 hover:bg-primary-700 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition-all cursor-pointer"
               >
                 <Zap className="w-3.5 h-3.5" /> 1-Click Test Email
               </button>
@@ -681,11 +681,11 @@ echo $response;`,
 
       {/* ⚡ 1-CLICK INTERACTIVE TEST DISPATCH MODAL */}
       {testModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
           <div className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 sm:p-7 shadow-2xl space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <div className="p-2 rounded-xl bg-amber-100 text-amber-800">
+                <div className="p-2 rounded-xl bg-primary-50 text-primary-600">
                   <Zap className="w-4 h-4" />
                 </div>
                 <div>
@@ -724,7 +724,7 @@ echo $response;`,
                   value={testTo}
                   onChange={(e) => setTestTo(e.target.value)}
                   placeholder="you@company.com"
-                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:border-amber-500 transition-colors"
+                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-colors"
                 />
               </div>
 
@@ -735,7 +735,7 @@ echo $response;`,
                   required
                   value={testSubject}
                   onChange={(e) => setTestSubject(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:border-amber-500 transition-colors"
+                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-colors"
                 />
               </div>
 
@@ -760,7 +760,7 @@ echo $response;`,
                 <button
                   type="submit"
                   disabled={sendingTest}
-                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-extrabold shadow-sm transition-all disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-extrabold shadow-sm transition-all disabled:opacity-50 cursor-pointer"
                 >
                   {sendingTest ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
                   <span>{sendingTest ? "Sending Live..." : "Send Test Now"}</span>

@@ -169,22 +169,22 @@ export default function ReferralsPage() {
       )}
 
       {/* Header Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-linear-to-r from-slate-900 via-indigo-950 to-slate-900 p-8 text-white shadow-xl border border-indigo-900/40">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-50/70 via-white to-primary-50/50 p-8 text-slate-900 shadow-sm border border-indigo-100">
         <div className="relative z-10 max-w-2xl space-y-3">
-          <div className="inline-flex items-center gap-2 rounded-full bg-indigo-500/20 px-3 py-1 text-xs font-semibold text-indigo-300 border border-indigo-400/20 backdrop-blur-xs">
-            <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+          <div className="inline-flex items-center gap-2 rounded-full bg-primary-100/80 px-3 py-1 text-xs font-semibold text-primary-700 border border-primary-200">
+            <Sparkles className="w-3.5 h-3.5 text-primary-600" />
             <span>Sendport Partner & Affiliate Program</span>
           </div>
-          <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl text-white">
-            Earn <span className="text-indigo-400">20% Recurring</span> Lifetime Commission
+          <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl text-slate-900">
+            Earn <span className="text-primary-600">20% Recurring</span> Lifetime Commission
           </h1>
-          <p className="text-sm text-slate-300 leading-relaxed">
+          <p className="text-sm text-slate-600 leading-relaxed">
             Invite fellow developers, SaaS founders, or agencies to Sendport. You earn 20% of their subscription every single month as long as they stay subscribed.
           </p>
         </div>
 
         {/* Decorative background glow */}
-        <div className="absolute -right-10 -bottom-10 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -right-10 -bottom-10 w-96 h-96 bg-primary-200/20 rounded-full blur-3xl pointer-events-none" />
       </div>
 
       {/* 4 KPI Cards */}
@@ -216,7 +216,7 @@ export default function ReferralsPage() {
           <div className="text-xs text-slate-500 font-medium">All-time lifetime earnings</div>
         </div>
 
-        <div className="p-5 rounded-2xl bg-linear-to-br from-indigo-50 to-white border border-indigo-200/80 shadow-xs space-y-2">
+        <div className="p-5 rounded-2xl bg-gradient-to-br from-indigo-50 to-white border border-indigo-200/80 shadow-xs space-y-2">
           <div className="flex items-center justify-between text-slate-500">
             <span className="text-xs font-semibold uppercase tracking-wider text-indigo-950">Unpaid Balance</span>
             <CreditCard className="w-4 h-4 text-indigo-600" />
@@ -246,7 +246,7 @@ export default function ReferralsPage() {
               type="text"
               readOnly
               value={referralLink}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50/70 py-3.5 px-4 text-xs font-mono font-semibold text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20"
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50/70 py-3.5 px-4 text-xs font-mono font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
             />
             <div className="absolute right-3 top-1/2 -translate-y-1/2">
               <span className="inline-flex items-center gap-1 rounded-lg bg-indigo-100 px-2 py-0.5 text-[10px] font-bold text-indigo-700">
@@ -384,7 +384,7 @@ export default function ReferralsPage() {
 
       {/* Payout Modal */}
       {showPayoutModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
           <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl border border-slate-200 space-y-5 animate-in fade-in zoom-in-95">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div className="flex items-center gap-2">
@@ -407,7 +407,7 @@ export default function ReferralsPage() {
                 <select
                   value={payoutMethod}
                   onChange={(e) => setPayoutMethod(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-3 text-xs font-semibold text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20"
+                  className="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-3 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                 >
                   <option value="EASYPAISA">Easypaisa (Pakistan)</option>
                   <option value="JAZZCASH">JazzCash (Pakistan)</option>
@@ -433,7 +433,7 @@ export default function ReferralsPage() {
                   }
                   value={payoutAccount}
                   onChange={(e) => setPayoutAccount(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-3 text-xs font-semibold text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20"
+                  className="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-3 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                 />
               </div>
 
@@ -447,7 +447,7 @@ export default function ReferralsPage() {
                   placeholder={`Available: $${stats.unpaidBalance.toFixed(2)}`}
                   value={payoutAmount}
                   onChange={(e) => setPayoutAmount(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-3 text-xs font-semibold text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20"
+                  className="w-full rounded-xl border border-slate-200 bg-white py-2.5 px-3 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                 />
                 <p className="text-[11px] text-slate-400 mt-1">
                   Leave blank to withdraw entire unpaid balance of ${stats.unpaidBalance.toFixed(2)}. Minimum threshold: $10.00.

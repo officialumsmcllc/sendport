@@ -436,7 +436,7 @@ export default function BillingPage() {
                       <select
                         value={manualMethod}
                         onChange={(e) => setManualMethod(e.target.value)}
-                        className="w-full rounded-xl border border-slate-200 p-2.5 bg-white text-xs font-semibold text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20"
+                        className="w-full rounded-xl border border-slate-200 p-2.5 bg-white text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                       >
                         {availableGateways.length > 0 ? (
                           availableGateways.map((gw) => (
@@ -526,7 +526,7 @@ export default function BillingPage() {
                           placeholder="e.g. TID-9823412 or 0x4f..."
                           value={txId}
                           onChange={(e) => setTxId(e.target.value)}
-                          className="w-full rounded-xl border border-slate-200 p-2.5 text-xs bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20"
+                          className="w-full rounded-xl border border-slate-200 p-2.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                         />
                       </div>
 
@@ -537,7 +537,7 @@ export default function BillingPage() {
                           placeholder="e.g. Muhammad Umar (0300-1234567)"
                           value={senderName}
                           onChange={(e) => setSenderName(e.target.value)}
-                          className="w-full rounded-xl border border-slate-200 p-2.5 text-xs bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20"
+                          className="w-full rounded-xl border border-slate-200 p-2.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                         />
                       </div>
                     </div>

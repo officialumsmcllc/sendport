@@ -1484,7 +1484,7 @@ export default function AudiencesPage() {
 
       {/* MODAL: LAUNCH EMAIL BROADCAST */}
       {showBroadcastModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
           <div className="w-full max-w-2xl rounded-3xl bg-white border border-slate-200 p-6 sm:p-7 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
@@ -1559,7 +1559,7 @@ export default function AudiencesPage() {
                   placeholder="e.g. Major Product Update: What's new in Sendport 2.0"
                   value={broadcastSubject}
                   onChange={(e) => setBroadcastSubject(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20"
+                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                 />
               </div>
 
@@ -1571,7 +1571,7 @@ export default function AudiencesPage() {
                     placeholder="e.g. Muhammad from Sendport"
                     value={broadcastFromName}
                     onChange={(e) => setBroadcastFromName(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20"
+                    className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                   />
                 </div>
 
@@ -1583,7 +1583,7 @@ export default function AudiencesPage() {
                     placeholder="e.g. team@yourdomain.com"
                     value={broadcastFromEmail}
                     onChange={(e) => setBroadcastFromEmail(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20"
+                    className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                   />
                 </div>
               </div>
@@ -1600,7 +1600,7 @@ export default function AudiencesPage() {
                   required
                   value={broadcastHtml}
                   onChange={(e) => setBroadcastHtml(e.target.value)}
-                  className="w-full font-mono text-[11px] rounded-xl border border-slate-200 p-3 text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20"
+                  className="w-full font-mono text-[11px] rounded-xl border border-slate-200 p-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                   placeholder="<p>Hi {{first_name}},</p><p>Your message content here...</p>"
                 />
               </div>
