@@ -318,19 +318,19 @@ export default function AdminUsersPage() {
 
             <form onSubmit={handleSaveUser} className="space-y-4 text-xs">
               <div>
-                <label className="block text-slate-400 font-bold mb-1">User Role Authority</label>
+                <label className="block text-slate-300 font-bold mb-1">User Role Authority</label>
                 <select
                   value={editRole}
                   onChange={(e) => setEditRole(e.target.value)}
-                  className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-white font-bold focus:border-amber-500 focus:outline-none"
+                  className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-white font-bold focus:border-amber-400 focus:ring-2 focus:ring-amber-500/30 focus:outline-none"
                 >
-                  <option value="USER">USER (Regular Customer)</option>
-                  <option value="ADMIN">ADMIN (Superadmin Root Authority)</option>
+                  <option value="USER" className="bg-slate-900 text-white">USER (Regular Customer)</option>
+                  <option value="ADMIN" className="bg-slate-900 text-amber-300 font-bold">ADMIN (Superadmin Root Authority)</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-slate-400 font-bold mb-1">Workspace Plan Tier</label>
+                <label className="block text-slate-300 font-bold mb-1">Workspace Plan Tier</label>
                 <select
                   value={editPlan}
                   onChange={(e) => {
@@ -340,27 +340,63 @@ export default function AdminUsersPage() {
                     else if (p === "GROWTH") setEditQuota(3000);
                     else setEditQuota(100);
                   }}
-                  className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-white font-bold focus:border-amber-500 focus:outline-none"
+                  className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-white font-bold focus:border-amber-400 focus:ring-2 focus:ring-amber-500/30 focus:outline-none"
                 >
-                  <option value="STARTER">STARTER (Free - 100 emails/day)</option>
-                  <option value="GROWTH">GROWTH ($20/mo - 3,000 emails/day)</option>
-                  <option value="SCALE_PRO">SCALE_PRO ($79/mo - 25,000 emails/day)</option>
+                  <option value="STARTER" className="bg-slate-900 text-white">STARTER (Free - 100 emails/day)</option>
+                  <option value="GROWTH" className="bg-slate-900 text-white">GROWTH ($20/mo - 3,000 emails/day)</option>
+                  <option value="SCALE_PRO" className="bg-slate-900 text-white">SCALE_PRO ($79/mo - 25,000 emails/day)</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-slate-400 font-bold mb-1">Custom Daily Sending Quota</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-slate-300 font-bold">Custom Daily Sending Quota</label>
+                  <span className="text-[11px] font-mono text-amber-400 font-bold">
+                    {editQuota.toLocaleString()} emails/day
+                  </span>
+                </div>
                 <input
                   type="number"
                   min="100"
                   step="100"
                   value={editQuota}
                   onChange={(e) => setEditQuota(Number(e.target.value))}
-                  className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-white font-mono font-bold focus:border-amber-500 focus:outline-none"
+                  className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-white font-mono font-bold focus:border-amber-400 focus:ring-2 focus:ring-amber-500/30 focus:outline-none"
                 />
-                <p className="text-[10px] text-slate-500 mt-1">
-                  You can set any custom quota (e.g. 50,000 or 100,000 emails/day).
-                </p>
+
+                {/* Quick Quota Preset Chips */}
+                <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+                  <span className="text-[10px] uppercase font-bold text-slate-500 mr-1">Presets:</span>
+                  {[
+                    { label: "1k", val: 1000 },
+                    { label: "5k", val: 5000 },
+                    { label: "10k", val: 10000 },
+                    { label: "25k", val: 25000 },
+                    { label: "50k", val: 50000 },
+                    { label: "100k", val: 100000 },
+                    { label: "1M", val: 1000000 },
+                  ].map((preset) => (
+                    <button
+                      key={preset.label}
+                      type="button"
+                      onClick={() => setEditQuota(preset.val)}
+                      className={`px-2 py-0.5 rounded-lg text-[10px] font-mono font-semibold border transition-all ${
+                        editQuota === preset.val
+                          ? "bg-amber-500/20 border-amber-500/50 text-amber-300"
+                          : "bg-slate-950/80 border-slate-700/80 text-slate-400 hover:text-white hover:border-slate-600"
+                      }`}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setEditQuota((prev) => prev + 5000)}
+                    className="px-2 py-0.5 rounded-lg text-[10px] font-mono font-semibold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 transition-all"
+                  >
+                    +5k
+                  </button>
+                </div>
               </div>
 
               <div className="pt-2 flex gap-2">

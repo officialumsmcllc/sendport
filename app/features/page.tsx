@@ -255,6 +255,175 @@ await sendport.contacts.create({
             </div>
           </div>
         </section>
+
+        {/* AUDIENCES & CONTACT LISTS SHOWCASE SECTION */}
+        <section id="audiences" className="py-20 border-t border-slate-800/60 bg-black/40 scroll-mt-16">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+              <div className="lg:col-span-6 space-y-5">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-500/10 border border-primary-500/20 text-xs font-semibold text-primary-400">
+                  <Activity className="w-3.5 h-3.5" />
+                  <span>Audience Infrastructure</span>
+                </div>
+                <h2 className="text-3xl font-bold text-white tracking-tight">
+                  High-Performance Audiences & Segmented Contact Lists
+                </h2>
+                <p className="text-sm text-slate-400 leading-relaxed">
+                  Manage millions of subscribers with sub-millisecond query filtering. Automatically tracks opt-outs, unsubscribes, bounce suppressions, and engagement tags.
+                </p>
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                    <span className="text-xs text-slate-300">
+                      <strong>Automatic Bounce Suppression:</strong> Hard bounces and spam complaints are automatically isolated to safeguard sender reputation.
+                    </span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                    <span className="text-xs text-slate-300">
+                      <strong>Custom Metadata & Tags:</strong> Store arbitrary JSON key-value pairs per subscriber for dynamic template personalization.
+                    </span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                    <span className="text-xs text-slate-300">
+                      <strong>One-Click CSV Imports:</strong> Ingest hundreds of thousands of contacts seamlessly with background stream validation.
+                    </span>
+                  </div>
+                </div>
+                <div className="pt-4 flex items-center gap-3">
+                  <Link
+                    href="/signup"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-slate-950 font-bold text-xs hover:bg-slate-200 transition-all shadow-md"
+                  >
+                    <span>Create Free Audience</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                  <Link
+                    href="/docs"
+                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-900/60 text-xs font-semibold text-slate-300 hover:text-white hover:border-slate-700 transition-all"
+                  >
+                    <Terminal className="w-3.5 h-3.5 text-primary-400" />
+                    <span>Audience API Reference</span>
+                  </Link>
+                </div>
+              </div>
+
+              <div className="lg:col-span-6">
+                <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-5 shadow-2xl backdrop-blur-xl">
+                  <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+                    <div className="flex items-center gap-2">
+                      <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                      <span className="text-xs font-mono font-bold text-white">Live Audience Metrics</span>
+                    </div>
+                    <span className="text-[10px] font-mono text-slate-400">Total: 48,290 Verified</span>
+                  </div>
+                  <div className="mt-4 space-y-3 font-mono text-xs">
+                    <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                        <span className="text-slate-200">Production SaaS Users</span>
+                      </div>
+                      <span className="text-emerald-400 font-bold">34,120 contacts</span>
+                    </div>
+                    <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-sky-400" />
+                        <span className="text-slate-200">Newsletter Weekly Digest</span>
+                      </div>
+                      <span className="text-sky-400 font-bold">12,850 contacts</span>
+                    </div>
+                    <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-amber-400" />
+                        <span className="text-slate-200">High-Value Enterprise Leads</span>
+                      </div>
+                      <span className="text-amber-400 font-bold">1,320 contacts</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* PRE-FLIGHT LINK CHECKER SHOWCASE SECTION */}
+        <section id="link-checker" className="py-20 border-t border-slate-800/60 bg-slate-950/70 scroll-mt-16">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+              <div className="lg:col-span-6 order-2 lg:order-1">
+                <div className="rounded-2xl border border-slate-800 bg-[#080c16] p-6 shadow-2xl">
+                  <div className="flex items-center justify-between border-b border-slate-800/80 pb-3 mb-4">
+                    <span className="text-xs font-mono font-bold text-slate-300">Pre-Flight Link Diagnostic Report</span>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      ALL PASS (100%)
+                    </span>
+                  </div>
+                  <div className="space-y-2.5 text-xs font-mono">
+                    <div className="p-2.5 rounded-lg bg-slate-900/70 border border-slate-800/80 flex items-center justify-between">
+                      <span className="text-slate-300 truncate max-w-[240px]">https://yourdomain.com/login</span>
+                      <span className="text-emerald-400 font-bold">200 OK · SSL Valid</span>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-slate-900/70 border border-slate-800/80 flex items-center justify-between">
+                      <span className="text-slate-300 truncate max-w-[240px]">https://yourdomain.com/unsubscribe</span>
+                      <span className="text-emerald-400 font-bold">RFC 8058 Compliant</span>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-slate-900/70 border border-slate-800/80 flex items-center justify-between">
+                      <span className="text-slate-300 truncate max-w-[240px]">https://yourdomain.com/pricing</span>
+                      <span className="text-emerald-400 font-bold">Fast Redirect (12ms)</span>
+                    </div>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
+                    <span>Phishing Blacklist: Clean</span>
+                    <span>Zero 404s Detected</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="lg:col-span-6 order-1 lg:order-2 space-y-5">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-xs font-semibold text-cyan-400">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Zero Broken Links Guaranteed</span>
+                </div>
+                <h2 className="text-3xl font-bold text-white tracking-tight">
+                  Pre-Flight Email Link Verification & Security Scanning
+                </h2>
+                <p className="text-sm text-slate-400 leading-relaxed">
+                  Never send an email with broken links or bad redirects again. Sendport automatically crawls and checks all URLs embedded inside your HTML and Markdown templates before dispatching.
+                </p>
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+                    <span className="text-xs text-slate-300">
+                      <strong>Instant 404 & Timeout Interception:</strong> Catches broken links before your campaign hits recipient inboxes.
+                    </span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+                    <span className="text-xs text-slate-300">
+                      <strong>HTTPS & SSL Expiry Check:</strong> Ensures all destinations have valid SSL certificates to avoid browser security warnings.
+                    </span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+                    <span className="text-xs text-slate-300">
+                      <strong>Anti-Phishing Reputation Audit:</strong> Tests links against global malware and blacklists to prevent spam score degradation.
+                    </span>
+                  </div>
+                </div>
+                <div className="pt-4 flex items-center gap-3">
+                  <Link
+                    href="/signup"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-slate-950 font-bold text-xs hover:bg-slate-200 transition-all shadow-md"
+                  >
+                    <span>Test Links Live</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
 
       <Footer dark={true} />

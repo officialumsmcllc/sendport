@@ -97,10 +97,10 @@ export function Navbar({
             <Terminal className="w-3.5 h-3.5 text-primary-400" />
             Docs
           </Link>
-          <Link href="/dashboard/audiences" className="hover:text-primary-400 transition-colors">
+          <Link href="/features#audiences" className="hover:text-primary-400 transition-colors">
             Audiences
           </Link>
-          <Link href="/dashboard/link-checker" className="hover:text-primary-400 transition-colors">
+          <Link href="/features#link-checker" className="hover:text-primary-400 transition-colors">
             Link Checker
           </Link>
           <Link href="/blog" className="hover:text-primary-400 transition-colors">
@@ -263,10 +263,10 @@ export function Navbar({
           <Link href="/docs" className="block text-sm py-1 font-medium hover:text-primary-400">
             API Documentation
           </Link>
-          <Link href="/dashboard/audiences" className="block text-sm py-1 font-medium hover:text-primary-400">
+          <Link href="/features#audiences" onClick={() => setMobileMenuOpen(false)} className="block text-sm py-1 font-medium hover:text-primary-400">
             Audiences & Contacts
           </Link>
-          <Link href="/dashboard/link-checker" className="block text-sm py-1 font-medium hover:text-primary-400">
+          <Link href="/features#link-checker" onClick={() => setMobileMenuOpen(false)} className="block text-sm py-1 font-medium hover:text-primary-400">
             Link Checker
           </Link>
           <Link href="/blog" className="block text-sm py-1 font-medium hover:text-primary-400">

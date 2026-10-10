@@ -157,10 +157,10 @@ export default function AdminTemplatesPage() {
   // Filter templates by risk in view if needed
   const displayedTemplates = templates.filter((t) => {
     if (filterRisk === "ALL") return true;
-    return t.safety.riskLevel === filterRisk;
+    return t.safety?.riskLevel === filterRisk;
   });
 
-  const highRiskCount = templates.filter((t) => t.safety.riskLevel === "HIGH").length;
+  const highRiskCount = templates.filter((t) => t.safety?.riskLevel === "HIGH").length;
 
   return (
     <div className="space-y-6">
@@ -262,12 +262,12 @@ export default function AdminTemplatesPage() {
           <select
             value={filterRisk}
             onChange={(e) => setFilterRisk(e.target.value)}
-            className="rounded-xl border border-slate-800 bg-slate-950/80 px-3 py-2 text-xs font-semibold text-slate-300 focus:outline-none focus:border-indigo-500"
+            className="rounded-xl border border-slate-800 bg-slate-950/80 px-3 py-2 text-xs font-semibold text-slate-200 focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-500/30"
           >
-            <option value="ALL">All Risk Levels</option>
-            <option value="LOW">Low Risk Only</option>
-            <option value="MEDIUM">Medium Risk</option>
-            <option value="HIGH">High Risk Alert</option>
+            <option value="ALL" className="bg-slate-900 text-white">All Risk Levels</option>
+            <option value="LOW" className="bg-slate-900 text-emerald-400">Low Risk Only</option>
+            <option value="MEDIUM" className="bg-slate-900 text-amber-400">Medium Risk</option>
+            <option value="HIGH" className="bg-slate-900 text-rose-400">High Risk Alert</option>
           </select>
 
           {/* View Mode Toggle */}

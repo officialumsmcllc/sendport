@@ -29,25 +29,36 @@ import {
 export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any>(null);
+  const [autoSync, setAutoSync] = useState(true);
+  const [lastSynced, setLastSynced] = useState<string>("");
 
-  const fetchOverview = async () => {
+  const fetchOverview = async (showLoading = true) => {
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
       const res = await fetch("/api/admin/overview");
       if (res.ok) {
         const json = await res.json();
         setData(json);
+        setLastSynced(new Date().toLocaleTimeString());
       }
     } catch (e) {
       console.error("Failed to load admin overview:", e);
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchOverview();
   }, []);
+
+  useEffect(() => {
+    if (!autoSync) return;
+    const timer = setInterval(() => {
+      fetchOverview(false);
+    }, 30000);
+    return () => clearInterval(timer);
+  }, [autoSync]);
 
   const metrics = data?.metrics || {
     totalUsers: 0,
@@ -87,12 +98,33 @@ export default function AdminDashboardPage() {
           <h1 className="text-3xl font-black text-white tracking-tight">
             Sendport Executive Overview
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
-            Real-time aggregate delivery throughput, platform earnings, subscription breakdowns, and system health.
+          <p className="text-xs text-slate-400 mt-1 flex items-center gap-2">
+            <span>Real-time aggregate delivery throughput, platform earnings, and cluster telemetry.</span>
+            {lastSynced && (
+              <span className="text-slate-500 font-mono hidden sm:inline">• Synced at {lastSynced}</span>
+            )}
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
+          {/* Live Telemetry Auto-Sync Toggle */}
+          <button
+            onClick={() => setAutoSync(!autoSync)}
+            className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold border transition-all ${
+              autoSync
+                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                : "bg-slate-900 border-slate-800 text-slate-400 hover:text-white"
+            }`}
+            title="Toggle automatic 30-second live background refresh"
+          >
+            <span
+              className={`h-2 w-2 rounded-full ${
+                autoSync ? "bg-emerald-400 animate-pulse" : "bg-slate-600"
+              }`}
+            />
+            <span>{autoSync ? "Live (30s)" : "Paused"}</span>
+          </button>
+
           <Link
             href="/dashboard"
             target="_blank"
@@ -101,13 +133,14 @@ export default function AdminDashboardPage() {
             <span>Customer View</span>
             <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
           </Link>
+
           <button
-            onClick={fetchOverview}
+            onClick={() => fetchOverview(true)}
             disabled={loading}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs transition-all shadow-md active:scale-95"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs transition-all shadow-md active:scale-95 disabled:opacity-50"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
-            <span>Sync Live Metrics</span>
+            <span>Sync Live</span>
           </button>
         </div>
       </div>

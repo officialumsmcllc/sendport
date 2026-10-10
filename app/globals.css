@@ -7,15 +7,15 @@
   --foreground: #ffffff;
 }
 
-/* Global Selection Styling - high contrast blue highlight */
+/* Global Selection Styling - subtle default that permits contextual Tailwind selection:* classes */
 ::selection {
-  background-color: #2563eb !important;
-  color: #ffffff !important;
+  background-color: rgba(37, 99, 235, 0.35);
+  color: #ffffff;
 }
 
 ::-moz-selection {
-  background-color: #2563eb !important;
-  color: #ffffff !important;
+  background-color: rgba(37, 99, 235, 0.35);
+  color: #ffffff;
 }
 
 /* Ensure standard inputs in light containers have crystal clear dark text */
@@ -25,17 +25,37 @@ input, textarea, select {
 }
 
 input::selection, textarea::selection {
-  background-color: #2563eb !important;
-  color: #ffffff !important;
+  background-color: rgba(37, 99, 235, 0.35);
+  color: #ffffff;
 }
 
-/* Dark panels text color overrides */
-.bg-slate-950 input,
-.bg-slate-900 input,
-.bg-slate-950 textarea,
-.bg-slate-900 textarea {
+/* Universal Dark panels & modal form controls (including Tailwind opacity modifiers and selects) */
+[class*="bg-slate-950"] input,
+[class*="bg-slate-900"] input,
+[class*="bg-slate-800"] input,
+[class*="bg-zinc-950"] input,
+[class*="bg-zinc-900"] input,
+.bg-black input,
+[class*="bg-slate-950"] textarea,
+[class*="bg-slate-900"] textarea,
+[class*="bg-slate-800"] textarea,
+[class*="bg-zinc-950"] textarea,
+[class*="bg-zinc-900"] textarea,
+.bg-black textarea,
+[class*="bg-slate-950"] select,
+[class*="bg-slate-900"] select,
+[class*="bg-slate-800"] select,
+[class*="bg-zinc-950"] select,
+[class*="bg-zinc-900"] select,
+.bg-black select {
   color: #f8fafc !important;
   caret-color: #60a5fa;
+}
+
+/* Style native select options on Chromium/Windows */
+select option {
+  background-color: #0f172a;
+  color: #f8fafc;
 }
 
 body {

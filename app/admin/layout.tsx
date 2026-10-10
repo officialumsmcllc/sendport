@@ -41,21 +41,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   // Command Palette State
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [paletteSearch, setPaletteSearch] = useState("");
+  const [paletteSelectedIndex, setPaletteSelectedIndex] = useState(0);
 
   const navItems = [
-    { label: "Executive Mission Control", href: "/admin", icon: ShieldAlert, description: "System throughput, KPIs & health" },
-    { label: "User Email Templates", href: "/admin/templates", icon: FileText, description: "Audit & inspect customer HTML templates" },
-    { label: "Payment Slip Approvals", href: "/admin/payments", icon: CreditCard, badge: pendingSlipsCount, description: "Review manual bank & crypto transfers" },
-    { label: "Customer Contacts & Lists", href: "/admin/contacts", icon: BookUser, description: "Global directory of customer audiences & leads" },
-    { label: "User Accounts & Quotas", href: "/admin/users", icon: Users, description: "Plan switches, RBAC & custom send limits" },
-    { label: "Customer Domains", href: "/admin/domains", icon: Globe2, description: "DKIM, SPF and DoH verification records" },
-    { label: "Global Email Logs", href: "/admin/logs", icon: Mail, description: "Inspect message IDs, latency & bounces" },
-    { label: "Global Analytics & Revenue", href: "/admin/analytics", icon: BarChart3, description: "Platform revenue & volume projections" },
-    { label: "Manual Subscriptions", href: "/admin/subscriptions", icon: Sparkles, description: "Active recurring subscriptions ledger" },
-    { label: "Infrastructure & SMTP", href: "/admin/system", icon: Server, description: "SMTP relay daemon & node diagnostics" },
-    { label: "Promo Codes & Discounts", href: "/admin/coupons", icon: Tag, description: "Promotional credit codes & vouchers" },
-    { label: "Platform Broadcasts", href: "/admin/broadcasts", icon: Megaphone, description: "Announcements & system notifications" },
-    { label: "Security & Audit Logs", href: "/admin/audit", icon: ShieldCheck, description: "Immutable root access & login journal" },
+    { label: "Executive Mission Control", href: "/admin", icon: ShieldAlert, description: "System throughput, KPIs & health", category: "Navigation" },
+    { label: "User Email Templates", href: "/admin/templates", icon: FileText, description: "Audit & inspect customer HTML templates", category: "Navigation" },
+    { label: "Payment Slip Approvals", href: "/admin/payments", icon: CreditCard, badge: pendingSlipsCount, description: "Review manual bank & crypto transfers", category: "Action Required" },
+    { label: "Customer Contacts & Lists", href: "/admin/contacts", icon: BookUser, description: "Global directory of customer audiences & leads", category: "Navigation" },
+    { label: "User Accounts & Quotas", href: "/admin/users", icon: Users, description: "Plan switches, RBAC & custom send limits", category: "Navigation" },
+    { label: "Customer Domains", href: "/admin/domains", icon: Globe2, description: "DKIM, SPF and DoH verification records", category: "Navigation" },
+    { label: "Global Email Logs", href: "/admin/logs", icon: Mail, description: "Inspect message IDs, latency & bounces", category: "Navigation" },
+    { label: "Global Analytics & Revenue", href: "/admin/analytics", icon: BarChart3, description: "Platform revenue & volume projections", category: "Navigation" },
+    { label: "Manual Subscriptions", href: "/admin/subscriptions", icon: Sparkles, description: "Active recurring subscriptions ledger", category: "Navigation" },
+    { label: "Infrastructure & SMTP", href: "/admin/system", icon: Server, description: "SMTP relay daemon & node diagnostics", category: "Navigation" },
+    { label: "Promo Codes & Discounts", href: "/admin/coupons", icon: Tag, description: "Promotional credit codes & vouchers", category: "Navigation" },
+    { label: "Platform Broadcasts", href: "/admin/broadcasts", icon: Megaphone, description: "Announcements & system notifications", category: "Navigation" },
+    { label: "Security & Audit Logs", href: "/admin/audit", icon: ShieldCheck, description: "Immutable root access & login journal", category: "Navigation" },
   ];
 
   // Cmd+K / Ctrl+K keyboard shortcut listener
@@ -64,6 +65,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
         setPaletteOpen((prev) => !prev);
+        setPaletteSelectedIndex(0);
       } else if (e.key === "Escape") {
         setPaletteOpen(false);
       }
@@ -144,6 +146,24 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       item.description?.toLowerCase().includes(paletteSearch.toLowerCase())
   );
 
+  const handlePaletteKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (filteredPaletteItems.length === 0) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setPaletteSelectedIndex((prev) => (prev + 1) % filteredPaletteItems.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setPaletteSelectedIndex((prev) => (prev - 1 + filteredPaletteItems.length) % filteredPaletteItems.length);
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      const target = filteredPaletteItems[paletteSelectedIndex];
+      if (target) {
+        router.push(target.href);
+        setPaletteOpen(false);
+      }
+    }
+  };
+
   if (verifying) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-slate-300">
@@ -157,32 +177,53 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div className="flex min-h-screen bg-slate-950 text-slate-100 selection:bg-amber-500/30 selection:text-amber-200">
       {/* COMMAND PALETTE MODAL */}
       {paletteOpen && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-black/70 backdrop-blur-md">
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-black/75 backdrop-blur-md">
           <div className="w-full max-w-xl rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-800 bg-slate-950/60">
-              <Search className="w-4 h-4 text-amber-400" />
+            <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-800 bg-slate-950/80">
+              <Search className="w-4 h-4 text-amber-400 shrink-0" />
               <input
                 type="text"
                 autoFocus
-                placeholder="Type a command or jump to an admin module..."
+                placeholder="Search admin module or use ↑ ↓ to navigate, ↵ to jump..."
                 value={paletteSearch}
-                onChange={(e) => setPaletteSearch(e.target.value)}
+                onChange={(e) => {
+                  setPaletteSearch(e.target.value);
+                  setPaletteSelectedIndex(0);
+                }}
+                onKeyDown={handlePaletteKeyDown}
                 className="w-full bg-transparent text-sm text-white placeholder-slate-500 focus:outline-none"
               />
-              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
-                ESC
-              </span>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
+                  ↑↓ Navigate
+                </span>
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
+                  ↵ Jump
+                </span>
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
+                  ESC
+                </span>
+              </div>
             </div>
 
             <div className="max-h-80 overflow-y-auto p-2 space-y-1">
-              <p className="px-3 py-1.5 text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500">
-                Admin Navigation
-              </p>
+              <div className="flex items-center justify-between px-3 py-1.5">
+                <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500">
+                  Platform Administration Modules
+                </p>
+                <span className="text-[10px] font-mono text-amber-400">
+                  {filteredPaletteItems.length} available
+                </span>
+              </div>
+
               {filteredPaletteItems.length === 0 ? (
-                <div className="p-6 text-center text-xs text-slate-500">No matching admin modules found.</div>
+                <div className="p-8 text-center text-xs text-slate-500">
+                  No matching admin modules found for &quot;{paletteSearch}&quot;.
+                </div>
               ) : (
-                filteredPaletteItems.map((item) => {
+                filteredPaletteItems.map((item, index) => {
                   const Icon = item.icon;
+                  const isSelected = index === paletteSelectedIndex;
                   return (
                     <button
                       key={item.href}
@@ -190,18 +231,42 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         router.push(item.href);
                         setPaletteOpen(false);
                       }}
-                      className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-slate-800 text-left transition-colors group"
+                      onMouseEnter={() => setPaletteSelectedIndex(index)}
+                      className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-left transition-all ${
+                        isSelected
+                          ? "bg-amber-500/15 border border-amber-500/40 text-white shadow-sm"
+                          : "hover:bg-slate-800/60 text-slate-300 border border-transparent"
+                      }`}
                     >
                       <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-slate-950 border border-slate-800 text-amber-400 group-hover:border-amber-500/50">
+                        <div
+                          className={`p-2 rounded-lg border transition-colors ${
+                            isSelected
+                              ? "bg-amber-500/20 border-amber-500/50 text-amber-300"
+                              : "bg-slate-950 border-slate-800 text-amber-400"
+                          }`}
+                        >
                           <Icon className="w-4 h-4" />
                         </div>
                         <div>
-                          <div className="text-xs font-bold text-slate-200 group-hover:text-white">{item.label}</div>
-                          <div className="text-[11px] text-slate-500 truncate max-w-xs">{item.description}</div>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-xs font-bold ${isSelected ? "text-white" : "text-slate-200"}`}>
+                              {item.label}
+                            </span>
+                            {item.badge !== undefined && item.badge > 0 && (
+                              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold bg-amber-500 text-slate-950">
+                                {item.badge} pending
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[11px] text-slate-500 truncate max-w-sm">{item.description}</div>
                         </div>
                       </div>
-                      <ChevronRight className="w-3.5 h-3.5 text-slate-600 group-hover:text-amber-400" />
+                      <ChevronRight
+                        className={`w-3.5 h-3.5 transition-colors ${
+                          isSelected ? "text-amber-400 translate-x-0.5" : "text-slate-600"
+                        }`}
+                      />
                     </button>
                   );
                 })

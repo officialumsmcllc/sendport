@@ -1,8 +1,15 @@
 import type { Metadata } from "next";
 import Script from "next/script";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { siteConfig } from "@/lib/config/site";
 import { SendportJsonLd } from "@/components/seo/JsonLd";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
@@ -79,7 +86,7 @@ export default function RootLayout({
       <head>
         <SendportJsonLd />
       </head>
-      <body className="min-h-screen bg-black text-slate-100 antialiased selection:bg-white/20 selection:text-white">
+      <body className={`${inter.variable} font-sans min-h-screen bg-black text-slate-100 antialiased selection:bg-white/20 selection:text-white`}>
         {/* Google Analytics (gtag.js) */}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-FZSYLVT8JC"
