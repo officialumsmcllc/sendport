@@ -37,13 +37,14 @@ export async function GET(req: NextRequest) {
       ];
     }
 
-    const [total, delivered, opened, clicked, bounced, todayCount, logs] = await Promise.all([
+    const [total, delivered, opened, clicked, bounced, todayCount, apiKeysCount, logs] = await Promise.all([
       prisma.emailLog.count({ where: logWhere }),
       prisma.emailLog.count({ where: { ...logWhere, status: "DELIVERED" } }),
       prisma.emailLog.count({ where: { ...logWhere, status: "OPENED" } }),
       prisma.emailLog.count({ where: { ...logWhere, status: "CLICKED" } }),
       prisma.emailLog.count({ where: { ...logWhere, status: "BOUNCED" } }),
       prisma.emailLog.count({ where: { workspaceId, createdAt: { gte: startOfToday } } }),
+      prisma.apiKey.count({ where: { workspaceId } }),
       prisma.emailLog.findMany({
         where: logWhere,
         take: 100,
@@ -121,6 +122,7 @@ export async function GET(req: NextRequest) {
         usedToday: todayCount,
       },
       domains,
+      apiKeysCount,
       stats,
       recentEmails,
     });
