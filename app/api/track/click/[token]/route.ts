@@ -9,7 +9,17 @@ export async function GET(
   try {
     const { token } = await params;
     const { searchParams } = new URL(req.url);
-    const destinationUrl = searchParams.get("url") || "https://getsendport.com";
+    let destinationUrl = searchParams.get("url") || "https://getsendport.com";
+
+    // Strictly validate protocol to prevent open redirect and javascript: injection attacks
+    try {
+      const parsed = new URL(destinationUrl);
+      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+        destinationUrl = "https://getsendport.com";
+      }
+    } catch {
+      destinationUrl = "https://getsendport.com";
+    }
 
     const emailLog = await prisma.emailLog.findUnique({
       where: { clickToken: token },

@@ -1,5 +1,19 @@
 export const SESSION_COOKIE_NAME = "sendport_session";
-const SECRET = process.env.SESSION_SECRET || "sendport_super_secure_session_secret_key_2026";
+
+function getSessionSecret(): string {
+  const secret = process.env.SESSION_SECRET;
+  if (
+    process.env.NODE_ENV === "production" &&
+    (!secret || secret === "sendport_super_secure_session_secret_key_2026")
+  ) {
+    console.warn(
+      "[SECURITY ALERT] SESSION_SECRET is not set or using the default key in production! Set a high-entropy SESSION_SECRET in your environment variables immediately."
+    );
+  }
+  return secret || "sendport_super_secure_session_secret_key_2026";
+}
+
+const SECRET = getSessionSecret();
 
 export interface SessionPayload {
   userId: string;

@@ -14,6 +14,7 @@ function ForgotPasswordForm() {
   const [step, setStep] = useState<"REQUEST" | "RESET">("REQUEST");
   const [email, setEmail] = useState(initialEmail);
   const [recoveryCode, setRecoveryCode] = useState("");
+  const [resetToken, setResetToken] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -39,8 +40,13 @@ function ForgotPasswordForm() {
         return;
       }
 
-      setRecoveryCode(data.recoveryCode || "123456");
-      setSuccessMsg(`Recovery code generated: ${data.recoveryCode}`);
+      if (data.resetToken) setResetToken(data.resetToken);
+      if (data.recoveryCode) {
+        setRecoveryCode(data.recoveryCode);
+        setSuccessMsg(`Recovery code generated: ${data.recoveryCode}`);
+      } else {
+        setSuccessMsg("Verification code sent to your email address.");
+      }
       setStep("RESET");
     } catch (err: any) {
       setError("An unexpected network error occurred.");
@@ -69,7 +75,13 @@ function ForgotPasswordForm() {
       const res = await fetch("/api/auth/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, newPassword, confirmPassword }),
+        body: JSON.stringify({
+          email,
+          newPassword,
+          confirmPassword,
+          code: recoveryCode,
+          token: resetToken,
+        }),
       });
 
       const data = await res.json();

@@ -6,12 +6,36 @@ import { logSecurityAudit } from "@/lib/security/audit";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { email, newPassword, confirmPassword } = body;
+    const { email, newPassword, confirmPassword, token, code } = body;
 
     if (!email || !newPassword) {
       return NextResponse.json(
         { error: "Email and new password are required." },
         { status: 400 }
+      );
+    }
+
+    if (!token && !code) {
+      return NextResponse.json(
+        { error: "A valid password reset token or recovery code is required to reset your password." },
+        { status: 401 }
+      );
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Verify cryptographic reset token and signature
+    const { verifyPasswordResetToken } = await import("@/lib/auth/password-reset-token");
+    const isTokenValid = token
+      ? verifyPasswordResetToken(token, normalizedEmail, code)
+      : false;
+
+    if (!isTokenValid) {
+      return NextResponse.json(
+        {
+          error: "Invalid, expired, or tampered password reset request. Please request a new recovery link.",
+        },
+        { status: 401 }
       );
     }
 
@@ -28,8 +52,6 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-
-    const normalizedEmail = email.toLowerCase().trim();
 
     const user = await prisma.user.findUnique({
       where: { email: normalizedEmail },

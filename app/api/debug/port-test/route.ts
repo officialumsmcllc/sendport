@@ -68,7 +68,19 @@ function probeTcpPort(host: string, port: number, timeoutMs = 7000): Promise<{
   });
 }
 
+import { getCurrentUser } from "@/lib/auth/session";
+
 export async function GET() {
+  if (process.env.NODE_ENV === "production") {
+    const user = await getCurrentUser();
+    if (!user || user.role !== "ADMIN") {
+      return NextResponse.json(
+        { error: "Forbidden: Diagnostic endpoints are restricted to platform administrators." },
+        { status: 403 }
+      );
+    }
+  }
+
   const targets = [
     { host: "gmail-smtp-in.l.google.com", port: 25 },
     { host: "alt1.gmail-smtp-in.l.google.com", port: 25 },

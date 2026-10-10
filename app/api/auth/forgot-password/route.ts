@@ -25,9 +25,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Generate secure 6-digit recovery code and reset token
+    // Generate secure 6-digit recovery code and cryptographically signed reset token
     const recoveryCode = Math.floor(100000 + Math.random() * 900000).toString();
-    const resetToken = crypto.randomBytes(24).toString("hex");
+    const { createPasswordResetToken } = await import("@/lib/auth/password-reset-token");
+    const resetToken = createPasswordResetToken(user.email, recoveryCode);
 
     // Send real password reset email if SMTP is configured
     if (process.env.SMTP_USER && process.env.SMTP_PASS && process.env.SMTP_HOST) {
@@ -65,11 +66,14 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Only expose recoveryCode in development/test if SMTP is not active
+    const isDev = process.env.NODE_ENV !== "production" || !process.env.SMTP_USER;
+
     return NextResponse.json({
       success: true,
-      message: `Password reset recovery code generated and sent to ${user.email}.`,
-      recoveryCode,
+      message: `Password reset instructions and verification code sent to ${user.email}.`,
       resetToken,
+      recoveryCode: isDev ? recoveryCode : undefined,
       email: user.email,
     });
   } catch (error: any) {

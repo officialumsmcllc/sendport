@@ -35,8 +35,8 @@ export async function POST(req: NextRequest) {
       domain.dkimPublicKey
     );
 
-    // Update status in DB
-    const isNowVerified = dnsResult.allValid || domain.name.includes("test") || domain.name === "getsendport.com";
+    // Update status in DB strictly based on valid DNS records
+    const isNowVerified = Boolean(dnsResult.allValid);
     const updated = await prisma.domain.update({
       where: { id: domain.id },
       data: {

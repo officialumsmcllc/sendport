@@ -54,7 +54,7 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
   const recipients = Array.isArray(options.to) ? options.to : [options.to];
   const { name: senderName, email: senderEmail, domain: senderDomain } = parseFromHeader(options.from);
 
-  // 1. Strictly verify that the domain belongs to this user's workspace
+  // 1. Strictly verify that the domain belongs to this user's workspace & prevent domain spoofing
   const normalizedDomain = senderDomain.toLowerCase().trim();
   const domainRecord = await prisma.domain.findFirst({
     where: {
@@ -63,20 +63,34 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
     },
   });
 
-  const isPlatformDefault =
-    normalizedDomain === "getsendport.com" ||
-    normalizedDomain === "localhost";
+  const isPlatformCoreDomain = normalizedDomain === "getsendport.com";
+  if (isPlatformCoreDomain) {
+    // Only platform administrators can send from the root @getsendport.com domain
+    const workspace = options.workspaceId
+      ? await prisma.workspace.findUnique({
+          where: { id: options.workspaceId },
+          include: { members: { include: { user: { select: { role: true } } } } },
+        })
+      : null;
 
-  if (!domainRecord && !isPlatformDefault) {
-    throw new Error(
-      `Domain "${senderDomain}" is not added or verified in your Sendport account. Please add and verify your domain in your dashboard before sending.`
-    );
-  }
+    const isPlatformAdmin = workspace?.members.some((m) => m.user.role === "ADMIN");
+    if (!isPlatformAdmin) {
+      throw new Error(
+        `Unauthorized sender domain: Only Sendport platform administrators can dispatch from "@getsendport.com". Please add and verify your own custom domain in Dashboard > Domains.`
+      );
+    }
+  } else if (normalizedDomain !== "localhost") {
+    if (!domainRecord) {
+      throw new Error(
+        `Domain "${senderDomain}" is not added or verified in your Sendport account. Please add and verify your domain in your dashboard before sending.`
+      );
+    }
 
-  if (domainRecord && domainRecord.status !== "VERIFIED" && !isPlatformDefault) {
-    throw new Error(
-      `Domain "${senderDomain}" DNS records are pending verification. Please verify DKIM & SPF records in your dashboard before sending.`
-    );
+    if (domainRecord.status !== "VERIFIED") {
+      throw new Error(
+        `Domain "${senderDomain}" DNS records are pending verification. Please verify DKIM & SPF records in your dashboard before sending.`
+      );
+    }
   }
 
   // 1b. Strictly verify workspace daily quota
