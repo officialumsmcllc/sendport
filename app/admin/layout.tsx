@@ -23,6 +23,11 @@ import {
   Mail,
   Sparkles,
   ShieldAlert,
+  Search,
+  BookUser,
+  SlidersHorizontal,
+  Command,
+  FileText,
 } from "lucide-react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -32,6 +37,40 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [adminUser, setAdminUser] = useState<{ id: string; email: string; name?: string; role: string } | null>(null);
   const [verifying, setVerifying] = useState(true);
   const [pendingSlipsCount, setPendingSlipsCount] = useState<number>(0);
+
+  // Command Palette State
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [paletteSearch, setPaletteSearch] = useState("");
+
+  const navItems = [
+    { label: "Executive Mission Control", href: "/admin", icon: ShieldAlert, description: "System throughput, KPIs & health" },
+    { label: "User Email Templates", href: "/admin/templates", icon: FileText, description: "Audit & inspect customer HTML templates" },
+    { label: "Payment Slip Approvals", href: "/admin/payments", icon: CreditCard, badge: pendingSlipsCount, description: "Review manual bank & crypto transfers" },
+    { label: "Customer Contacts & Lists", href: "/admin/contacts", icon: BookUser, description: "Global directory of customer audiences & leads" },
+    { label: "User Accounts & Quotas", href: "/admin/users", icon: Users, description: "Plan switches, RBAC & custom send limits" },
+    { label: "Customer Domains", href: "/admin/domains", icon: Globe2, description: "DKIM, SPF and DoH verification records" },
+    { label: "Global Email Logs", href: "/admin/logs", icon: Mail, description: "Inspect message IDs, latency & bounces" },
+    { label: "Global Analytics & Revenue", href: "/admin/analytics", icon: BarChart3, description: "Platform revenue & volume projections" },
+    { label: "Manual Subscriptions", href: "/admin/subscriptions", icon: Sparkles, description: "Active recurring subscriptions ledger" },
+    { label: "Infrastructure & SMTP", href: "/admin/system", icon: Server, description: "SMTP relay daemon & node diagnostics" },
+    { label: "Promo Codes & Discounts", href: "/admin/coupons", icon: Tag, description: "Promotional credit codes & vouchers" },
+    { label: "Platform Broadcasts", href: "/admin/broadcasts", icon: Megaphone, description: "Announcements & system notifications" },
+    { label: "Security & Audit Logs", href: "/admin/audit", icon: ShieldCheck, description: "Immutable root access & login journal" },
+  ];
+
+  // Cmd+K / Ctrl+K keyboard shortcut listener
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setPaletteOpen((prev) => !prev);
+      } else if (e.key === "Escape") {
+        setPaletteOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   useEffect(() => {
     // 1. Instant optimistic auth check from localStorage cache
@@ -99,19 +138,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     router.refresh();
   };
 
-  const navItems = [
-    { label: "Executive Mission Control", href: "/admin", icon: ShieldAlert },
-    { label: "Payment Slip Approvals", href: "/admin/payments", icon: CreditCard, badge: pendingSlipsCount },
-    { label: "Global Analytics & Revenue", href: "/admin/analytics", icon: BarChart3 },
-    { label: "Customer Domains", href: "/admin/domains", icon: Globe2 },
-    { label: "Global Email Logs", href: "/admin/logs", icon: Mail },
-    { label: "User Accounts & Quotas", href: "/admin/users", icon: Users },
-    { label: "Manual Subscriptions", href: "/admin/subscriptions", icon: Sparkles },
-    { label: "Infrastructure & SMTP", href: "/admin/system", icon: Server },
-    { label: "Promo Codes & Discounts", href: "/admin/coupons", icon: Tag },
-    { label: "Platform Broadcasts", href: "/admin/broadcasts", icon: Megaphone },
-    { label: "Security & Audit Logs", href: "/admin/audit", icon: ShieldCheck },
-  ];
+  const filteredPaletteItems = navItems.filter(
+    (item) =>
+      item.label.toLowerCase().includes(paletteSearch.toLowerCase()) ||
+      item.description?.toLowerCase().includes(paletteSearch.toLowerCase())
+  );
 
   if (verifying) {
     return (
@@ -124,6 +155,62 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="flex min-h-screen bg-slate-950 text-slate-100 selection:bg-amber-500/30 selection:text-amber-200">
+      {/* COMMAND PALETTE MODAL */}
+      {paletteOpen && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-black/70 backdrop-blur-md">
+          <div className="w-full max-w-xl rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-800 bg-slate-950/60">
+              <Search className="w-4 h-4 text-amber-400" />
+              <input
+                type="text"
+                autoFocus
+                placeholder="Type a command or jump to an admin module..."
+                value={paletteSearch}
+                onChange={(e) => setPaletteSearch(e.target.value)}
+                className="w-full bg-transparent text-sm text-white placeholder-slate-500 focus:outline-none"
+              />
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
+                ESC
+              </span>
+            </div>
+
+            <div className="max-h-80 overflow-y-auto p-2 space-y-1">
+              <p className="px-3 py-1.5 text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500">
+                Admin Navigation
+              </p>
+              {filteredPaletteItems.length === 0 ? (
+                <div className="p-6 text-center text-xs text-slate-500">No matching admin modules found.</div>
+              ) : (
+                filteredPaletteItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.href}
+                      onClick={() => {
+                        router.push(item.href);
+                        setPaletteOpen(false);
+                      }}
+                      className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-slate-800 text-left transition-colors group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-slate-950 border border-slate-800 text-amber-400 group-hover:border-amber-500/50">
+                          <Icon className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <div className="text-xs font-bold text-slate-200 group-hover:text-white">{item.label}</div>
+                          <div className="text-[11px] text-slate-500 truncate max-w-xs">{item.description}</div>
+                        </div>
+                      </div>
+                      <ChevronRight className="w-3.5 h-3.5 text-slate-600 group-hover:text-amber-400" />
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* DESKTOP ADMIN SIDEBAR */}
       <aside className="hidden lg:flex w-64 flex-col justify-between border-r border-slate-800 bg-slate-900/90 p-4 shrink-0 shadow-2xl backdrop-blur-xl">
         <div className="space-y-4">
@@ -153,8 +240,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </p>
           </div>
 
+          {/* Quick Palette Trigger Button */}
+          <button
+            onClick={() => setPaletteOpen(true)}
+            className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-slate-950/80 border border-slate-800 text-xs text-slate-400 hover:text-white hover:border-slate-700 transition-colors shadow-sm"
+          >
+            <div className="flex items-center gap-2">
+              <Search className="w-3.5 h-3.5 text-amber-400" />
+              <span>Quick Search...</span>
+            </div>
+            <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
+              ⌘K
+            </span>
+          </button>
+
           {/* Navigation Links */}
-          <nav className="space-y-0.5 overflow-y-auto max-h-[calc(100vh-280px)] pr-1">
+          <nav className="space-y-0.5 overflow-y-auto max-h-[calc(100vh-320px)] pr-1">
             <p className="px-2 text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
               Management Modules
             </p>
@@ -176,9 +277,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <span className="truncate">{item.label}</span>
                   </div>
                   {item.badge !== undefined && item.badge > 0 && (
-                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold ${
-                      isActive ? "bg-slate-950 text-amber-400" : "bg-amber-500 text-slate-950"
-                    }`}>
+                    <span
+                      className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold ${
+                        isActive ? "bg-slate-950 text-amber-400" : "bg-amber-500 text-slate-950"
+                      }`}
+                    >
                       {item.badge}
                     </span>
                   )}
@@ -290,23 +393,39 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* MAIN ADMIN CONTENT WRAPPER */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Mobile Header Bar */}
-        <header className="flex lg:hidden items-center justify-between p-4 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md">
-          <div className="flex items-center gap-2">
+        {/* Top Header Bar with Command Palette Trigger */}
+        <header className="flex items-center justify-between p-4 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => setMobileNavOpen(true)}
-              className="p-1.5 rounded-lg border border-slate-800 text-slate-400 hover:text-white"
+              className="lg:hidden p-1.5 rounded-lg border border-slate-800 text-slate-400 hover:text-white"
             >
               <Menu className="w-5 h-5" />
             </button>
-            <SendportLogo size={24} dark={true} />
-            <span className="text-[10px] font-bold text-amber-400 border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 rounded">
-              ADMIN
+            <div className="hidden sm:flex items-center gap-2">
+              <span className="text-xs font-bold text-white">Sendport Platform Root</span>
+              <span className="text-slate-600">•</span>
+              <span className="text-[11px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                PostgreSQL Online
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setPaletteOpen(true)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-400 hover:text-white hover:border-slate-700 transition-colors shadow-sm"
+            >
+              <Search className="w-3.5 h-3.5 text-amber-400" />
+              <span className="hidden sm:inline">Search modules or press</span>
+              <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
+                ⌘K
+              </span>
+            </button>
+            <span className="text-[11px] font-mono text-slate-400 truncate max-w-[160px] hidden md:inline">
+              {adminUser?.email}
             </span>
           </div>
-          <span className="text-[11px] font-mono text-slate-400 truncate max-w-[150px]">
-            {adminUser?.email}
-          </span>
         </header>
 
         {/* Content View */}

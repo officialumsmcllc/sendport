@@ -24,8 +24,13 @@ export async function GET() {
       todayEmails,
       totalDomains,
       verifiedDomains,
+      totalContacts,
+      totalAudiences,
+      totalBroadcasts,
+      totalTemplates,
       recentSignups,
       recentAuditLogs,
+      recentTemplates,
     ] = await Promise.all([
       prisma.user.count(),
       prisma.workspace.count(),
@@ -46,6 +51,10 @@ export async function GET() {
       prisma.emailLog.count({ where: { createdAt: { gte: startOfToday } } }),
       prisma.domain.count(),
       prisma.domain.count({ where: { status: "VERIFIED" } }),
+      prisma.contact.count(),
+      prisma.audience.count(),
+      prisma.broadcastBlast.count(),
+      prisma.emailTemplate.count(),
       prisma.user.findMany({
         take: 5,
         orderBy: { createdAt: "desc" },
@@ -63,6 +72,22 @@ export async function GET() {
         include: {
           user: {
             select: { email: true, name: true },
+          },
+        },
+      }),
+      prisma.emailTemplate.findMany({
+        take: 5,
+        orderBy: { createdAt: "desc" },
+        include: {
+          workspace: {
+            select: {
+              id: true,
+              name: true,
+              members: {
+                take: 1,
+                include: { user: { select: { email: true } } },
+              },
+            },
           },
         },
       }),
@@ -103,9 +128,14 @@ export async function GET() {
         bounceRate: `${bounceRate}%`,
         totalDomains,
         verifiedDomains,
+        totalContacts,
+        totalAudiences,
+        totalBroadcasts,
+        totalTemplates,
       },
       recentSignups,
       recentAuditLogs,
+      recentTemplates,
       systemHealth: {
         api: "OPERATIONAL",
         smtp: "LISTENING (Port 587 / 465)",
