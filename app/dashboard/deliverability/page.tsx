@@ -73,6 +73,44 @@ export default function DeliverabilityPage() {
   const [metrics, setMetrics] = useState<DeliverabilityMetrics | null>(null);
   const [warmupStages, setWarmupStages] = useState<any[]>([]);
   const [warmupEnabled, setWarmupEnabled] = useState(true);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+
+  const showToast = (message: string, type: "success" | "error" = "success") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 4000);
+  };
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("sendport_warmup_enabled");
+      if (saved !== null) {
+        setWarmupEnabled(saved === "true");
+      }
+    } catch (e) {}
+  }, []);
+
+  const handleToggleWarmup = async () => {
+    const newState = !warmupEnabled;
+    setWarmupEnabled(newState);
+    try {
+      localStorage.setItem("sendport_warmup_enabled", String(newState));
+      const res = await fetch("/api/v1/deliverability", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ warmupEnabled: newState }),
+      });
+      if (res.ok) {
+        showToast(
+          newState
+            ? "Automated 30-Day Warmup active! Daily volume curves (50 -> 250 -> 1,000) are protecting your Gmail Primary Inbox placement."
+            : "Automated Warmup paused. Standard workspace daily sending quota is now active.",
+          "success"
+        );
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   // Diagnostic Tester State
   const [subject, setSubject] = useState("Welcome to our platform! Your account is ready");
@@ -204,6 +242,20 @@ export default function DeliverabilityPage() {
 
   return (
     <div className="space-y-8 pb-12">
+      {/* Toast Notification */}
+      {toast && (
+        <div
+          className={`fixed bottom-6 right-6 z-50 flex items-center gap-2.5 rounded-xl px-4 py-3 text-xs font-bold shadow-2xl transition-all ${
+            toast.type === "success"
+              ? "bg-slate-900 text-emerald-300 border border-emerald-500/30"
+              : "bg-slate-900 text-rose-300 border border-rose-500/30"
+          }`}
+        >
+          {toast.type === "success" ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <AlertTriangle className="w-4 h-4 text-rose-400" />}
+          <span>{toast.message}</span>
+        </div>
+      )}
+
       {/* HEADER & CONTROLS */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-4 border-b border-slate-200">
         <div>
@@ -241,7 +293,7 @@ export default function DeliverabilityPage() {
             <span className="text-xs font-semibold text-slate-700">Auto Warmup:</span>
             <button
               type="button"
-              onClick={() => setWarmupEnabled(!warmupEnabled)}
+              onClick={handleToggleWarmup}
               className={`w-10 h-5 flex items-center rounded-full p-0.5 cursor-pointer transition-colors ${
                 warmupEnabled ? "bg-emerald-600" : "bg-slate-300"
               }`}

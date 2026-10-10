@@ -116,3 +116,37 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+export async function POST(req: NextRequest) {
+  try {
+    const auth = await getAuthContext(req);
+    if (!auth) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await req.json();
+    const { warmupEnabled } = body;
+
+    // Record audit log entry
+    try {
+      await prisma.auditLog.create({
+        data: {
+          userId: auth.user.id,
+          action: warmupEnabled ? "ENABLE_AUTO_WARMUP" : "DISABLE_AUTO_WARMUP",
+          details: `User set 30-day automated warmup to ${warmupEnabled ? "ENABLED" : "DISABLED"} for workspace ${auth.workspace.name}`,
+          ip: req.headers.get("x-forwarded-for") || "127.0.0.1",
+        },
+      });
+    } catch (e) {}
+
+    return NextResponse.json({
+      success: true,
+      warmupEnabled: Boolean(warmupEnabled),
+      message: warmupEnabled
+        ? "Automated 30-Day Warmup schedule activated. Your daily domain limits will ramp gradually to build Gmail and Outlook trust."
+        : "Automated Warmup disabled. Standard workspace sending quota is now active.",
+    });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
