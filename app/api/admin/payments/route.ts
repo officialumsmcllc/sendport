@@ -78,6 +78,17 @@ export async function POST(req: NextRequest) {
         newQuota: quota,
       });
 
+      // Send Plan Upgrade Confirmation Email from no-reply@getsendport.com
+      prisma.user.findUnique({ where: { id: tx.userId }, select: { email: true, name: true } })
+        .then((user) => {
+          if (user?.email) {
+            import("@/lib/email/system-mailer")
+              .then(({ sendPlanUpgradeEmail }) => sendPlanUpgradeEmail(user, tx.plan, quota))
+              .catch((err) => console.warn("Async upgrade email error:", err));
+          }
+        })
+        .catch(() => {});
+
       return NextResponse.json({
         success: true,
         message: `Transaction approved! Workspace upgraded to ${tx.plan} (${quota.toLocaleString()} emails/day).`,

@@ -124,6 +124,19 @@ export async function PATCH(req: NextRequest) {
       } catch (_) {}
     }
 
+    // Send confirmation email if plan was updated
+    if (userId && plan) {
+      prisma.user.findUnique({ where: { id: userId }, select: { email: true, name: true } })
+        .then((u) => {
+          if (u?.email) {
+            import("@/lib/email/system-mailer")
+              .then(({ sendPlanUpgradeEmail }) => sendPlanUpgradeEmail(u, plan, dailyQuota ? Number(dailyQuota) : (plan === "SCALE_PRO" ? 25000 : plan === "GROWTH" ? 3000 : 100)))
+              .catch(() => {});
+          }
+        })
+        .catch(() => {});
+    }
+
     return NextResponse.json({
       success: true,
       message: "Account settings updated successfully.",

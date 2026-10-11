@@ -103,6 +103,13 @@ export async function POST(req: NextRequest) {
       expiresAt,
     });
 
+    // Send Plan Upgrade Confirmation Email from no-reply@getsendport.com
+    if (user?.email) {
+      import("@/lib/email/system-mailer")
+        .then(({ sendPlanUpgradeEmail }) => sendPlanUpgradeEmail(user, plan, quota))
+        .catch((err) => console.warn("Async upgrade email error:", err));
+    }
+
     return NextResponse.json({
       success: true,
       message: `User upgraded to ${plan} (${quota.toLocaleString()} emails/day) successfully!`,
