@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import {
   ShieldCheck,
   Zap,
@@ -175,20 +176,34 @@ export default function DeliverabilityPage() {
     }
   };
 
+  const activeDomain = domains.find((d) => d.id === selectedDomainId) || domains[0];
+  const isDomainVerified = activeDomain?.status === "VERIFIED";
+
   const handleSendLiveTest = async () => {
     if (!testEmailRecipient || !testEmailRecipient.includes("@")) {
       setTestEmailStatus("Please enter a valid recipient email (e.g. your personal Gmail or Outlook).");
       return;
     }
 
+    if (!activeDomain) {
+      setTestEmailStatus("No domain found. Please add and verify a custom domain in Dashboard > Domains first.");
+      return;
+    }
+
+    if (!isDomainVerified) {
+      setTestEmailStatus(`Domain "${activeDomain.name}" is pending DNS verification. Live test emails can only be sent from verified domains.`);
+      return;
+    }
+
     try {
       setSendingLiveTest(true);
-      setTestEmailStatus(`Dispatching live test to ${testEmailRecipient}...`);
+      setTestEmailStatus(`Dispatching live test from test@${activeDomain.name} to ${testEmailRecipient}...`);
       const res = await fetch("/api/v1/deliverability/test", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          domainName: activeDomain?.name,
+          domainId: activeDomain.id,
+          domainName: activeDomain.name,
           subject,
           htmlContent: bodyHtml,
           recipientEmail: testEmailRecipient.trim(),
@@ -198,10 +213,12 @@ export default function DeliverabilityPage() {
       const json = await res.json();
       if (res.ok && json.liveTestSent) {
         setTestEmailStatus(
-          `✓ Live test email successfully delivered to ${testEmailRecipient}! Check your inbox now (Deliverability Score: ${json.overallDeliverabilityScore}/100, Grade: ${json.grade}).`
+          `✓ Live test email successfully delivered from test@${activeDomain.name} to ${testEmailRecipient}! Check your inbox now (Deliverability Score: ${json.overallDeliverabilityScore}/100, Grade: ${json.grade}).`
         );
       } else if (json.liveTestError) {
         setTestEmailStatus(`Notice: ${json.liveTestError}`);
+      } else if (!res.ok) {
+        setTestEmailStatus(`Error: ${json.error || "Failed to dispatch deliverability test"}`);
       } else {
         setTestEmailStatus(`Deliverability test completed (Score: ${json.overallDeliverabilityScore || 95}/100).`);
       }
@@ -218,8 +235,6 @@ export default function DeliverabilityPage() {
       runDiagnostic();
     }
   }, [domains, selectedDomainId]);
-
-  const activeDomain = domains.find((d) => d.id === selectedDomainId) || domains[0];
 
   const loadPreset = (type: "clean" | "sales" | "spammy") => {
     if (type === "clean") {
@@ -282,7 +297,7 @@ export default function DeliverabilityPage() {
               >
                 {domains.map((d) => (
                   <option key={d.id} value={d.id}>
-                    {d.name} ({d.status})
+                    {d.name} {d.status === "VERIFIED" ? "(✓ Verified)" : "(⏳ Pending DNS)"}
                   </option>
                 ))}
               </select>
@@ -526,23 +541,68 @@ export default function DeliverabilityPage() {
             </div>
 
             {/* LIVE INBOX PLACEMENT TEST DISPATCH */}
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/90 space-y-2">
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                Send Live Test to Personal Inbox (Gmail / Outlook / Yahoo)
-              </label>
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/90 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                  Send Live Test to Personal Inbox (Gmail / Outlook / Yahoo)
+                </label>
+                {activeDomain && (
+                  <span
+                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                      isDomainVerified
+                        ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                        : "bg-amber-100 text-amber-800 border border-amber-300"
+                    }`}
+                  >
+                    {isDomainVerified ? "✓ Sender Ready" : "⏳ Pending Verification"}
+                  </span>
+                )}
+              </div>
+
+              {!isDomainVerified && activeDomain && (
+                <div className="p-2.5 rounded-xl bg-amber-50/90 border border-amber-200 text-xs text-amber-900 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                    <span className="text-[11px]">
+                      Sender domain <strong>{activeDomain.name}</strong> is pending DNS verification. Emails can only be dispatched from verified domains.
+                    </span>
+                  </div>
+                  <Link
+                    href="/dashboard/domains"
+                    className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-800 hover:text-amber-950 underline shrink-0"
+                  >
+                    Verify DNS in Domains &rarr;
+                  </Link>
+                </div>
+              )}
+
+              {!activeDomain && (
+                <div className="p-2.5 rounded-xl bg-slate-100 border border-slate-200 text-xs text-slate-700 flex items-center justify-between gap-2">
+                  <span className="text-[11px]">No domain found in your account. Add your custom domain to send live inbox tests.</span>
+                  <Link
+                    href="/dashboard/domains"
+                    className="text-[11px] font-bold text-primary-600 hover:text-primary-800 underline shrink-0"
+                  >
+                    Add Domain &rarr;
+                  </Link>
+                </div>
+              )}
+
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                 <input
                   type="email"
                   placeholder="e.g. yourname@gmail.com"
                   value={testEmailRecipient}
                   onChange={(e) => setTestEmailRecipient(e.target.value)}
-                  className="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 bg-white font-medium focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                  disabled={!isDomainVerified}
+                  className="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 bg-white font-medium focus:outline-none focus:ring-2 focus:ring-primary-500/20 disabled:bg-slate-100 disabled:text-slate-400"
                 />
                 <button
                   type="button"
                   onClick={handleSendLiveTest}
-                  disabled={sendingLiveTest}
-                  className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-colors shadow-xs flex items-center justify-center gap-1.5 disabled:opacity-50 shrink-0 cursor-pointer"
+                  disabled={sendingLiveTest || !isDomainVerified}
+                  className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-colors shadow-xs flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed shrink-0 cursor-pointer"
+                  title={!isDomainVerified ? "Complete domain DNS verification in Domains before sending" : ""}
                 >
                   <Mail className="w-3.5 h-3.5" />
                   <span>{sendingLiveTest ? "Dispatching..." : "Send to My Inbox"}</span>

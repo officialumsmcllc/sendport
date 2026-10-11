@@ -13,7 +13,7 @@ services:
       - key: PORT
         value: "10000"
       - key: DATABASE_URL
-        value: postgresql://postgres.wdmhfrbygqrcjxebjlrk:rf.%26HN%243im%23%2F2BK@aws-0-ap-northeast-2.pooler.supabase.com:5432/postgres?connection_limit=5
+        sync: false
       - key: NEXT_PUBLIC_APP_URL
         value: https://getsendport.com
       - key: NEXT_PUBLIC_SITE_NAME
@@ -35,13 +35,13 @@ services:
       - key: HOSTINGER_ENGINE_URL
         value: https://engine.getsendport.com/sendport_engine.php
       - key: SENDPORT_SECRET
-        value: sendport_enterprise_jwt_secret_key_2026
+        sync: false
       - key: CLOUDFLARE_WORKER_URL
         value: https://sendport-mailer.restless-pine-1d68.workers.dev
       - key: CLOUDFLARE_CLIENT_ID
-        value: 86333fde52ca339731b8f6593edc3e40
+        sync: false
       - key: CLOUDFLARE_CLIENT_SECRET
-        value: cfoc_rXUaIBdIyrg3xd74QSiqKQIcBaG2kqZZBkvtBVzi20336754
+        sync: false
       - key: STRIPE_SECRET_KEY
         sync: false
       - key: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY

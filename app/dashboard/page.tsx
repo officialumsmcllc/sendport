@@ -112,11 +112,18 @@ export default function DashboardOverview() {
       setSendingTest(true);
       setTestFeedback(null);
 
-      // Identify sender
+      // Identify verified domain sender
       const verifiedDomain = domains.find((d) => d.status === "VERIFIED");
-      const fromEmail = verifiedDomain
-        ? `verify@${verifiedDomain.name}`
-        : "onboarding@getsendport.com";
+      if (!verifiedDomain) {
+        setTestFeedback({
+          success: false,
+          message: "A verified domain is required to dispatch emails. Please add and verify your custom domain in Dashboard > Domains first.",
+        });
+        setSendingTest(false);
+        return;
+      }
+
+      const fromEmail = `verify@${verifiedDomain.name}`;
 
       const res = await fetch("/api/v1/emails/send", {
         method: "POST",
@@ -739,14 +746,29 @@ echo $response;`,
                 />
               </div>
 
+              {!domains.some((d) => d.status === "VERIFIED") && (
+                <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                    <span className="text-[11px]">No verified domain found. Add and verify your domain to dispatch emails.</span>
+                  </div>
+                  <Link
+                    href="/dashboard/domains"
+                    className="font-bold underline text-amber-800 hover:text-amber-950 shrink-0 text-[11px]"
+                  >
+                    Verify Domain &rarr;
+                  </Link>
+                </div>
+              )}
+
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 text-[11px] leading-relaxed">
                 <strong>Sender:</strong>{" "}
-                <span className="font-mono text-slate-800">
+                <span className="font-mono text-slate-800 font-bold">
                   {domains.find((d) => d.status === "VERIFIED")
                     ? `verify@${domains.find((d) => d.status === "VERIFIED").name}`
-                    : "onboarding@getsendport.com"}
+                    : "Pending Domain Verification"}
                 </span>{" "}
-                (2048-bit RSA DKIM Authenticated)
+                {domains.some((d) => d.status === "VERIFIED") && "(2048-bit RSA DKIM Authenticated)"}
               </div>
 
               <div className="pt-2 flex items-center justify-end gap-2.5">
@@ -759,8 +781,9 @@ echo $response;`,
                 </button>
                 <button
                   type="submit"
-                  disabled={sendingTest}
-                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-extrabold shadow-sm transition-all disabled:opacity-50 cursor-pointer"
+                  disabled={sendingTest || !domains.some((d) => d.status === "VERIFIED")}
+                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-extrabold shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  title={!domains.some((d) => d.status === "VERIFIED") ? "Please verify your custom domain in Domains first" : ""}
                 >
                   {sendingTest ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
                   <span>{sendingTest ? "Sending Live..." : "Send Test Now"}</span>
