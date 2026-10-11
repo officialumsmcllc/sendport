@@ -8,10 +8,10 @@ export default function AdminAuditPage() {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const fetchAuditLogs = async () => {
+  const fetchAuditLogs = async (showLoading = true) => {
     try {
-      setLoading(true);
-      const res = await fetch("/api/admin/audit");
+      if (showLoading) setLoading(true);
+      const res = await fetch("/api/admin/audit", { cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
         setLogs(data.auditLogs || []);
@@ -19,12 +19,16 @@ export default function AdminAuditPage() {
     } catch (e) {
       console.error(e);
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchAuditLogs();
+    fetchAuditLogs(true);
+    const timer = setInterval(() => {
+      fetchAuditLogs(false);
+    }, 10000);
+    return () => clearInterval(timer);
   }, []);
 
   const filtered = logs.filter(
@@ -49,7 +53,7 @@ export default function AdminAuditPage() {
           </p>
         </div>
         <button
-          onClick={fetchAuditLogs}
+          onClick={() => fetchAuditLogs(true)}
           disabled={loading}
           className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800 px-3.5 py-2 text-xs font-bold text-white hover:bg-slate-700 shadow-sm transition-all"
         >
@@ -119,7 +123,7 @@ export default function AdminAuditPage() {
                         {log.details || "{}"}
                       </div>
                     </td>
-                    <td className="p-4 text-right font-mono text-[11px] text-slate-400">
+                    <td className="p-4 text-right font-mono text-[11px] text-slate-400" suppressHydrationWarning>
                       {new Date(log.createdAt).toLocaleString()}
                     </td>
                   </tr>

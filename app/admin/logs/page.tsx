@@ -30,10 +30,10 @@ export default function AdminLogsPage() {
   const [renderDevice, setRenderDevice] = useState<"desktop" | "mobile">("desktop");
   const [copied, setCopied] = useState(false);
 
-  const fetchLogs = async () => {
+  const fetchLogs = async (showLoading = true) => {
     try {
-      setLoading(true);
-      const res = await fetch(`/api/admin/logs?status=${statusFilter}&limit=100`);
+      if (showLoading) setLoading(true);
+      const res = await fetch(`/api/admin/logs?status=${statusFilter}&limit=100`, { cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
         setLogs(data.logs || []);
@@ -42,12 +42,16 @@ export default function AdminLogsPage() {
     } catch (e) {
       console.error(e);
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchLogs();
+    fetchLogs(true);
+    const timer = setInterval(() => {
+      fetchLogs(false);
+    }, 12000);
+    return () => clearInterval(timer);
   }, [statusFilter]);
 
   const filtered = logs.filter(
@@ -73,7 +77,7 @@ export default function AdminLogsPage() {
           </p>
         </div>
         <button
-          onClick={fetchLogs}
+          onClick={() => fetchLogs(true)}
           disabled={loading}
           className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800 px-3.5 py-2 text-xs font-bold text-white hover:bg-slate-700 shadow-sm transition-all"
         >
@@ -230,7 +234,7 @@ export default function AdminLogsPage() {
                         </span>
                       </div>
                     </td>
-                    <td className="p-4 text-right text-[11px] font-mono text-slate-400">
+                    <td className="p-4 text-right text-[11px] font-mono text-slate-400" suppressHydrationWarning>
                       {new Date(log.createdAt).toLocaleTimeString()}
                     </td>
                   </tr>

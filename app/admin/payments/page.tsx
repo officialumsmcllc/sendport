@@ -76,10 +76,10 @@ export default function AdminPaymentsPage() {
   const [formDisplayOrder, setFormDisplayOrder] = useState(0);
   const [submittingForm, setSubmittingForm] = useState(false);
 
-  const fetchTransactions = async () => {
+  const fetchTransactions = async (showLoading = true) => {
     try {
-      setLoading(true);
-      const res = await fetch("/api/admin/payments");
+      if (showLoading) setLoading(true);
+      const res = await fetch("/api/admin/payments", { cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
         if (data.transactions) {
@@ -87,20 +87,22 @@ export default function AdminPaymentsPage() {
         }
       } else {
         const err = await res.json();
-        setToast({ message: err.error || "Failed to load payment queue.", type: "error" });
+        if (showLoading) setToast({ message: err.error || "Failed to load payment queue.", type: "error" });
       }
     } catch (e: any) {
-      console.error(e);
-      setToast({ message: "Network error loading transactions.", type: "error" });
+      if (showLoading) {
+        console.error(e);
+        setToast({ message: "Network error loading transactions.", type: "error" });
+      }
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
   const fetchGateways = async () => {
     try {
       setLoadingGateways(true);
-      const res = await fetch("/api/admin/payment-methods");
+      const res = await fetch("/api/admin/payment-methods", { cache: "no-store" });
       const data = await res.json();
       if (res.ok) {
         if (data.methods) {
@@ -117,8 +119,12 @@ export default function AdminPaymentsPage() {
   };
 
   useEffect(() => {
-    fetchTransactions();
+    fetchTransactions(true);
     fetchGateways();
+    const timer = setInterval(() => {
+      fetchTransactions(false);
+    }, 12000); // 12-second silent auto-refresh for payment queue
+    return () => clearInterval(timer);
   }, []);
 
   const handleAction = async (id: string, action: "APPROVE" | "REJECT") => {
@@ -679,7 +685,7 @@ export default function AdminPaymentsPage() {
               </select>
 
               <button
-                onClick={fetchTransactions}
+                onClick={() => fetchTransactions(true)}
                 className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
                 title="Refresh Table"
               >

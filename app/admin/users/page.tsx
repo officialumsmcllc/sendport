@@ -26,10 +26,10 @@ export default function AdminUsersPage() {
   const [updating, setUpdating] = useState(false);
   const [toastMsg, setToastMsg] = useState("");
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (showLoading = true) => {
     try {
-      setLoading(true);
-      const res = await fetch("/api/admin/users");
+      if (showLoading) setLoading(true);
+      const res = await fetch("/api/admin/users", { cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
         setUsers(data.users || []);
@@ -38,12 +38,16 @@ export default function AdminUsersPage() {
     } catch (e) {
       console.error(e);
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchUsers();
+    fetchUsers(true);
+    const timer = setInterval(() => {
+      fetchUsers(false);
+    }, 15000);
+    return () => clearInterval(timer);
   }, []);
 
   const openEditModal = (user: any) => {
@@ -129,7 +133,7 @@ export default function AdminUsersPage() {
           </p>
         </div>
         <button
-          onClick={fetchUsers}
+          onClick={() => fetchUsers(true)}
           disabled={loading}
           className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800 px-3.5 py-2 text-xs font-bold text-white hover:bg-slate-700 shadow-sm transition-all"
         >
