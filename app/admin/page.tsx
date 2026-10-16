@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth/session";
+import { cookies } from "next/headers";
+import { getCurrentUser, SESSION_COOKIE_NAME } from "@/lib/auth/session";
 import { getAdminOverviewData, defaultAdminData } from "@/lib/data/admin-overview";
 import AdminDashboardClient from "./AdminDashboardClient";
 
@@ -13,8 +14,16 @@ export default async function AdminPage() {
     console.error("Failed to verify user session during admin SSR:", err);
   }
 
-  if (!user || user.role !== "ADMIN") {
+  if (!user) {
+    try {
+      const cookieStore = await cookies();
+      cookieStore.delete(SESSION_COOKIE_NAME);
+    } catch (_) {}
     redirect("/login?redirect=/admin");
+  }
+
+  if (user.role !== "ADMIN") {
+    redirect("/dashboard?error=unauthorized_admin_access");
   }
 
   let initialData = defaultAdminData;

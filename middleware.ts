@@ -62,12 +62,14 @@ export async function middleware(req: NextRequest) {
 
   // 5. Auth pages (/login, /signup, /register) when already logged in
   if (pathname === "/login" || pathname === "/signup" || pathname === "/register") {
-    if (session) {
-      const redirectParam = req.nextUrl.searchParams.get("redirect");
-      if (redirectParam && redirectParam.startsWith("/")) {
-        return NextResponse.redirect(new URL(redirectParam, req.url));
-      }
+    // If there is an explicit redirect query parameter, DO NOT auto-redirect in middleware.
+    // Doing so when a protected page redirected here causes an immediate ERR_TOO_MANY_REDIRECTS loop.
+    const redirectParam = req.nextUrl.searchParams.get("redirect");
+    if (redirectParam) {
+      return NextResponse.next();
+    }
 
+    if (session) {
       if (session.role === "ADMIN") {
         return NextResponse.redirect(new URL("/admin", req.url));
       }

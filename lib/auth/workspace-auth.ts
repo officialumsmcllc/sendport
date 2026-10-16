@@ -85,51 +85,70 @@ export async function getAuthContext(req?: NextRequest): Promise<AuthContext | n
   // 2. Check Cookie Session for logged-in web users
   const session = await getCurrentUser();
   if (session) {
-    const user = await prisma.user.findUnique({
-      where: { id: session.userId },
-      include: {
-        workspaces: {
-          include: {
-            workspace: true,
+    try {
+      let user = await prisma.user.findUnique({
+        where: { id: session.userId },
+        include: {
+          workspaces: {
+            include: {
+              workspace: true,
+            },
+            orderBy: { createdAt: "asc" },
           },
-          orderBy: { createdAt: "asc" },
         },
-      },
-    });
+      });
 
-    if (user) {
-      let workspace = user.workspaces?.[0]?.workspace;
-      if (!workspace) {
-        // Auto-provision an isolated workspace if one wasn't linked
-        const userSlug = (user.email.split("@")[0] || "user").replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
-        const slug = `ws-${userSlug}-${user.id.substring(0, 5)}`;
-        workspace = await prisma.workspace.create({
-          data: {
-            name: `${user.name || user.email.split("@")[0]}'s Workspace`,
-            slug,
-            plan: "STARTER",
-            dailyQuota: 100,
-            members: {
-              create: {
-                userId: user.id,
-                role: "OWNER",
+      // Auto-heal: If user was reseeded or ID changed, try lookup by email
+      if (!user && session.email) {
+        user = await prisma.user.findUnique({
+          where: { email: session.email },
+          include: {
+            workspaces: {
+              include: {
+                workspace: true,
               },
+              orderBy: { createdAt: "asc" },
             },
           },
         });
       }
 
-      await autoResetDailyQuotaIfExpired(workspace);
+      if (user) {
+        let workspace = user.workspaces?.[0]?.workspace;
+        if (!workspace) {
+          // Auto-provision an isolated workspace if one wasn't linked
+          const userSlug = (user.email.split("@")[0] || "user").replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+          const slug = `ws-${userSlug}-${user.id.substring(0, 5)}`;
+          workspace = await prisma.workspace.create({
+            data: {
+              name: `${user.name || user.email.split("@")[0]}'s Workspace`,
+              slug,
+              plan: "STARTER",
+              dailyQuota: 100,
+              members: {
+                create: {
+                  userId: user.id,
+                  role: "OWNER",
+                },
+              },
+            },
+          });
+        }
 
-      return {
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-        },
-        workspace,
-      };
+        await autoResetDailyQuotaIfExpired(workspace);
+
+        return {
+          user: {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+          },
+          workspace,
+        };
+      }
+    } catch (err) {
+      console.error("Error in getAuthContext fetching user/workspace:", err);
     }
   }
 

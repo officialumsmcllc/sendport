@@ -1,4 +1,6 @@
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
+import { SESSION_COOKIE_NAME } from "@/lib/auth/session";
 import { getAuthContext } from "@/lib/auth/workspace-auth";
 import { getDashboardOverviewData, defaultDashboardData } from "@/lib/data/dashboard-overview";
 import DashboardClient from "./DashboardClient";
@@ -14,6 +16,10 @@ export default async function DashboardPage() {
   }
 
   if (!auth) {
+    try {
+      const cookieStore = await cookies();
+      cookieStore.delete(SESSION_COOKIE_NAME);
+    } catch (_) {}
     redirect("/login");
   }
 

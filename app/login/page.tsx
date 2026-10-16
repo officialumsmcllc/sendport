@@ -48,7 +48,11 @@ export default function LoginPage() {
       const redirectTarget = params?.get("redirect");
 
       if (redirectTarget && redirectTarget.startsWith("/")) {
-        router.push(redirectTarget);
+        if (redirectTarget.startsWith("/admin") && data.user?.role !== "ADMIN") {
+          router.push("/dashboard");
+        } else {
+          router.push(redirectTarget);
+        }
       } else if (data.user?.role === "ADMIN") {
         router.push("/admin");
       } else {
