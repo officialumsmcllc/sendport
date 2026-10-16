@@ -1,11 +1,44 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { getAuthContext } from "@/lib/auth/workspace-auth";
+import { getCurrentUser } from "@/lib/auth/session";
+import { isSuperAdminUser } from "@/lib/auth/admin-guard";
 
 export async function GET(req: NextRequest) {
   try {
     const auth = await getAuthContext(req);
     if (!auth) {
+      const session = await getCurrentUser(req);
+      if (session) {
+        const isAdmin = isSuperAdminUser(session.email, session.role);
+        return NextResponse.json({
+          authenticated: true,
+          user: {
+            id: session.userId,
+            email: session.email,
+            name: session.name || session.email.split("@")[0],
+            role: isAdmin ? "ADMIN" : (session.role || "USER"),
+          },
+          workspace: null,
+          domains: [],
+          apiKeysCount: 0,
+          stats: {
+            delivered: 0,
+            deliveredRate: "0%",
+            opened: 0,
+            openRate: "0%",
+            clicked: 0,
+            clickRate: "0%",
+            bounced: 0,
+            bounceRate: "0%",
+            usedToday: 0,
+            dailyQuota: isAdmin ? 50000 : 100,
+            credits: 0,
+            plan: isAdmin ? "SCALE_PRO" : "STARTER",
+          },
+          recentEmails: [],
+        });
+      }
       return NextResponse.json({ authenticated: false, user: null }, { status: 401 });
     }
 

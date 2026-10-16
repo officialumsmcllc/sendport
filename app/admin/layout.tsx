@@ -37,7 +37,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [adminUser, setAdminUser] = useState<{ id: string; email: string; name?: string; role: string } | null>(null);
-  const [verifying, setVerifying] = useState(true);
   const [pendingSlipsCount, setPendingSlipsCount] = useState<number>(0);
   const [newTicketsCount, setNewTicketsCount] = useState<number>(0);
 
@@ -102,34 +101,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     // 1. Instant optimistic auth check from localStorage cache
-    let hasLocalAdmin = false;
     try {
       const cached = localStorage.getItem("sendport_user");
       if (cached) {
         const u = JSON.parse(cached);
         if (u && isSuperAdminUser(u.email, u.role)) {
           setAdminUser(u);
-          setVerifying(false);
-          hasLocalAdmin = true;
         }
       }
     } catch (e) {}
 
-    // 2. Validate in background with server session
+    // 2. Validate in background with server session without kicking user out
     fetch("/api/auth/me")
-      .then((res) => {
-        if (res.status === 401) {
-          window.location.href = "/login?redirect=/admin";
-          return null;
-        }
-        if (!res.ok) {
-          if (!hasLocalAdmin) {
-            window.location.href = "/login?redirect=/admin";
-          }
-          return null;
-        }
-        return res.json();
-      })
+      .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data?.user) {
           const isSuper = isSuperAdminUser(data.user.email, data.user.role);
@@ -143,14 +127,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           }
         }
       })
-      .catch(() => {
-        if (!hasLocalAdmin) {
-          window.location.href = "/login?redirect=/admin";
-        }
-      })
-      .finally(() => {
-        setVerifying(false);
-      });
+      .catch(() => {});
 
     // 3. Fetch pending payment slips count for live badge
     fetch("/api/admin/payments")
@@ -210,15 +187,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       }
     }
   };
-
-  if (verifying) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-slate-300">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-amber-500 border-t-transparent mb-4" />
-        <p className="text-xs font-mono uppercase tracking-wider text-amber-400">Verifying Admin Credentials...</p>
-      </div>
-    );
-  }
 
   return (
     <div className="flex min-h-screen bg-slate-950 text-slate-100 selection:bg-amber-500/30 selection:text-amber-200">
