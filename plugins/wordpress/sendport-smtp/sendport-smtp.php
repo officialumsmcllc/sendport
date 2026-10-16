@@ -1,219 +1,368 @@
 <?php
 /**
- * Plugin Name: Sendport SMTP & Email Deliverability
- * Plugin URI: https://getsendport.com/integrations/wordpress
- * Description: Ultra-fast, 99.9% inbox deliverability for WordPress and WooCommerce powered by Sendport REST API & 2048-bit RSA DKIM.
- * Version: 1.0.0
- * Author: Sendport Technologies Inc.
- * Author URI: https://getsendport.com
- * License: GPL-2.0+
- * Text Domain: sendport-smtp
+ * Plugin Name:       Sendport SMTP & Email Deliverability
+ * Plugin URI:        https://getsendport.com/integrations/wordpress
+ * Description:       Ultra-fast, 99.9% inbox deliverability for WordPress & WooCommerce powered by Sendport REST API and 2048-bit RSA DKIM.
+ * Version:           1.0.0
+ * Requires at least: 5.6
+ * Requires PHP:      7.4
+ * Tested up to:      6.7
+ * Author:            Sendport Technologies Inc.
+ * Author URI:        https://getsendport.com
+ * License:           GPL-2.0-or-later
+ * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
+ * Text Domain:       sendport-smtp
+ * Domain Path:       /languages
  */
 
+// Exit if accessed directly
 if (!defined('ABSPATH')) {
-    exit; // Exit if accessed directly
+    exit;
 }
 
-class Sendport_SMTP_Plugin {
-    const API_ENDPOINT = 'https://getsendport.com/api/v1/emails/send';
+if (!class_exists('Sendport_SMTP_Plugin')) {
 
-    public function __construct() {
-        add_action('admin_menu', array($this, 'add_admin_menu'));
-        add_action('admin_init', array($this, 'register_settings'));
-        add_filter('pre_wp_mail', array($this, 'intercept_wp_mail'), 10, 2);
-    }
+    class Sendport_SMTP_Plugin {
 
-    public function add_admin_menu() {
-        add_options_page(
-            'Sendport SMTP Settings',
-            'Sendport SMTP',
-            'manage_options',
-            'sendport-smtp',
-            array($this, 'render_settings_page')
-        );
-    }
+        const VERSION      = '1.0.0';
+        const API_ENDPOINT = 'https://getsendport.com/api/v1/emails/send';
 
-    public function register_settings() {
-        register_setting('sendport_smtp_group', 'sendport_api_key');
-        register_setting('sendport_smtp_group', 'sendport_from_email');
-        register_setting('sendport_smtp_group', 'sendport_from_name');
-        register_setting('sendport_smtp_group', 'sendport_track_opens');
-        register_setting('sendport_smtp_group', 'sendport_track_clicks');
-    }
-
-    /**
-     * Intercepts standard wp_mail calls and redirects through Sendport REST API
-     */
-    public function intercept_wp_mail($return, $atts) {
-        $api_key = get_option('sendport_api_key');
-        if (empty($api_key)) {
-            return $return; // Fall back to native wp_mail if API key not configured
+        public function __construct() {
+            add_action('admin_menu', array($this, 'add_admin_menu'));
+            add_action('admin_init', array($this, 'register_settings'));
+            add_filter('pre_wp_mail', array($this, 'intercept_wp_mail'), 10, 2);
+            add_filter('plugin_action_links_' . plugin_basename(__FILE__), array($this, 'add_action_links'));
         }
 
-        $to = $atts['to'];
-        if (!is_array($to)) {
-            $to = array_map('trim', explode(',', $to));
+        /**
+         * Add Settings shortcut link to Plugins screen
+         */
+        public function add_action_links($links) {
+            $settings_link = sprintf(
+                '<a href="%s">%s</a>',
+                esc_url(admin_url('options-general.php?page=sendport-smtp')),
+                esc_html__('Settings', 'sendport-smtp')
+            );
+            array_unshift($links, $settings_link);
+            return $links;
         }
 
-        $subject = $atts['subject'];
-        $message = $atts['message'];
-        $headers = isset($atts['headers']) ? $atts['headers'] : array();
-
-        $from_email = get_option('sendport_from_email');
-        if (empty($from_email)) {
-            $from_email = get_option('admin_email');
+        /**
+         * Register Settings Page under WordPress Settings menu
+         */
+        public function add_admin_menu() {
+            add_options_page(
+                esc_html__('Sendport SMTP Settings', 'sendport-smtp'),
+                esc_html__('Sendport SMTP', 'sendport-smtp'),
+                'manage_options',
+                'sendport-smtp',
+                array($this, 'render_settings_page')
+            );
         }
 
-        $from_name = get_option('sendport_from_name');
-        if (empty($from_name)) {
-            $from_name = get_bloginfo('name');
+        /**
+         * Register Options with strict sanitize_callback for 100% WP.org approval
+         */
+        public function register_settings() {
+            register_setting('sendport_smtp_group', 'sendport_api_key', array(
+                'type'              => 'string',
+                'sanitize_callback' => 'sanitize_text_field',
+                'default'           => '',
+            ));
+
+            register_setting('sendport_smtp_group', 'sendport_from_email', array(
+                'type'              => 'string',
+                'sanitize_callback' => 'sanitize_email',
+                'default'           => '',
+            ));
+
+            register_setting('sendport_smtp_group', 'sendport_from_name', array(
+                'type'              => 'string',
+                'sanitize_callback' => 'sanitize_text_field',
+                'default'           => '',
+            ));
+
+            register_setting('sendport_smtp_group', 'sendport_track_opens', array(
+                'type'              => 'string',
+                'sanitize_callback' => array($this, 'sanitize_checkbox'),
+                'default'           => '1',
+            ));
+
+            register_setting('sendport_smtp_group', 'sendport_track_clicks', array(
+                'type'              => 'string',
+                'sanitize_callback' => array($this, 'sanitize_checkbox'),
+                'default'           => '1',
+            ));
         }
 
-        $from_header = sprintf('%s <%s>', $from_name, $from_email);
-
-        // Determine if message is HTML or Plain Text
-        $is_html = (strpos($message, '<html') !== false || strpos($message, '<body') !== false || strpos($message, '<p') !== false || strpos($message, '<br') !== false);
-
-        $payload = array(
-            'from' => $from_header,
-            'to' => $to,
-            'subject' => $subject,
-            'track_opens' => get_option('sendport_track_opens', '1') === '1',
-            'track_clicks' => get_option('sendport_track_clicks', '1') === '1',
-        );
-
-        if ($is_html) {
-            $payload['html'] = $message;
-        } else {
-            $payload['text'] = $message;
-            $payload['html'] = nl2br(esc_html($message));
+        public function sanitize_checkbox($input) {
+            return ($input === '1' || $input === 1) ? '1' : '0';
         }
 
-        $response = wp_remote_post(self::API_ENDPOINT, array(
-            'method' => 'POST',
-            'timeout' => 15,
-            'headers' => array(
-                'Authorization' => 'Bearer ' . trim($api_key),
-                'Content-Type' => 'application/json',
-                'User-Agent' => 'Sendport-WordPress/' . get_bloginfo('version'),
-            ),
-            'body' => wp_json_encode($payload),
-        ));
+        /**
+         * Intercepts standard wp_mail calls and routes through Sendport REST API
+         */
+        public function intercept_wp_mail($return, $atts) {
+            $api_key = get_option('sendport_api_key');
+            if (empty($api_key)) {
+                // If Sendport API key is not configured, fall back to native wp_mail
+                return $return;
+            }
 
-        if (is_wp_error($response)) {
-            error_log('[Sendport SMTP Error] ' . $response->get_error_message());
-            return false;
-        }
+            $to = $atts['to'];
+            if (!is_array($to)) {
+                $to = array_map('trim', explode(',', $to));
+            }
 
-        $code = wp_remote_retrieve_response_code($response);
-        if ($code >= 200 && $code < 300) {
-            return true; // Successfully delivered via Sendport API
-        } else {
+            $subject = $atts['subject'];
+            $message = $atts['message'];
+
+            $from_email = get_option('sendport_from_email');
+            if (empty($from_email)) {
+                $from_email = get_option('admin_email');
+            }
+
+            $from_name = get_option('sendport_from_name');
+            if (empty($from_name)) {
+                $from_name = get_bloginfo('name');
+            }
+
+            $from_header = sprintf('%s <%s>', $from_name, $from_email);
+
+            // Determine if email body contains HTML tags
+            $is_html = (
+                strpos($message, '<html') !== false ||
+                strpos($message, '<body') !== false ||
+                strpos($message, '<p') !== false ||
+                strpos($message, '<br') !== false ||
+                strpos($message, '<div') !== false ||
+                strpos($message, '<table') !== false
+            );
+
+            $payload = array(
+                'from'         => $from_header,
+                'to'           => $to,
+                'subject'      => $subject,
+                'track_opens'  => get_option('sendport_track_opens', '1') === '1',
+                'track_clicks' => get_option('sendport_track_clicks', '1') === '1',
+            );
+
+            if ($is_html) {
+                $payload['html'] = $message;
+            } else {
+                $payload['text'] = $message;
+                $payload['html'] = nl2br(esc_html($message));
+            }
+
+            $response = wp_remote_post(self::API_ENDPOINT, array(
+                'method'      => 'POST',
+                'timeout'     => 15,
+                'redirection' => 5,
+                'httpversion' => '1.1',
+                'blocking'    => true,
+                'headers'     => array(
+                    'Authorization' => 'Bearer ' . trim($api_key),
+                    'Content-Type'  => 'application/json; charset=utf-8',
+                    'User-Agent'    => 'Sendport-WordPress/' . self::VERSION . '; ' . esc_url(home_url()),
+                ),
+                'body'        => wp_json_encode($payload),
+            ));
+
+            if (is_wp_error($response)) {
+                // Log transport error for site administrator debugging
+                error_log('[Sendport SMTP Error] ' . $response->get_error_message());
+                return false;
+            }
+
+            $code = wp_remote_retrieve_response_code($response);
+            if ($code >= 200 && $code < 300) {
+                return true; // Successfully accepted & dispatched by Sendport
+            }
+
             $body = wp_remote_retrieve_body($response);
             error_log('[Sendport SMTP HTTP ' . $code . '] ' . $body);
             return false;
         }
-    }
 
-    public function render_settings_page() {
-        $test_result = null;
-
-        // Handle Test Email Dispatch
-        if (isset($_POST['sendport_test_action']) && check_admin_referer('sendport_test_nonce')) {
-            $test_to = sanitize_email($_POST['sendport_test_email']);
-            if (!empty($test_to)) {
-                $subject = 'Sendport SMTP Test Email — ' . get_bloginfo('name');
-                $message = '<h3>Congratulations!</h3><p>Your WordPress site is now successfully delivering authenticated, 2048-bit DKIM signed emails via Sendport.</p><p>Timestamp: ' . current_time('mysql') . '</p>';
-                
-                $sent = wp_mail($test_to, $subject, $message);
-                $test_result = $sent 
-                    ? array('success' => true, 'message' => 'Test email successfully dispatched to ' . esc_html($test_to) . '! Check your inbox.')
-                    : array('success' => false, 'message' => 'Failed to dispatch test email. Please verify your Sendport API Key and verified domain in Sendport Dashboard.');
+        /**
+         * Render Plugin Settings and Live Delivery Verification Screen
+         */
+        public function render_settings_page() {
+            if (!current_user_can('manage_options')) {
+                wp_die(esc_html__('You do not have sufficient permissions to access this page.', 'sendport-smtp'));
             }
-        }
-        ?>
-        <div class="wrap" style="max-width: 800px; margin-top: 24px;">
-            <div style="background: #0f172a; color: #fff; padding: 24px; border-radius: 12px; margin-bottom: 24px; border: 1px solid #1e293b;">
-                <div style="display: flex; align-items: center; justify-content: space-between;">
-                    <div>
-                        <h1 style="color: #fff; margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.5px;">⚡ Sendport SMTP Delivery</h1>
-                        <p style="color: #94a3b8; font-size: 13px; margin: 6px 0 0 0;">The Developer-First Transactional Email Engine for WordPress & WooCommerce</p>
+
+            $test_result = null;
+
+            // Handle Live Test Email Action
+            if (isset($_POST['sendport_test_action']) && check_admin_referer('sendport_test_nonce_action', 'sendport_test_nonce_field')) {
+                $test_to = isset($_POST['sendport_test_email']) ? sanitize_email(wp_unslash($_POST['sendport_test_email'])) : '';
+
+                if (!empty($test_to) && is_email($test_to)) {
+                    $subject = sprintf(
+                        /* translators: %s: Site Title */
+                        esc_html__('Sendport SMTP Test Delivery — %s', 'sendport-smtp'),
+                        get_bloginfo('name')
+                    );
+
+                    $message = '<h3>' . esc_html__('Congratulations! 🎉', 'sendport-smtp') . '</h3>' .
+                        '<p>' . esc_html__('Your WordPress site is now successfully transmitting transactional emails via Sendport with verified 2048-bit RSA DKIM authentication.', 'sendport-smtp') . '</p>' .
+                        '<p><strong>' . esc_html__('Timestamp:', 'sendport-smtp') . '</strong> ' . esc_html(current_time('mysql')) . '</p>' .
+                        '<p><small>' . esc_html__('Delivered by Sendport Developer API (getsendport.com)', 'sendport-smtp') . '</small></p>';
+
+                    $sent = wp_mail($test_to, $subject, $message);
+
+                    if ($sent) {
+                        $test_result = array(
+                            'success' => true,
+                            'message' => sprintf(
+                                /* translators: %s: recipient email address */
+                                esc_html__('Test email successfully dispatched to %s! Check your inbox or spam folder.', 'sendport-smtp'),
+                                esc_html($test_to)
+                            ),
+                        );
+                    } else {
+                        $test_result = array(
+                            'success' => false,
+                            'message' => esc_html__('Failed to dispatch test email. Please ensure your Sendport API Key is valid and your sending domain is verified in Sendport Dashboard.', 'sendport-smtp'),
+                        );
+                    }
+                } else {
+                    $test_result = array(
+                        'success' => false,
+                        'message' => esc_html__('Please enter a valid recipient email address.', 'sendport-smtp'),
+                    );
+                }
+            }
+            ?>
+            <div class="wrap" style="max-width: 820px; margin-top: 24px;">
+                <!-- Header Card -->
+                <div style="background: #090d16; color: #ffffff; padding: 26px 30px; border-radius: 12px; margin-bottom: 24px; border: 1px solid #1e293b; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span style="background: #0284c7; color: #fff; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; text-transform: uppercase;">Official</span>
+                                <h1 style="color: #ffffff; margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.5px;">⚡ Sendport SMTP Delivery</h1>
+                            </div>
+                            <p style="color: #94a3b8; font-size: 13px; margin: 8px 0 0 0;">
+                                <?php esc_html_e('Developer-first transactional email engine for WordPress & WooCommerce with 99.9% inbox placement.', 'sendport-smtp'); ?>
+                            </p>
+                        </div>
+                        <a href="https://getsendport.com/dashboard/api-keys" target="_blank" rel="noopener noreferrer" style="background: #0284c7; color: #ffffff; text-decoration: none; padding: 10px 18px; border-radius: 8px; font-weight: 700; font-size: 12px; display: inline-flex; align-items: center; gap: 6px;">
+                            <?php esc_html_e('Get Sendport API Key →', 'sendport-smtp'); ?>
+                        </a>
                     </div>
-                    <a href="https://getsendport.com/dashboard/api-keys" target="_blank" style="background: #0284c7; color: #fff; text-decoration: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 12px;">Get API Key →</a>
                 </div>
-            </div>
 
-            <?php if ($test_result): ?>
-                <div style="padding: 14px 18px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; <?php echo $test_result['success'] ? 'background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0;' : 'background: #fef2f2; color: #991b1b; border: 1px solid #fecaca;'; ?>">
-                    <strong><?php echo $test_result['success'] ? '✓ Success:' : '✕ Error:'; ?></strong> <?php echo $test_result['message']; ?>
-                </div>
-            <?php endif; ?>
+                <!-- Test Feedback Alert -->
+                <?php if ($test_result): ?>
+                    <div style="padding: 14px 18px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; <?php echo $test_result['success'] ? 'background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0;' : 'background: #fef2f2; color: #991b1b; border: 1px solid #fecaca;'; ?>">
+                        <strong><?php echo $test_result['success'] ? esc_html__('✓ Success:', 'sendport-smtp') : esc_html__('✕ Error:', 'sendport-smtp'); ?></strong>
+                        <?php echo esc_html($test_result['message']); ?>
+                    </div>
+                <?php endif; ?>
 
-            <form method="post" action="options.php" style="background: #fff; padding: 28px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 24px;">
-                <?php settings_fields('sendport_smtp_group'); ?>
-                
-                <h3 style="margin-top: 0; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px; font-size: 16px;">API Credentials</h3>
-                <table class="form-table">
-                    <tr>
-                        <th scope="row"><label for="sendport_api_key">Sendport API Key</label></th>
-                        <td>
-                            <input type="password" id="sendport_api_key" name="sendport_api_key" value="<?php echo esc_attr(get_option('sendport_api_key')); ?>" class="regular-text" placeholder="sk_live_..." required />
-                            <p class="description">Found in your <a href="https://getsendport.com/dashboard/api-keys" target="_blank">Sendport Dashboard &gt; API Keys</a>.</p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row"><label for="sendport_from_email">From Email Address</label></th>
-                        <td>
-                            <input type="email" id="sendport_from_email" name="sendport_from_email" value="<?php echo esc_attr(get_option('sendport_from_email')); ?>" class="regular-text" placeholder="hello@yourdomain.com" />
-                            <p class="description">Must match a verified sending domain configured in Sendport.</p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row"><label for="sendport_from_name">From Sender Name</label></th>
-                        <td>
-                            <input type="text" id="sendport_from_name" name="sendport_from_name" value="<?php echo esc_attr(get_option('sendport_from_name')); ?>" class="regular-text" placeholder="<?php echo esc_attr(get_bloginfo('name')); ?>" />
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row">Tracking Preferences</th>
-                        <td>
-                            <label>
-                                <input type="checkbox" name="sendport_track_opens" value="1" <?php checked(get_option('sendport_track_opens', '1'), '1'); ?> />
-                                Enable Real-time Open Tracking
-                            </label><br>
-                            <label>
-                                <input type="checkbox" name="sendport_track_clicks" value="1" <?php checked(get_option('sendport_track_clicks', '1'), '1'); ?> />
-                                Enable Real-time Click Tracking
-                            </label>
-                        </td>
-                    </tr>
-                </table>
+                <!-- Settings Form -->
+                <form method="post" action="options.php" style="background: #ffffff; padding: 28px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <?php settings_fields('sendport_smtp_group'); ?>
 
-                <?php submit_button('Save Sendport Credentials'); ?>
-            </form>
+                    <h3 style="margin-top: 0; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px; font-size: 16px; font-weight: 700; color: #0f172a;">
+                        <?php esc_html_e('API Credentials & Sending Identity', 'sendport-smtp'); ?>
+                    </h3>
 
-            <div style="background: #fff; padding: 28px; border-radius: 12px; border: 1px solid #e2e8f0;">
-                <h3 style="margin-top: 0; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px; font-size: 16px;">Test Your Email Delivery</h3>
-                <form method="post" action="">
-                    <?php wp_nonce_field('sendport_test_nonce'); ?>
-                    <input type="hidden" name="sendport_test_action" value="1" />
-                    <table class="form-table">
+                    <table class="form-table" role="presentation">
                         <tr>
-                            <th scope="row"><label for="sendport_test_email">Recipient Email</label></th>
+                            <th scope="row">
+                                <label for="sendport_api_key"><?php esc_html_e('Sendport API Key', 'sendport-smtp'); ?></label>
+                            </th>
                             <td>
-                                <input type="email" id="sendport_test_email" name="sendport_test_email" value="<?php echo esc_attr(wp_get_current_user()->user_email); ?>" class="regular-text" required />
-                                <p class="description">Enter an email to receive an instant live test message.</p>
+                                <input type="password" id="sendport_api_key" name="sendport_api_key" value="<?php echo esc_attr(get_option('sendport_api_key')); ?>" class="regular-text" placeholder="sk_live_..." required autocomplete="off" />
+                                <p class="description">
+                                    <?php
+                                    printf(
+                                        /* translators: %s: dashboard url */
+                                        esc_html__('Generated in your %s.', 'sendport-smtp'),
+                                        '<a href="https://getsendport.com/dashboard/api-keys" target="_blank" rel="noopener noreferrer">' . esc_html__('Sendport Dashboard > API Keys', 'sendport-smtp') . '</a>'
+                                    );
+                                    ?>
+                                </p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                <label for="sendport_from_email"><?php esc_html_e('From Email Address', 'sendport-smtp'); ?></label>
+                            </th>
+                            <td>
+                                <input type="email" id="sendport_from_email" name="sendport_from_email" value="<?php echo esc_attr(get_option('sendport_from_email')); ?>" class="regular-text" placeholder="hello@yourdomain.com" />
+                                <p class="description">
+                                    <?php esc_html_e('Must match an active domain registered in your Sendport account.', 'sendport-smtp'); ?>
+                                </p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                <label for="sendport_from_name"><?php esc_html_e('From Sender Name', 'sendport-smtp'); ?></label>
+                            </th>
+                            <td>
+                                <input type="text" id="sendport_from_name" name="sendport_from_name" value="<?php echo esc_attr(get_option('sendport_from_name')); ?>" class="regular-text" placeholder="<?php echo esc_attr(get_bloginfo('name')); ?>" />
+                                <p class="description">
+                                    <?php esc_html_e('The friendly name displayed in recipient inboxes (defaults to Site Title).', 'sendport-smtp'); ?>
+                                </p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><?php esc_html_e('Real-time Analytics', 'sendport-smtp'); ?></th>
+                            <td>
+                                <fieldset>
+                                    <label>
+                                        <input type="checkbox" name="sendport_track_opens" value="1" <?php checked(get_option('sendport_track_opens', '1'), '1'); ?> />
+                                        <?php esc_html_e('Enable real-time email open tracking', 'sendport-smtp'); ?>
+                                    </label><br>
+                                    <label style="margin-top: 6px; display: inline-block;">
+                                        <input type="checkbox" name="sendport_track_clicks" value="1" <?php checked(get_option('sendport_track_clicks', '1'), '1'); ?> />
+                                        <?php esc_html_e('Enable click-through engagement tracking', 'sendport-smtp'); ?>
+                                    </label>
+                                </fieldset>
                             </td>
                         </tr>
                     </table>
-                    <p class="submit">
-                        <input type="submit" class="button button-primary" value="Send Test Email via Sendport" />
-                    </p>
-                </form>
-            </div>
-        </div>
-        <?php
-    }
-}
 
-new Sendport_SMTP_Plugin();
+                    <?php submit_button(esc_html__('Save Sendport Credentials', 'sendport-smtp')); ?>
+                </form>
+
+                <!-- Live Test Dispatch Box -->
+                <div style="background: #ffffff; padding: 28px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <h3 style="margin-top: 0; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px; font-size: 16px; font-weight: 700; color: #0f172a;">
+                        <?php esc_html_e('Verify Email Deliverability (Live Test)', 'sendport-smtp'); ?>
+                    </h3>
+                    <p style="color: #64748b; font-size: 13px; margin: 0 0 16px 0;">
+                        <?php esc_html_e('Send an authenticated test message to verify your API Key and DNS records.', 'sendport-smtp'); ?>
+                    </p>
+
+                    <form method="post" action="">
+                        <?php wp_nonce_field('sendport_test_nonce_action', 'sendport_test_nonce_field'); ?>
+                        <input type="hidden" name="sendport_test_action" value="1" />
+
+                        <table class="form-table" role="presentation">
+                            <tr>
+                                <th scope="row">
+                                    <label for="sendport_test_email"><?php esc_html_e('Recipient Email', 'sendport-smtp'); ?></label>
+                                </th>
+                                <td>
+                                    <input type="email" id="sendport_test_email" name="sendport_test_email" value="<?php echo esc_attr(wp_get_current_user()->user_email); ?>" class="regular-text" required />
+                                </td>
+                            </tr>
+                        </table>
+
+                        <p class="submit">
+                            <input type="submit" class="button button-primary" value="<?php esc_attr_e('Send Test Email via Sendport', 'sendport-smtp'); ?>" />
+                        </p>
+                    </form>
+                </div>
+            </div>
+            <?php
+        }
+    }
+
+    new Sendport_SMTP_Plugin();
+}

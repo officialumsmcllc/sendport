@@ -49,12 +49,12 @@ define('SENDPORT_API_KEY', 'sk_live_your_api_key_here');`);
 
             <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
               <a
-                href="/downloads/sendport-smtp.php"
-                download="sendport-smtp.php"
+                href="/downloads/sendport-smtp.zip"
+                download="sendport-smtp.zip"
                 className="inline-flex items-center gap-2.5 rounded-2xl bg-white px-7 py-3.5 text-xs font-bold text-black hover:bg-slate-200 transition-all shadow-xl shadow-white/5"
               >
                 <Download className="w-4 h-4 text-sky-600" />
-                Download WordPress Plugin (v1.0.0)
+                Download Plugin (.ZIP) — v1.0.0
               </a>
 
               <Link
