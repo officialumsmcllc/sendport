@@ -55,27 +55,40 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      // Automatically upgrade user's workspace daily quota based on plan
-      const quota = tx.plan === "SCALE_PRO" ? 25000 : tx.plan === "GROWTH" ? 3000 : 100;
-      
       const userWorkspaces = await prisma.workspaceMember.findMany({
         where: { userId: tx.userId },
       });
 
-      for (const wm of userWorkspaces) {
-        await prisma.workspace.update({
-          where: { id: wm.workspaceId },
-          data: {
-            plan: tx.plan,
-            dailyQuota: quota,
-          },
-        });
+      const quota = tx.plan === "SCALE_PRO" ? 25000 : tx.plan === "GROWTH" ? 3000 : 100;
+
+      if (tx.isCreditTopup && tx.creditsPurchased) {
+        // Automatically add top-up credits to user's workspaces
+        for (const wm of userWorkspaces) {
+          await prisma.workspace.update({
+            where: { id: wm.workspaceId },
+            data: {
+              credits: { increment: tx.creditsPurchased },
+            },
+          });
+        }
+      } else {
+        // Automatically upgrade user's workspace daily quota based on plan
+        for (const wm of userWorkspaces) {
+          await prisma.workspace.update({
+            where: { id: wm.workspaceId },
+            data: {
+              plan: tx.plan,
+              dailyQuota: quota,
+            },
+          });
+        }
       }
 
       logSecurityAudit("PAYMENT_APPROVED", tx.userId, {
         transactionId: tx.id,
         plan: tx.plan,
-        newQuota: quota,
+        isCreditTopup: tx.isCreditTopup,
+        creditsPurchased: tx.creditsPurchased,
       });
 
       // Send Plan Upgrade Confirmation Email from no-reply@getsendport.com
@@ -89,9 +102,13 @@ export async function POST(req: NextRequest) {
         })
         .catch(() => {});
 
+      const successMsg = tx.isCreditTopup && tx.creditsPurchased
+        ? `Transaction approved! Added ${tx.creditsPurchased.toLocaleString()} non-expiring credits to workspace.`
+        : `Transaction approved! Workspace upgraded to ${tx.plan} (${quota.toLocaleString()} emails/day).`;
+
       return NextResponse.json({
         success: true,
-        message: `Transaction approved! Workspace upgraded to ${tx.plan} (${quota.toLocaleString()} emails/day).`,
+        message: successMsg,
         transaction: updated,
       });
     } else {

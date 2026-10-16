@@ -105,6 +105,7 @@ export function Footer({ dark = true }: { dark?: boolean }) {
               <li><Link href="/blog" className="hover:text-white transition-colors">Engineering & Guides Blog</Link></li>
               <li><Link href="/docs" className="hover:text-white transition-colors">REST API Reference</Link></li>
               <li><Link href="/dashboard/smtp" className="hover:text-white transition-colors">SMTP Relay Credentials</Link></li>
+              <li><Link href="/integrations/wordpress" className="text-sky-400 hover:text-sky-300 font-semibold transition-colors flex items-center gap-1">WordPress SMTP Plugin <span className="text-[10px] bg-sky-500/20 px-1 rounded">New</span></Link></li>
               <li><Link href="/dashboard/playground" className="hover:text-white transition-colors">Interactive API Playground</Link></li>
               <li><Link href="/vs/resend-alternative" className="hover:text-white transition-colors">Sendport vs Resend</Link></li>
               <li><Link href="/vs/sendgrid-alternative" className="hover:text-white transition-colors">Sendport vs SendGrid</Link></li>

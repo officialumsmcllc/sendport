@@ -19,17 +19,6 @@ export async function POST(req: NextRequest) {
     }
 
     const workspace = auth.workspace;
-
-    // Daily Quota Enforcement
-    if (workspace.usedToday >= workspace.dailyQuota) {
-      return NextResponse.json(
-        {
-          error: `Daily email quota reached (${workspace.usedToday}/${workspace.dailyQuota}). Upgrade plan to send more.`,
-        },
-        { status: 429 }
-      );
-    }
-
     const body = await req.json();
     const { from, to, subject, html, text, reply_to, track_opens, track_clicks, headers, attachments } = body;
 
@@ -40,8 +29,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Pre-flight recipient syntax & DNS MX validation (prevents hard bounces and mailbox suspensions)
     const recipientList = Array.isArray(to) ? to : [to];
+    const availableCredits = (workspace as any).credits || 0;
+
+    // Daily Quota & Pay-As-You-Go Credits Enforcement
+    if (workspace.usedToday >= workspace.dailyQuota && availableCredits < recipientList.length) {
+      return NextResponse.json(
+        {
+          error: `Daily email quota reached (${workspace.usedToday}/${workspace.dailyQuota}) and insufficient top-up credits (${availableCredits} available). Top up credits or upgrade plan at /dashboard/billing to send more.`,
+        },
+        { status: 429 }
+      );
+    }
+
+    // Pre-flight recipient syntax & DNS MX validation (prevents hard bounces and mailbox suspensions)
     for (const recipient of recipientList) {
       const val = await validateEmailWithMx(recipient);
       if (!val.isValid) {

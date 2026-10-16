@@ -93,6 +93,7 @@ export async function GET(req: NextRequest) {
       bounceRate: total > 0 ? `${Math.round((bounced / total) * 100)}%` : "0%",
       usedToday: todayCount,
       dailyQuota: auth.workspace.dailyQuota || 100,
+      credits: (auth.workspace as any).credits || 0,
       plan: auth.workspace.plan || "STARTER",
     };
 

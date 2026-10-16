@@ -93,13 +93,15 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
     }
   }
 
-  // 1b. Strictly verify workspace daily quota
+  // 1b. Strictly verify workspace daily quota & pay-as-you-go credits
+  let workspacePlan = "STARTER";
   if (options.workspaceId) {
     const ws = await prisma.workspace.findUnique({
       where: { id: options.workspaceId },
-      select: { usedToday: true, dailyQuota: true, plan: true, quotaResetAt: true },
+      select: { usedToday: true, dailyQuota: true, credits: true, plan: true, quotaResetAt: true },
     });
     if (ws) {
+      workspacePlan = ws.plan || "STARTER";
       const startOfToday = new Date();
       startOfToday.setHours(0, 0, 0, 0);
       let currentUsed = ws.usedToday;
@@ -113,10 +115,20 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
         } catch (_) {}
       }
 
-      if ((currentUsed + recipients.length) > ws.dailyQuota) {
-        throw new Error(
-          `Daily email quota exceeded (${currentUsed}/${ws.dailyQuota}). Please upgrade your workspace plan at /dashboard/billing to send more emails.`
-        );
+      const neededSends = recipients.length;
+      if ((currentUsed + neededSends) > ws.dailyQuota) {
+        const overage = (currentUsed + neededSends) - ws.dailyQuota;
+        if (ws.credits >= overage) {
+          // Deduct from non-expiring credit balance
+          await prisma.workspace.update({
+            where: { id: options.workspaceId },
+            data: { credits: { decrement: overage } },
+          });
+        } else {
+          throw new Error(
+            `Daily email quota exceeded (${currentUsed}/${ws.dailyQuota}) and insufficient top-up credits (${ws.credits} available). Top up credits or upgrade at /dashboard/billing.`
+          );
+        }
       }
     }
   }
@@ -127,8 +139,26 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
   const clickToken = crypto.randomBytes(16).toString("hex");
   const appUrl = siteConfig.url;
 
-  // 3. Tracking Injection
+  // 3. Tracking Injection & Viral Badge
   let processedHtml = options.html || `<p>${options.text || ""}</p>`;
+
+  // 3a. Viral Attribution Badge (STARTER plan only)
+  // Appends a clean, high-converting "Delivered with ⚡ Sendport" footer badge
+  if (workspacePlan === "STARTER") {
+    const viralBadgeHtml = `
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top: 36px; padding-top: 18px; border-top: 1px solid #e2e8f0;">
+  <tr>
+    <td align="center" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; color: #94a3b8; text-align: center;">
+      Delivered with <a href="https://getsendport.com/?ref=badge" target="_blank" style="color: #0284c7; font-weight: 700; text-decoration: none;">⚡ Sendport</a> &bull; Developer Email Infrastructure
+    </td>
+  </tr>
+</table>`;
+    if (processedHtml.includes("</body>")) {
+      processedHtml = processedHtml.replace("</body>", `${viralBadgeHtml}</body>`);
+    } else {
+      processedHtml += viralBadgeHtml;
+    }
+  }
 
   if (options.trackOpens !== false) {
     const trackingPixel = `<img src="${appUrl}/api/track/open/${openToken}" width="1" height="1" style="display:none !important;" alt="" />`;

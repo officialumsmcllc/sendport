@@ -43,10 +43,43 @@ export default function BillingPage() {
     plan: "STARTER",
     usedToday: 0,
     dailyQuota: 100,
+    credits: 0,
   });
+
+  // Purchase Mode: Monthly Subscription Plan vs Pay-As-You-Go Credits
+  const [purchaseMode, setPurchaseMode] = useState<"PLAN" | "CREDITS">("PLAN");
 
   // Selected upgrade target (null if viewing active plan)
   const [selectedUpgradePlan, setSelectedUpgradePlan] = useState<"STARTER" | "GROWTH" | "SCALE_PRO" | null>(null);
+
+  // Credit Packs for pay-as-you-go top-ups
+  const creditPacks = [
+    {
+      id: "PACK_10K",
+      name: "10,000 Emails Pack",
+      credits: 10000,
+      usdPrice: 5,
+      desc: "Instant burst capacity for small blasts & test campaigns.",
+      popular: false,
+    },
+    {
+      id: "PACK_50K",
+      name: "50,000 Emails Pack",
+      credits: 50000,
+      usdPrice: 15,
+      desc: "Most popular for product launches, newsletters & SaaS bursts.",
+      popular: true,
+    },
+    {
+      id: "PACK_200K",
+      name: "200,000 Emails Pack",
+      credits: 200000,
+      usdPrice: 45,
+      desc: "High-volume reserve quota. Credits never expire.",
+      popular: false,
+    },
+  ];
+  const [selectedCreditPack, setSelectedCreditPack] = useState(creditPacks[1]);
 
   // Manual payment form states
   const [manualMethod, setManualMethod] = useState("EASYPAISA");
@@ -69,6 +102,7 @@ export default function BillingPage() {
             plan: userPlan,
             usedToday: data.stats.usedToday || 0,
             dailyQuota: data.stats.dailyQuota || 100,
+            credits: data.stats.credits || 0,
           });
 
           // Set sensible upgrade recommendation based on current active plan
@@ -128,8 +162,11 @@ export default function BillingPage() {
   const handleManualSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!txId.trim()) return;
+
+    const isCredit = purchaseMode === "CREDITS";
     const targetPlan = selectedUpgradePlan || "GROWTH";
     const activePlanObj = plans.find((p) => p.id === targetPlan) || plans[1];
+    const amountToCharge = isCredit ? selectedCreditPack.usdPrice : activePlanObj.usdPrice;
 
     try {
       setSubmittingManual(true);
@@ -138,12 +175,14 @@ export default function BillingPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          plan: targetPlan,
-          amount: activePlanObj.usdPrice,
+          plan: isCredit ? `CREDITS_${selectedCreditPack.credits}` : targetPlan,
+          amount: amountToCharge,
           currency,
           method: manualMethod,
           referenceId: txId.trim(),
           senderName: senderName.trim(),
+          isCreditTopup: isCredit,
+          creditsPurchased: isCredit ? selectedCreditPack.credits : null,
         }),
       });
 
@@ -212,40 +251,94 @@ export default function BillingPage() {
       </div>
 
       {/* CURRENT USAGE SUMMARY */}
-      <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="space-y-1">
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-extrabold uppercase tracking-wider">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            Current Active Plan: {currentPlan}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2 rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-extrabold uppercase tracking-wider">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              Current Active Plan: {currentPlan}
+            </div>
+            <h2 className="text-xl font-black text-slate-900">
+              {currentPlan === "GROWTH"
+                ? `Growth Plan (${workspaceStats.dailyQuota.toLocaleString()} emails/day)`
+                : currentPlan === "SCALE_PRO"
+                ? `Scale Pro Plan (${workspaceStats.dailyQuota.toLocaleString()} emails/day)`
+                : `Starter Plan (${workspaceStats.dailyQuota.toLocaleString()} emails/day)`}
+            </h2>
+            <p className="text-xs text-slate-500">Daily quota resets automatically at 00:00 UTC.</p>
           </div>
-          <h2 className="text-2xl font-black text-slate-900">
-            {currentPlan === "GROWTH"
-              ? `Growth Plan (${workspaceStats.dailyQuota.toLocaleString()} emails/day)`
-              : currentPlan === "SCALE_PRO"
-              ? `Scale Pro Plan (${workspaceStats.dailyQuota.toLocaleString()} emails/day)`
-              : `Starter Plan (${workspaceStats.dailyQuota.toLocaleString()} emails/day)`}
-          </h2>
-          <p className="text-xs text-slate-500">Daily quota resets automatically at 00:00 UTC.</p>
+
+          <div className="text-right w-full sm:w-auto">
+            <span className="text-xs text-slate-400 block font-semibold">Today&apos;s Usage</span>
+            <span className="text-2xl font-black text-slate-900 font-mono">
+              {workspaceStats.usedToday.toLocaleString()} / {workspaceStats.dailyQuota.toLocaleString()}
+            </span>
+            <div className="w-full sm:w-44 h-2 bg-slate-100 rounded-full mt-2 overflow-hidden border border-slate-200/50">
+              <div
+                className={`h-full rounded-full transition-all duration-300 ${
+                  usagePercent > 90 ? "bg-rose-500" : usagePercent > 75 ? "bg-amber-500" : "bg-indigo-600"
+                }`}
+                style={{ width: `${Math.max(3, usagePercent)}%` }}
+              />
+            </div>
+          </div>
         </div>
 
-        <div className="text-right w-full sm:w-auto">
-          <span className="text-xs text-slate-400 block font-semibold">Today&apos;s Usage</span>
-          <span className="text-2xl font-black text-slate-900 font-mono">
-            {workspaceStats.usedToday.toLocaleString()} / {workspaceStats.dailyQuota.toLocaleString()}
-          </span>
-          <div className="w-full sm:w-48 h-2.5 bg-slate-100 rounded-full mt-2 overflow-hidden border border-slate-200/50">
-            <div
-              className={`h-full rounded-full transition-all duration-300 ${
-                usagePercent > 90 ? "bg-rose-500" : usagePercent > 75 ? "bg-amber-500" : "bg-indigo-600"
-              }`}
-              style={{ width: `${Math.max(3, usagePercent)}%` }}
-            />
+        {/* Reserve Overdraft Credits Card */}
+        <div className="rounded-2xl border border-sky-200 bg-gradient-to-br from-sky-50/60 to-indigo-50/60 p-6 shadow-xs flex flex-col justify-between">
+          <div className="space-y-1">
+            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-sky-100 border border-sky-300 text-sky-800 text-[10px] font-extrabold uppercase tracking-wider">
+              <Zap className="w-3 h-3 text-sky-600" /> Reserve Overdraft Credits
+            </div>
+            <h3 className="text-xs text-slate-600 font-medium pt-1">Non-Expiring Top-Up Balance</h3>
+            <p className="text-2xl font-black text-slate-900 font-mono">
+              {(workspaceStats.credits || 0).toLocaleString()} <span className="text-xs font-normal text-slate-500">emails</span>
+            </p>
           </div>
+          <button
+            onClick={() => setPurchaseMode("CREDITS")}
+            className="mt-3 text-xs font-bold text-sky-700 hover:text-sky-900 flex items-center gap-1 cursor-pointer"
+          >
+            Buy Additional Credits →
+          </button>
         </div>
       </div>
 
-      {/* PLAN CARDS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* MODE SELECTOR */}
+      <div className="flex flex-wrap items-center justify-between border-b border-slate-200 pb-3 gap-3">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setPurchaseMode("PLAN")}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              purchaseMode === "PLAN"
+                ? "bg-slate-900 text-white shadow-xs"
+                : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+            }`}
+          >
+            Monthly Subscriptions
+          </button>
+          <button
+            type="button"
+            onClick={() => setPurchaseMode("CREDITS")}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+              purchaseMode === "CREDITS"
+                ? "bg-indigo-600 text-white shadow-xs"
+                : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+            }`}
+          >
+            <Zap className="w-3.5 h-3.5 text-amber-300" /> Pay-As-You-Go Credits (Never Expire)
+          </button>
+        </div>
+
+        <p className="text-xs text-slate-500 font-medium">
+          {purchaseMode === "PLAN" ? "Elevated daily recurring sending quotas" : "One-time burst protection packs that never expire"}
+        </p>
+      </div>
+
+      {/* PLAN CARDS OR CREDIT PACKS */}
+      {purchaseMode === "PLAN" ? (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {plans.map((p) => {
           const isCurrentPlan = currentPlan === p.id;
           const isSelectedForUpgrade = selectedUpgradePlan === p.id && !isCurrentPlan;
@@ -351,27 +444,94 @@ export default function BillingPage() {
           );
         })}
       </div>
+      ) : (
+        /* CREDIT PACK CARDS */
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {creditPacks.map((pack) => {
+            const isSelected = selectedCreditPack.id === pack.id;
+            return (
+              <div
+                key={pack.id}
+                onClick={() => setSelectedCreditPack(pack)}
+                className={`rounded-3xl border p-6 flex flex-col justify-between transition-all duration-200 relative cursor-pointer ${
+                  isSelected
+                    ? "border-indigo-600 bg-indigo-50/20 shadow-md ring-2 ring-indigo-500/20"
+                    : "border-slate-200 bg-white hover:border-slate-300"
+                }`}
+              >
+                {pack.popular && (
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-indigo-600 px-3 py-0.5 text-[10px] font-bold text-white shadow-xs">
+                    BEST VALUE
+                  </span>
+                )}
+                <div>
+                  <h4 className="text-lg font-bold text-slate-900 flex items-center gap-1.5">
+                    <Zap className="w-4 h-4 text-indigo-600" /> {pack.name}
+                  </h4>
+                  <p className="text-xs text-slate-500 mt-1">{pack.desc}</p>
+
+                  <div className="mt-4 mb-4">
+                    <span className="text-3xl font-black text-slate-900">
+                      {formatPrice(pack.usdPrice, currency)}
+                    </span>
+                    <span className="text-xs text-slate-400 font-medium"> / one-time</span>
+                  </div>
+
+                  <div className="space-y-2 text-xs text-slate-600 border-t border-slate-100 pt-4">
+                    <div className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>{pack.credits.toLocaleString()} Guaranteed Delivery Credits</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>Credits Never Expire</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>Overdraft Automatic Activation</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-6">
+                  {isSelected ? (
+                    <button className="w-full py-2.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-xs flex items-center justify-center gap-1.5 cursor-pointer">
+                      <Check className="w-3.5 h-3.5" /> Selected for Top-Up
+                    </button>
+                  ) : (
+                    <button className="w-full py-2.5 rounded-xl text-xs font-semibold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
+                      Select {pack.name}
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* CHECKOUT / UPGRADE SECTION */}
-      {selectedUpgradePlan && selectedUpgradePlan !== currentPlan ? (
+      {purchaseMode === "CREDITS" || (selectedUpgradePlan && selectedUpgradePlan !== currentPlan) ? (
         <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-xs space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-4 gap-3">
             <div>
               <div className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 uppercase tracking-wider">
-                <Sparkles className="w-3 h-3" /> Upgrade Order Summary
+                <Sparkles className="w-3 h-3" /> {purchaseMode === "CREDITS" ? "Credit Top-Up Summary" : "Upgrade Order Summary"}
               </div>
               <h3 className="text-xl font-black text-slate-900 mt-0.5">
-                Switch from {currentPlan} to {targetPlanObj?.name} Plan
+                {purchaseMode === "CREDITS" ? `Top Up ${selectedCreditPack.name}` : `Switch from ${currentPlan} to ${targetPlanObj?.name} Plan`}
               </h3>
               <p className="text-xs text-slate-500 mt-1">
-                Your daily quota will instantly upgrade to {targetPlanObj?.defaultQuota} upon payment confirmation.
+                {purchaseMode === "CREDITS"
+                  ? `${selectedCreditPack.credits.toLocaleString()} non-expiring credits will be added to your workspace balance immediately.`
+                  : `Your daily quota will instantly upgrade to ${targetPlanObj?.defaultQuota} upon payment confirmation.`}
               </p>
             </div>
             <div className="text-right">
               <span className="text-xs text-slate-400 block font-medium">Total Due Today</span>
               <span className="text-3xl font-black text-indigo-600">
-                {formatPrice(targetPlanObj?.usdPrice || 0, currency)}
-                <span className="text-xs text-slate-500 font-normal"> / month</span>
+                {formatPrice(purchaseMode === "CREDITS" ? selectedCreditPack.usdPrice : (targetPlanObj?.usdPrice || 0), currency)}
+                <span className="text-xs text-slate-500 font-normal"> {purchaseMode === "CREDITS" ? "/ one-time" : "/ month"}</span>
               </span>
             </div>
           </div>
@@ -410,10 +570,17 @@ export default function BillingPage() {
                   Instant activation via encrypted Stripe checkout. Supports Visa, Mastercard, Apple Pay, and Google Pay worldwide.
                 </p>
                 <button
-                  onClick={() => alert(`Redirecting to Stripe secure checkout for ${targetPlanObj?.name} plan...`)}
+                  onClick={() => alert(`Redirecting to Stripe secure checkout for ${purchaseMode === "CREDITS" ? selectedCreditPack.name : targetPlanObj?.name}...`)}
                   className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-xs font-bold text-white hover:bg-indigo-700 shadow-xs transition-colors cursor-pointer"
                 >
-                  <span>Proceed to Stripe Checkout ({formatPrice(targetPlanObj?.usdPrice || 0, currency)})</span>
+                  <span>
+                    Proceed to Stripe Checkout (
+                    {formatPrice(
+                      purchaseMode === "CREDITS" ? selectedCreditPack.usdPrice : (targetPlanObj?.usdPrice || 0),
+                      currency
+                    )}
+                    )
+                  </span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>

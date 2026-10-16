@@ -15,19 +15,21 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { plan, amount, currency, method, referenceId, senderName, senderPhone, receiptUrl } = body;
+    const { plan, amount, currency, method, referenceId, senderName, senderPhone, receiptUrl, isCreditTopup, creditsPurchased } = body;
 
     const transaction = await prisma.paymentTransaction.create({
       data: {
         userId: auth.user.id,
-        plan: plan || "GROWTH",
-        amount: parseFloat(amount) || 29,
+        plan: plan || (isCreditTopup ? "CREDIT_TOPUP" : "GROWTH"),
+        amount: parseFloat(amount) || 20,
         currency: currency || "USD",
         method: method || "BANK_TRANSFER",
         referenceId: referenceId || "TX-" + Date.now(),
         senderName: senderName || auth.user.name || "Customer",
         senderPhone: senderPhone || null,
         receiptUrl: receiptUrl || null,
+        isCreditTopup: Boolean(isCreditTopup),
+        creditsPurchased: creditsPurchased ? parseInt(creditsPurchased, 10) : null,
         status: "PENDING",
       },
     });
