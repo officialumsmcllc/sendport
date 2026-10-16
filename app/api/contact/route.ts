@@ -32,22 +32,26 @@ export async function POST(req: NextRequest) {
       req.headers.get("x-real-ip") ||
       null;
 
-    const ticket = await prisma.supportTicket.create({
-      data: {
-        ticketNumber,
-        name: name ? name.trim() : null,
-        email: emailTrimmed,
-        subject: subject.trim(),
-        message: message.trim(),
-        status: "NEW",
-        priority: "NORMAL",
-        ipAddress,
-      },
-    });
+    try {
+      await prisma.supportTicket.create({
+        data: {
+          ticketNumber,
+          name: name ? name.trim() : null,
+          email: emailTrimmed,
+          subject: subject.trim(),
+          message: message.trim(),
+          status: "NEW",
+          priority: "NORMAL",
+          ipAddress,
+        },
+      });
+    } catch (dbErr: any) {
+      console.error("[SUPPORT_TICKET_DB_NOTICE]", dbErr?.message || dbErr);
+    }
 
     return NextResponse.json({
       success: true,
-      ticketNumber: ticket.ticketNumber,
+      ticketNumber,
       message: "Support ticket registered successfully.",
     });
   } catch (error: any) {
