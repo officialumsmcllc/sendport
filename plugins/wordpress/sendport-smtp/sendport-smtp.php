@@ -239,14 +239,17 @@ if (!class_exists('Sendport_SMTP_Plugin')) {
                 <!-- Header Card -->
                 <div style="background: #090d16; color: #ffffff; padding: 26px 30px; border-radius: 12px; margin-bottom: 24px; border: 1px solid #1e293b; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
                     <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
-                        <div>
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <span style="background: #0284c7; color: #fff; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; text-transform: uppercase;">Official</span>
-                                <h1 style="color: #ffffff; margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.5px;">⚡ Sendport SMTP Delivery</h1>
+                        <div style="display: flex; align-items: center; gap: 14px;">
+                            <img src="<?php echo esc_url(plugins_url('assets/icon-128x128.png', __FILE__)); ?>" alt="Sendport" style="width: 44px; height: 44px; border-radius: 10px; border: 1px solid #334155;" />
+                            <div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <h1 style="color: #ffffff; margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.5px;">Sendport SMTP Delivery</h1>
+                                    <span style="background: #0284c7; color: #fff; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; text-transform: uppercase;">Official</span>
+                                </div>
+                                <p style="color: #94a3b8; font-size: 12px; margin: 4px 0 0 0;">
+                                    <?php esc_html_e('Developer-first transactional email engine for WordPress & WooCommerce with 99.9% inbox placement.', 'sendport-smtp'); ?>
+                                </p>
                             </div>
-                            <p style="color: #94a3b8; font-size: 13px; margin: 8px 0 0 0;">
-                                <?php esc_html_e('Developer-first transactional email engine for WordPress & WooCommerce with 99.9% inbox placement.', 'sendport-smtp'); ?>
-                            </p>
                         </div>
                         <a href="https://getsendport.com/dashboard/api-keys" target="_blank" rel="noopener noreferrer" style="background: #0284c7; color: #ffffff; text-decoration: none; padding: 10px 18px; border-radius: 8px; font-weight: 700; font-size: 12px; display: inline-flex; align-items: center; gap: 6px;">
                             <?php esc_html_e('Get Sendport API Key →', 'sendport-smtp'); ?>
