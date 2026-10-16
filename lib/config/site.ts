@@ -13,7 +13,8 @@ export const siteConfig = {
   social: {
     twitter: "https://twitter.com/getsendport",
     github: "https://github.com/officialumsmcllc/sendport",
-    linkedin: "https://linkedin.com/company/sendport",
+    linkedin: "https://www.linkedin.com/company/getsendport",
+    facebook: "https://facebook.com/getsendport",
   },
   stats: {
     uptime: "99.9%",

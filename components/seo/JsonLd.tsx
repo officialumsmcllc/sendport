@@ -19,6 +19,7 @@ export function SendportJsonLd() {
       siteConfig.social.twitter,
       siteConfig.social.github,
       siteConfig.social.linkedin,
+      siteConfig.social.facebook,
     ],
     contactPoint: {
       "@type": "ContactPoint",

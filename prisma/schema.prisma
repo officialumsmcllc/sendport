@@ -369,3 +369,21 @@ model AbExperiment {
 
   workspace       Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 }
+
+model SupportTicket {
+  id            String    @id @default(cuid())
+  ticketNumber  String    @unique // e.g. SPT-1042
+  name          String?
+  email         String
+  subject       String
+  message       String    @db.Text
+  status        String    @default("NEW") // NEW, OPEN, REPLIED, CLOSED
+  priority      String    @default("NORMAL") // LOW, NORMAL, HIGH, URGENT
+  replyText     String?   @db.Text
+  repliedAt     DateTime?
+  repliedBy     String?   // Admin name / email
+  ipAddress     String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+

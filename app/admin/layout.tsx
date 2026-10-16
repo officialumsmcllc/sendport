@@ -28,6 +28,7 @@ import {
   SlidersHorizontal,
   Command,
   FileText,
+  MessageSquare,
 } from "lucide-react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -37,6 +38,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [adminUser, setAdminUser] = useState<{ id: string; email: string; name?: string; role: string } | null>(null);
   const [verifying, setVerifying] = useState(true);
   const [pendingSlipsCount, setPendingSlipsCount] = useState<number>(0);
+  const [newTicketsCount, setNewTicketsCount] = useState<number>(0);
 
   // Command Palette State
   const [paletteOpen, setPaletteOpen] = useState(false);
@@ -48,6 +50,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       title: "OPERATIONS",
       items: [
         { label: "Executive Mission Control", href: "/admin", icon: ShieldAlert, description: "System throughput, KPIs & health", category: "Operations" },
+        { label: "Support Tickets & Inbox", href: "/admin/support", icon: MessageSquare, badge: newTicketsCount, description: "Customer inquiries & direct DKIM email replies", category: "Action Required" },
         { label: "Payment Slip Approvals", href: "/admin/payments", icon: CreditCard, badge: pendingSlipsCount, description: "Review manual bank & crypto transfers", category: "Action Required" },
         { label: "Global Analytics & Revenue", href: "/admin/analytics", icon: BarChart3, description: "Platform revenue & volume projections", category: "Operations" },
       ],
@@ -144,6 +147,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         if (data?.transactions) {
           const pending = data.transactions.filter((t: any) => t.status === "PENDING").length;
           setPendingSlipsCount(pending);
+        }
+      })
+      .catch(() => {});
+
+    // 4. Fetch new support tickets count for live badge
+    fetch("/api/admin/support")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.counts?.new !== undefined) {
+          setNewTicketsCount(data.counts.new);
         }
       })
       .catch(() => {});

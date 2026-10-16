@@ -40,4 +40,5 @@ next-env.d.ts
 # local private docs
 *SUMMARY.md
 SENDPORT_DEPLOYMENT_SUMMARY.md
+cookies.txt
 
