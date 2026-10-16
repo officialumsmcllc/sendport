@@ -1,5 +1,5 @@
 === Sendport SMTP & Email Deliverability ===
-Contributors: sendport, officialumsmcllc
+Contributors: officialum1, sendport, officialumsmcllc
 Donate link: https://getsendport.com
 Tags: smtp, email, deliverability, transactional email, woocommerce smtp
 Requires at least: 5.6
