@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
+import { isSuperAdminUser } from "@/lib/auth/admin-guard";
 import { logSecurityAudit } from "@/lib/security/audit";
 
 export async function GET() {
   try {
     const session = await getCurrentUser();
-    if (!session) {
-      return NextResponse.json({ error: "Authentication required." }, { status: 401 });
-    }
-    if (session.role !== "ADMIN") {
+    if (!session || !isSuperAdminUser(session.email, session.role)) {
       return NextResponse.json({ error: "Access denied. Administrator privileges required." }, { status: 403 });
     }
 
@@ -65,7 +63,7 @@ export async function GET() {
 export async function PATCH(req: NextRequest) {
   try {
     const session = await getCurrentUser();
-    if (!session || session.role !== "ADMIN") {
+    if (!session || !isSuperAdminUser(session.email, session.role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 

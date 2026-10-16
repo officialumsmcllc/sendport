@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { hashPassword } from "@/lib/auth/password";
 import { createSessionToken, SESSION_COOKIE_NAME } from "@/lib/auth/session";
+import { isSuperAdminEmail } from "@/lib/auth/admin-guard";
 
 export async function POST(req: NextRequest) {
   try {
@@ -39,13 +40,18 @@ export async function POST(req: NextRequest) {
     // Hash password
     const passwordHash = hashPassword(password);
 
+    const isAdmin = isSuperAdminEmail(normalizedEmail);
+    const assignedRole = isAdmin ? "ADMIN" : "USER";
+    const assignedPlan = isAdmin ? "SCALE_PRO" : "STARTER";
+    const assignedQuota = isAdmin ? 50000 : 100;
+
     // Create user and default workspace
     const user = await prisma.user.create({
       data: {
         name: name?.trim() || normalizedEmail.split("@")[0],
         email: normalizedEmail,
         passwordHash,
-        role: "USER",
+        role: assignedRole,
       },
     });
 
@@ -54,8 +60,8 @@ export async function POST(req: NextRequest) {
       data: {
         name: `${user.name}'s Workspace`,
         slug,
-        plan: "STARTER",
-        dailyQuota: 100,
+        plan: assignedPlan,
+        dailyQuota: assignedQuota,
         members: {
           create: {
             userId: user.id,

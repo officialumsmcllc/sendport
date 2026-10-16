@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { SendportLogo } from "@/components/brand/Logo";
+import { isSuperAdminUser } from "@/lib/auth/admin-guard";
 import {
   CreditCard,
   Users,
@@ -101,13 +102,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     // 1. Instant optimistic auth check from localStorage cache
+    let hasLocalAdmin = false;
     try {
       const cached = localStorage.getItem("sendport_user");
       if (cached) {
         const u = JSON.parse(cached);
-        if (u && (u.role === "ADMIN" || u.email === "admin@getsendport.com" || u.email?.endsWith("@getsendport.com"))) {
+        if (u && isSuperAdminUser(u.email, u.role)) {
           setAdminUser(u);
           setVerifying(false);
+          hasLocalAdmin = true;
         }
       }
     } catch (e) {}
@@ -115,17 +118,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     // 2. Validate in background with server session
     fetch("/api/auth/me")
       .then((res) => {
+        if (res.status === 401) {
+          window.location.href = "/login?redirect=/admin";
+          return null;
+        }
         if (!res.ok) {
-          router.push("/login?redirect=/admin");
+          if (!hasLocalAdmin) {
+            window.location.href = "/login?redirect=/admin";
+          }
           return null;
         }
         return res.json();
       })
       .then((data) => {
         if (data?.user) {
-          const isSuper = data.user.role === "ADMIN" || data.user.email === "admin@getsendport.com" || data.user.email?.endsWith("@getsendport.com");
+          const isSuper = isSuperAdminUser(data.user.email, data.user.role);
           if (!isSuper) {
-            router.push("/dashboard?error=unauthorized_admin_access");
+            window.location.href = "/dashboard?error=unauthorized_admin_access";
           } else {
             setAdminUser(data.user);
             try {
@@ -135,7 +144,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         }
       })
       .catch(() => {
-        router.push("/login?redirect=/admin");
+        if (!hasLocalAdmin) {
+          window.location.href = "/login?redirect=/admin";
+        }
       })
       .finally(() => {
         setVerifying(false);
@@ -161,7 +172,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         }
       })
       .catch(() => {});
-  }, [router, pathname]);
+  }, [router]);
 
   const handleLogout = async () => {
     try {

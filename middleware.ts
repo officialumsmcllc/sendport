@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifySessionEdge, SESSION_COOKIE_NAME } from "@/lib/auth/edge-session";
+import { isSuperAdminUser } from "@/lib/auth/admin-guard";
 
 export async function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
@@ -20,7 +21,7 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
-    if (session.role !== "ADMIN" && session.email !== "admin@getsendport.com" && !session.email?.endsWith("@getsendport.com")) {
+    if (!isSuperAdminUser(session.email, session.role)) {
       // Regular users are strictly forbidden from seeing or accessing admin portal
       const dashboardUrl = new URL("/dashboard", req.url);
       dashboardUrl.searchParams.set("error", "unauthorized_admin_access");
@@ -39,7 +40,7 @@ export async function middleware(req: NextRequest) {
       );
     }
 
-    if (session.role !== "ADMIN" && session.email !== "admin@getsendport.com" && !session.email?.endsWith("@getsendport.com")) {
+    if (!isSuperAdminUser(session.email, session.role)) {
       return NextResponse.json(
         { error: "Forbidden. Administrative privileges required." },
         { status: 403 }

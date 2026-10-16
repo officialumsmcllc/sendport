@@ -69,11 +69,12 @@ function probeTcpPort(host: string, port: number, timeoutMs = 7000): Promise<{
 }
 
 import { getCurrentUser } from "@/lib/auth/session";
+import { isSuperAdminUser } from "@/lib/auth/admin-guard";
 
 export async function GET() {
   if (process.env.NODE_ENV === "production") {
     const user = await getCurrentUser();
-    if (!user || user.role !== "ADMIN") {
+    if (!user || !isSuperAdminUser(user.email, user.role)) {
       return NextResponse.json(
         { error: "Forbidden: Diagnostic endpoints are restricted to platform administrators." },
         { status: 403 }

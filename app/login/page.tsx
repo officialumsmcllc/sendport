@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { SendportLogo } from "@/components/brand/Logo";
 import { ArrowRight, Lock, Mail, AlertCircle, CheckCircle2, ShieldCheck, Sparkles } from "lucide-react";
+import { isSuperAdminUser } from "@/lib/auth/admin-guard";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -46,7 +47,7 @@ export default function LoginPage() {
 
       const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
       const redirectTarget = params?.get("redirect");
-      const isSuper = data.user?.role === "ADMIN" || data.user?.email === "admin@getsendport.com" || data.user?.email?.endsWith("@getsendport.com");
+      const isSuper = isSuperAdminUser(data.user?.email, data.user?.role);
 
       let target = "/dashboard";
       if (redirectTarget && redirectTarget.startsWith("/")) {

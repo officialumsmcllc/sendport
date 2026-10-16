@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { verifyPassword } from "@/lib/auth/password";
 import { createSessionToken, SESSION_COOKIE_NAME } from "@/lib/auth/session";
+import { isSuperAdminUser } from "@/lib/auth/admin-guard";
 import { logSecurityAudit } from "@/lib/security/audit";
 import {
   checkLoginRateLimit,
@@ -94,12 +95,30 @@ export async function POST(req: NextRequest) {
     resetLoginAttempts(`ip:${ip}`);
     resetLoginAttempts(`email:${normalizedEmail}`);
 
-    // Generate session token
+    // Check if user is a designated super admin
+    const isAdmin = isSuperAdminUser(user.email, user.role);
+    let effectiveRole = user.role;
+
+    if (isAdmin && user.role !== "ADMIN") {
+      try {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { role: "ADMIN" },
+        });
+        effectiveRole = "ADMIN";
+      } catch (err) {
+        console.warn("Failed to auto-promote admin role in DB:", err);
+      }
+    } else if (isAdmin) {
+      effectiveRole = "ADMIN";
+    }
+
+    // Generate session token with authoritative role
     const token = createSessionToken({
       userId: user.id,
       email: user.email,
       name: user.name || undefined,
-      role: user.role,
+      role: effectiveRole,
     });
 
     logSecurityAudit("USER_LOGIN_SUCCESS", user.id, {
@@ -114,7 +133,7 @@ export async function POST(req: NextRequest) {
         id: user.id,
         email: user.email,
         name: user.name,
-        role: user.role,
+        role: effectiveRole,
       },
     });
 

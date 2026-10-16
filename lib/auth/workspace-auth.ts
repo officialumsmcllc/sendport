@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { getCurrentUser } from "./session";
+import { isSuperAdminUser } from "./admin-guard";
 import { prisma } from "@/lib/db/prisma";
 
 export interface AuthContext {
@@ -164,8 +165,8 @@ export async function getAuthContext(req?: NextRequest): Promise<AuthContext | n
       }
 
       if (user) {
-        // Guarantee admin role if admin email
-        if ((user.email === "admin@getsendport.com" || user.email.endsWith("@getsendport.com")) && user.role !== "ADMIN") {
+        // Guarantee admin role if super admin
+        if (isSuperAdminUser(user.email, user.role) && user.role !== "ADMIN") {
           user = await prisma.user.update({
             where: { id: user.id },
             data: { role: "ADMIN" },

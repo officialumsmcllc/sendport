@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
+import { isSuperAdminUser } from "@/lib/auth/admin-guard";
 import { logSecurityAudit } from "@/lib/security/audit";
 
 const DEFAULT_METHODS = [
@@ -137,7 +138,7 @@ async function ensurePaymentMethodTable() {
 export async function GET(req: NextRequest) {
   try {
     const session = await getCurrentUser();
-    if (!session || session.role !== "ADMIN") {
+    if (!session || !isSuperAdminUser(session.email, session.role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
@@ -171,7 +172,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const session = await getCurrentUser();
-    if (!session || session.role !== "ADMIN") {
+    if (!session || !isSuperAdminUser(session.email, session.role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
@@ -231,7 +232,7 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   try {
     const session = await getCurrentUser();
-    if (!session || session.role !== "ADMIN") {
+    if (!session || !isSuperAdminUser(session.email, session.role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
@@ -274,7 +275,7 @@ export async function PATCH(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     const session = await getCurrentUser();
-    if (!session || session.role !== "ADMIN") {
+    if (!session || !isSuperAdminUser(session.email, session.role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 

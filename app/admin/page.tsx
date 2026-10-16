@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { getCurrentUser, SESSION_COOKIE_NAME } from "@/lib/auth/session";
+import { isSuperAdminUser } from "@/lib/auth/admin-guard";
 import { getAdminOverviewData, defaultAdminData } from "@/lib/data/admin-overview";
 import AdminDashboardClient from "./AdminDashboardClient";
 
@@ -18,7 +19,7 @@ export default async function AdminPage() {
     redirect("/login?redirect=/admin");
   }
 
-  const isSuperAdmin = user.role === "ADMIN" || user.email === "admin@getsendport.com" || user.email?.endsWith("@getsendport.com");
+  const isSuperAdmin = isSuperAdminUser(user.email, user.role);
   if (!isSuperAdmin) {
     redirect("/dashboard?error=unauthorized_admin_access");
   }

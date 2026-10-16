@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { SendportLogo } from "@/components/brand/Logo";
+import { isSuperAdminUser } from "@/lib/auth/admin-guard";
 import {
   LayoutDashboard,
   Globe,
@@ -195,7 +196,7 @@ export default function DashboardLayout({
 
         {/* Footer info in sidebar */}
         <div className="border-t border-slate-100 pt-3 text-xs text-slate-500 space-y-2.5 px-2">
-          {user?.role === "ADMIN" && (
+          {isSuperAdminUser(user?.email, user?.role) && (
             <Link
               href="/admin"
               className="w-full flex items-center justify-between py-1.5 px-2.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 hover:bg-amber-100 transition-colors font-bold text-[11px]"
@@ -253,7 +254,19 @@ export default function DashboardLayout({
                 );
               })}
             </nav>
-            <div className="mt-auto pt-4 border-t border-slate-200">
+            <div className="mt-auto pt-4 border-t border-slate-200 space-y-2">
+              {isSuperAdminUser(user?.email, user?.role) && (
+                <Link
+                  href="/admin"
+                  onClick={() => setMobileNavOpen(false)}
+                  className="w-full flex items-center justify-between py-2 px-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 hover:bg-amber-100 transition-colors font-bold text-xs"
+                >
+                  <span className="flex items-center gap-2">
+                    <UserCheck className="w-4 h-4 text-amber-700" /> Platform Admin Portal
+                  </span>
+                  <ArrowUpRight className="w-4 h-4 text-amber-600" />
+                </Link>
+              )}
               <button
                 onClick={handleLogout}
                 className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg border border-slate-200 text-slate-700 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition-colors text-xs font-semibold"

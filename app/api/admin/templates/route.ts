@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
+import { isSuperAdminUser } from "@/lib/auth/admin-guard";
 
 // Automated spam & security analysis for user templates
 function analyzeTemplateSafety(subject: string, htmlContent: string) {
@@ -43,7 +44,7 @@ function analyzeTemplateSafety(subject: string, htmlContent: string) {
 export async function GET(req: NextRequest) {
   try {
     const session = await getCurrentUser();
-    if (!session || session.role !== "ADMIN") {
+    if (!session || !isSuperAdminUser(session.email, session.role)) {
       return NextResponse.json({ error: "Access denied. Administrator privileges required." }, { status: 403 });
     }
 
@@ -172,7 +173,7 @@ export async function GET(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     const session = await getCurrentUser();
-    if (!session || session.role !== "ADMIN") {
+    if (!session || !isSuperAdminUser(session.email, session.role)) {
       return NextResponse.json({ error: "Access denied. Administrator privileges required." }, { status: 403 });
     }
 
