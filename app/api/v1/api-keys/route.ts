@@ -10,8 +10,21 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const userMemberships = await prisma.workspaceMember.findMany({
+      where: { userId: auth.user.id },
+      select: { workspaceId: true },
+    }).catch(() => []);
+
+    const userWorkspaceIds = userMemberships.map((m: any) => m.workspaceId);
+    const allWorkspaceIds = Array.from(new Set([auth.workspace.id, ...userWorkspaceIds].filter(Boolean)));
+
     const apiKeys = await prisma.apiKey.findMany({
-      where: { workspaceId: auth.workspace.id },
+      where: {
+        OR: [
+          { workspaceId: { in: allWorkspaceIds } },
+          { userId: auth.user.id },
+        ],
+      },
       orderBy: { createdAt: "desc" },
     });
 
@@ -77,10 +90,21 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: "Missing key ID" }, { status: 400 });
     }
 
+    const userMemberships = await prisma.workspaceMember.findMany({
+      where: { userId: auth.user.id },
+      select: { workspaceId: true },
+    }).catch(() => []);
+
+    const userWorkspaceIds = userMemberships.map((m: any) => m.workspaceId);
+    const allWorkspaceIds = Array.from(new Set([auth.workspace.id, ...userWorkspaceIds].filter(Boolean)));
+
     const existingKey = await prisma.apiKey.findFirst({
       where: {
         id,
-        workspaceId: auth.workspace.id,
+        OR: [
+          { workspaceId: { in: allWorkspaceIds } },
+          { userId: auth.user.id },
+        ],
       },
     });
 

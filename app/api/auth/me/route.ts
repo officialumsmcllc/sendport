@@ -13,9 +13,23 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const domainFilter = searchParams.get("domain")?.trim();
 
-    // Fetch this workspace's registered domains
+    const userMemberships = await prisma.workspaceMember.findMany({
+      where: { userId: auth.user.id },
+      select: { workspaceId: true },
+    }).catch(() => []);
+
+    const userWorkspaceIds = userMemberships.map((m: any) => m.workspaceId);
+    const allWorkspaceIds = Array.from(new Set([workspaceId, ...userWorkspaceIds].filter(Boolean)));
+
+    // Fetch this user's registered domains across their workspaces
     const domains = await prisma.domain.findMany({
-      where: { workspaceId },
+      where: {
+        OR: [
+          { workspaceId: { in: allWorkspaceIds } },
+          { userId: auth.user.id },
+          { user: { email: auth.user.email } },
+        ],
+      },
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
@@ -28,12 +42,21 @@ export async function GET(req: NextRequest) {
     const startOfToday = new Date();
     startOfToday.setUTCHours(0, 0, 0, 0);
 
-    // Build log filter - strictly bounded to this user's workspace
-    const logWhere: any = { workspaceId };
+    // Build log filter - strictly bounded to this user's workspace & domains
+    const logWhere: any = {
+      OR: [
+        { workspaceId: { in: allWorkspaceIds } },
+        { domain: { userId: auth.user.id } },
+      ],
+    };
     if (domainFilter && domainFilter !== "ALL") {
-      logWhere.OR = [
-        { domain: { name: { equals: domainFilter, mode: "insensitive" } } },
-        { from: { contains: domainFilter, mode: "insensitive" } },
+      logWhere.AND = [
+        {
+          OR: [
+            { domain: { name: { equals: domainFilter, mode: "insensitive" } } },
+            { from: { contains: domainFilter, mode: "insensitive" } },
+          ],
+        },
       ];
     }
 
@@ -43,8 +66,15 @@ export async function GET(req: NextRequest) {
       prisma.emailLog.count({ where: { ...logWhere, status: "OPENED" } }),
       prisma.emailLog.count({ where: { ...logWhere, status: "CLICKED" } }),
       prisma.emailLog.count({ where: { ...logWhere, status: "BOUNCED" } }),
-      prisma.emailLog.count({ where: { workspaceId, createdAt: { gte: startOfToday } } }),
-      prisma.apiKey.count({ where: { workspaceId } }),
+      prisma.emailLog.count({ where: { workspaceId: { in: allWorkspaceIds }, createdAt: { gte: startOfToday } } }),
+      prisma.apiKey.count({
+        where: {
+          OR: [
+            { workspaceId: { in: allWorkspaceIds } },
+            { userId: auth.user.id },
+          ],
+        },
+      }),
       prisma.emailLog.findMany({
         where: logWhere,
         take: 100,

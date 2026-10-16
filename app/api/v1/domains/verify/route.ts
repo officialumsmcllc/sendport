@@ -17,10 +17,28 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { domainId, name } = body;
 
+    const userMemberships = await prisma.workspaceMember.findMany({
+      where: { userId: auth.user.id },
+      select: { workspaceId: true },
+    }).catch(() => []);
+
+    const userWorkspaceIds = userMemberships.map((m: any) => m.workspaceId);
+    const allWorkspaceIds = Array.from(new Set([auth.workspace.id, ...userWorkspaceIds].filter(Boolean)));
+
     const domain = await prisma.domain.findFirst({
       where: {
-        workspaceId: auth.workspace.id,
-        OR: [{ id: domainId || undefined }, { name: name || undefined }],
+        AND: [
+          {
+            OR: [
+              { workspaceId: { in: allWorkspaceIds } },
+              { userId: auth.user.id },
+              { user: { email: auth.user.email } },
+            ],
+          },
+          {
+            OR: [{ id: domainId || undefined }, { name: name || undefined }],
+          },
+        ],
       },
     });
 

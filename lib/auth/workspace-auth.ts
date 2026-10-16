@@ -91,7 +91,11 @@ export async function getAuthContext(req?: NextRequest): Promise<AuthContext | n
         include: {
           workspaces: {
             include: {
-              workspace: true,
+              workspace: {
+                include: {
+                  domains: true,
+                },
+              },
             },
             orderBy: { createdAt: "asc" },
           },
@@ -105,7 +109,11 @@ export async function getAuthContext(req?: NextRequest): Promise<AuthContext | n
           include: {
             workspaces: {
               include: {
-                workspace: true,
+                workspace: {
+                  include: {
+                    domains: true,
+                  },
+                },
               },
               orderBy: { createdAt: "asc" },
             },
@@ -126,7 +134,13 @@ export async function getAuthContext(req?: NextRequest): Promise<AuthContext | n
             },
             include: {
               workspaces: {
-                include: { workspace: true },
+                include: {
+                  workspace: {
+                    include: {
+                      domains: true,
+                    },
+                  },
+                },
               },
             },
           });
@@ -136,7 +150,13 @@ export async function getAuthContext(req?: NextRequest): Promise<AuthContext | n
             where: { email: session.email },
             include: {
               workspaces: {
-                include: { workspace: true },
+                include: {
+                  workspace: {
+                    include: {
+                      domains: true,
+                    },
+                  },
+                },
               },
             },
           });
@@ -151,15 +171,74 @@ export async function getAuthContext(req?: NextRequest): Promise<AuthContext | n
             data: { role: "ADMIN" },
             include: {
               workspaces: {
-                include: { workspace: true },
+                include: {
+                  workspace: {
+                    include: {
+                      domains: true,
+                    },
+                  },
+                },
               },
             },
           });
         }
 
-        let workspace = user.workspaces?.[0]?.workspace;
+        // 1. Prioritize workspace that already has user's configured domains
+        let workspace: any = user.workspaces?.find((w) => w.workspace?.domains && w.workspace.domains.length > 0)?.workspace;
+
+        // 2. If not found, check if ANY domain in DB belongs to this user or user's email
         if (!workspace) {
-          // Auto-provision an isolated workspace if one wasn't linked
+          const userDomain = await prisma.domain.findFirst({
+            where: {
+              OR: [
+                { userId: user.id },
+                { user: { email: user.email } },
+              ],
+            },
+            include: { workspace: true },
+            orderBy: { createdAt: "desc" },
+          });
+
+          if (userDomain?.workspace) {
+            workspace = userDomain.workspace;
+            // Ensure user is linked as OWNER/member
+            await prisma.workspaceMember.upsert({
+              where: {
+                workspaceId_userId: {
+                  workspaceId: workspace.id,
+                  userId: user.id,
+                },
+              },
+              create: {
+                workspaceId: workspace.id,
+                userId: user.id,
+                role: "OWNER",
+              },
+              update: {},
+            }).catch(() => {});
+          }
+        }
+
+        // 3. Fallback to first existing workspace in user.workspaces
+        if (!workspace) {
+          workspace = user.workspaces?.[0]?.workspace;
+        }
+
+        // 4. Fallback to any workspace with user membership
+        if (!workspace) {
+          const existingWs = await prisma.workspace.findFirst({
+            where: {
+              members: { some: { userId: user.id } },
+            },
+            include: { domains: true },
+          });
+          if (existingWs) {
+            workspace = existingWs;
+          }
+        }
+
+        // 5. Auto-provision an isolated workspace if one wasn't linked
+        if (!workspace) {
           const userSlug = (user.email.split("@")[0] || "user").replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
           const uniqueSuffix = `${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`;
           const slug = `ws-${userSlug}-${uniqueSuffix}`;
@@ -178,6 +257,44 @@ export async function getAuthContext(req?: NextRequest): Promise<AuthContext | n
               },
             },
           });
+        }
+
+        // 6. Consolidate any orphan domains/keys belonging to this user into their active workspace
+        if (workspace?.id) {
+          try {
+            const orphanDomains = await prisma.domain.findMany({
+              where: {
+                OR: [
+                  { userId: user.id },
+                  { user: { email: user.email } },
+                ],
+                workspaceId: { not: workspace.id },
+              },
+            });
+            for (const d of orphanDomains) {
+              const conflict = await prisma.domain.findFirst({
+                where: { workspaceId: workspace.id, name: d.name },
+              });
+              if (!conflict) {
+                await prisma.domain.update({
+                  where: { id: d.id },
+                  data: { workspaceId: workspace.id, userId: user.id },
+                }).catch(() => {});
+              }
+            }
+          } catch (_) {}
+
+          try {
+            await prisma.apiKey.updateMany({
+              where: {
+                userId: user.id,
+                workspaceId: { not: workspace.id },
+              },
+              data: {
+                workspaceId: workspace.id,
+              },
+            });
+          } catch (_) {}
         }
 
         await autoResetDailyQuotaIfExpired(workspace);

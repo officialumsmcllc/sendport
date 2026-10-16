@@ -12,9 +12,23 @@ export async function GET(req: NextRequest) {
 
     const workspaceId = auth.workspace.id;
 
-    // Fetch verified and pending domains strictly for this workspace
+    const userMemberships = await prisma.workspaceMember.findMany({
+      where: { userId: auth.user.id },
+      select: { workspaceId: true },
+    }).catch(() => []);
+
+    const userWorkspaceIds = userMemberships.map((m: any) => m.workspaceId);
+    const allWorkspaceIds = Array.from(new Set([workspaceId, ...userWorkspaceIds].filter(Boolean)));
+
+    // Fetch verified and pending domains strictly for this user and workspaces
     const domains = await prisma.domain.findMany({
-      where: { workspaceId },
+      where: {
+        OR: [
+          { workspaceId: { in: allWorkspaceIds } },
+          { userId: auth.user.id },
+          { user: { email: auth.user.email } },
+        ],
+      },
       orderBy: { createdAt: "desc" },
       select: {
         id: true,

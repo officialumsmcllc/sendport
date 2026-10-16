@@ -23,8 +23,22 @@ export async function GET(req: NextRequest) {
       },
     });
 
+    const userMemberships = await prisma.workspaceMember.findMany({
+      where: { userId: auth.user.id },
+      select: { workspaceId: true },
+    }).catch(() => []);
+
+    const userWorkspaceIds = userMemberships.map((m: any) => m.workspaceId);
+    const allWorkspaceIds = Array.from(new Set([auth.workspace.id, ...userWorkspaceIds].filter(Boolean)));
+
     const domains = await prisma.domain.findMany({
-      where: { workspaceId: auth.workspace.id },
+      where: {
+        OR: [
+          { workspaceId: { in: allWorkspaceIds } },
+          { userId: auth.user.id },
+          { user: { email: auth.user.email } },
+        ],
+      },
       select: { id: true, name: true, status: true, isMxValid: true },
     });
 

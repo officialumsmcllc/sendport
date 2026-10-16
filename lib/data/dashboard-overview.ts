@@ -79,7 +79,20 @@ export async function getDashboardOverviewData(
     const startOfToday = new Date();
     startOfToday.setUTCHours(0, 0, 0, 0);
 
-    const logWhere = { workspaceId };
+    const userMemberships = await prisma.workspaceMember.findMany({
+      where: { userId: user.id },
+      select: { workspaceId: true },
+    }).catch(() => []);
+
+    const userWorkspaceIds = userMemberships.map((m: any) => m.workspaceId);
+    const allWorkspaceIds = Array.from(new Set([workspaceId, ...userWorkspaceIds].filter(Boolean)));
+
+    const logWhere = {
+      OR: [
+        { workspaceId: { in: allWorkspaceIds } },
+        { domain: { userId: user.id } },
+      ],
+    };
 
     const [workspace, domains, apiKeysCount, total, delivered, opened, clicked, bounced, todayCount, logs] =
       await Promise.all([
@@ -88,7 +101,13 @@ export async function getDashboardOverviewData(
           select: { dailyQuota: true, usedToday: true, plan: true },
         }).catch(() => null),
         prisma.domain.findMany({
-          where: { workspaceId },
+          where: {
+            OR: [
+              { workspaceId: { in: allWorkspaceIds } },
+              { userId: user.id },
+              { user: { email: user.email } },
+            ],
+          },
           orderBy: { createdAt: "desc" },
           select: {
             id: true,
@@ -97,13 +116,20 @@ export async function getDashboardOverviewData(
             verifiedAt: true,
           },
         }).catch(() => []),
-        prisma.apiKey.count({ where: { workspaceId } }).catch(() => 0),
+        prisma.apiKey.count({
+          where: {
+            OR: [
+              { workspaceId: { in: allWorkspaceIds } },
+              { userId: user.id },
+            ],
+          },
+        }).catch(() => 0),
         prisma.emailLog.count({ where: logWhere }).catch(() => 0),
         prisma.emailLog.count({ where: { ...logWhere, status: "DELIVERED" } }).catch(() => 0),
         prisma.emailLog.count({ where: { ...logWhere, status: "OPENED" } }).catch(() => 0),
         prisma.emailLog.count({ where: { ...logWhere, status: "CLICKED" } }).catch(() => 0),
         prisma.emailLog.count({ where: { ...logWhere, status: "BOUNCED" } }).catch(() => 0),
-        prisma.emailLog.count({ where: { workspaceId, createdAt: { gte: startOfToday } } }).catch(() => 0),
+        prisma.emailLog.count({ where: { workspaceId: { in: allWorkspaceIds }, createdAt: { gte: startOfToday } } }).catch(() => 0),
         prisma.emailLog.findMany({
           where: logWhere,
           take: 50,

@@ -14,9 +14,21 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized. Please log in or provide an API key." }, { status: 401 });
     }
 
+    const userMemberships = await prisma.workspaceMember.findMany({
+      where: { userId: auth.user.id },
+      select: { workspaceId: true },
+    }).catch(() => []);
+
+    const userWorkspaceIds = userMemberships.map((m: any) => m.workspaceId);
+    const allWorkspaceIds = Array.from(new Set([auth.workspace.id, ...userWorkspaceIds].filter(Boolean)));
+
     const domains = await prisma.domain.findMany({
       where: {
-        workspaceId: auth.workspace.id,
+        OR: [
+          { workspaceId: { in: allWorkspaceIds } },
+          { userId: auth.user.id },
+          { user: { email: auth.user.email } },
+        ],
       },
       orderBy: { createdAt: "desc" },
     });
@@ -47,8 +59,21 @@ export async function POST(req: NextRequest) {
     const userPlan = (auth.workspace.plan || "STARTER").toUpperCase();
     const maxDomainsAllowed = userPlan === "STARTER" ? 1 : userPlan === "GROWTH" ? 5 : 99999;
 
+    const userMemberships = await prisma.workspaceMember.findMany({
+      where: { userId: auth.user.id },
+      select: { workspaceId: true },
+    }).catch(() => []);
+
+    const userWorkspaceIds = userMemberships.map((m: any) => m.workspaceId);
+    const allWorkspaceIds = Array.from(new Set([auth.workspace.id, ...userWorkspaceIds].filter(Boolean)));
+
     const existingDomainsCount = await prisma.domain.count({
-      where: { workspaceId: auth.workspace.id },
+      where: {
+        OR: [
+          { workspaceId: { in: allWorkspaceIds } },
+          { userId: auth.user.id },
+        ],
+      },
     });
 
     if (existingDomainsCount >= maxDomainsAllowed) {
@@ -76,11 +101,13 @@ export async function POST(req: NextRequest) {
 
     const cleanDomain = name.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
 
-    // Check if domain already exists in THIS workspace
+    // Check if domain already exists for THIS user or workspace
     const existing = await prisma.domain.findFirst({
       where: {
-        workspaceId: auth.workspace.id,
-        name: cleanDomain,
+        OR: [
+          { workspaceId: { in: allWorkspaceIds }, name: cleanDomain },
+          { userId: auth.user.id, name: cleanDomain },
+        ],
       },
     });
 
@@ -164,10 +191,22 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: "Missing domain ID parameter." }, { status: 400 });
     }
 
+    const userMemberships = await prisma.workspaceMember.findMany({
+      where: { userId: auth.user.id },
+      select: { workspaceId: true },
+    }).catch(() => []);
+
+    const userWorkspaceIds = userMemberships.map((m: any) => m.workspaceId);
+    const allWorkspaceIds = Array.from(new Set([auth.workspace.id, ...userWorkspaceIds].filter(Boolean)));
+
     const existing = await prisma.domain.findFirst({
       where: {
         id,
-        workspaceId: auth.workspace.id,
+        OR: [
+          { workspaceId: { in: allWorkspaceIds } },
+          { userId: auth.user.id },
+          { user: { email: auth.user.email } },
+        ],
       },
     });
 
