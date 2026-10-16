@@ -6,13 +6,11 @@
  * Version:           1.0.0
  * Requires at least: 5.6
  * Requires PHP:      7.4
- * Tested up to:      6.7
  * Author:            Sendport Technologies Inc.
  * Author URI:        https://getsendport.com
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain:       sendport-smtp
- * Domain Path:       /languages
+ * Text Domain:       sendport-smtp-email-deliverability
  */
 
 // Exit if accessed directly
@@ -41,7 +39,7 @@ if (!class_exists('Sendport_SMTP_Plugin')) {
             $settings_link = sprintf(
                 '<a href="%s">%s</a>',
                 esc_url(admin_url('options-general.php?page=sendport-smtp')),
-                esc_html__('Settings', 'sendport-smtp')
+                esc_html__('Settings', 'sendport-smtp-email-deliverability')
             );
             array_unshift($links, $settings_link);
             return $links;
@@ -52,10 +50,10 @@ if (!class_exists('Sendport_SMTP_Plugin')) {
          */
         public function add_admin_menu() {
             add_options_page(
-                esc_html__('Sendport SMTP Settings', 'sendport-smtp'),
-                esc_html__('Sendport SMTP', 'sendport-smtp'),
+                esc_html__('Sendport SMTP Settings', 'sendport-smtp-email-deliverability'),
+                esc_html__('Sendport SMTP', 'sendport-smtp-email-deliverability'),
                 'manage_options',
-                'sendport-smtp',
+                'sendport-smtp-email-deliverability',
                 array($this, 'render_settings_page')
             );
         }
@@ -189,7 +187,7 @@ if (!class_exists('Sendport_SMTP_Plugin')) {
          */
         public function render_settings_page() {
             if (!current_user_can('manage_options')) {
-                wp_die(esc_html__('You do not have sufficient permissions to access this page.', 'sendport-smtp'));
+                wp_die(esc_html__('You do not have sufficient permissions to access this page.', 'sendport-smtp-email-deliverability'));
             }
 
             $test_result = null;
@@ -201,14 +199,14 @@ if (!class_exists('Sendport_SMTP_Plugin')) {
                 if (!empty($test_to) && is_email($test_to)) {
                     $subject = sprintf(
                         /* translators: %s: Site Title */
-                        esc_html__('Sendport SMTP Test Delivery — %s', 'sendport-smtp'),
+                        esc_html__('Sendport SMTP Test Delivery — %s', 'sendport-smtp-email-deliverability'),
                         get_bloginfo('name')
                     );
 
-                    $message = '<h3>' . esc_html__('Congratulations! 🎉', 'sendport-smtp') . '</h3>' .
-                        '<p>' . esc_html__('Your WordPress site is now successfully transmitting transactional emails via Sendport with verified 2048-bit RSA DKIM authentication.', 'sendport-smtp') . '</p>' .
-                        '<p><strong>' . esc_html__('Timestamp:', 'sendport-smtp') . '</strong> ' . esc_html(current_time('mysql')) . '</p>' .
-                        '<p><small>' . esc_html__('Delivered by Sendport Developer API (getsendport.com)', 'sendport-smtp') . '</small></p>';
+                    $message = '<h3>' . esc_html__('Congratulations! 🎉', 'sendport-smtp-email-deliverability') . '</h3>' .
+                        '<p>' . esc_html__('Your WordPress site is now successfully transmitting transactional emails via Sendport with verified 2048-bit RSA DKIM authentication.', 'sendport-smtp-email-deliverability') . '</p>' .
+                        '<p><strong>' . esc_html__('Timestamp:', 'sendport-smtp-email-deliverability') . '</strong> ' . esc_html(current_time('mysql')) . '</p>' .
+                        '<p><small>' . esc_html__('Delivered by Sendport Developer API (getsendport.com)', 'sendport-smtp-email-deliverability') . '</small></p>';
 
                     $sent = wp_mail($test_to, $subject, $message);
 
@@ -217,20 +215,20 @@ if (!class_exists('Sendport_SMTP_Plugin')) {
                             'success' => true,
                             'message' => sprintf(
                                 /* translators: %s: recipient email address */
-                                esc_html__('Test email successfully dispatched to %s! Check your inbox or spam folder.', 'sendport-smtp'),
+                                esc_html__('Test email successfully dispatched to %s! Check your inbox or spam folder.', 'sendport-smtp-email-deliverability'),
                                 esc_html($test_to)
                             ),
                         );
                     } else {
                         $test_result = array(
                             'success' => false,
-                            'message' => esc_html__('Failed to dispatch test email. Please ensure your Sendport API Key is valid and your sending domain is verified in Sendport Dashboard.', 'sendport-smtp'),
+                            'message' => esc_html__('Failed to dispatch test email. Please ensure your Sendport API Key is valid and your sending domain is verified in Sendport Dashboard.', 'sendport-smtp-email-deliverability'),
                         );
                     }
                 } else {
                     $test_result = array(
                         'success' => false,
-                        'message' => esc_html__('Please enter a valid recipient email address.', 'sendport-smtp'),
+                        'message' => esc_html__('Please enter a valid recipient email address.', 'sendport-smtp-email-deliverability'),
                     );
                 }
             }
@@ -247,12 +245,12 @@ if (!class_exists('Sendport_SMTP_Plugin')) {
                                     <span style="background: #0284c7; color: #fff; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; text-transform: uppercase;">Official</span>
                                 </div>
                                 <p style="color: #94a3b8; font-size: 12px; margin: 4px 0 0 0;">
-                                    <?php esc_html_e('Developer-first transactional email engine for WordPress & WooCommerce with 99.9% inbox placement.', 'sendport-smtp'); ?>
+                                    <?php esc_html_e('Developer-first transactional email engine for WordPress & WooCommerce with 99.9% inbox placement.', 'sendport-smtp-email-deliverability'); ?>
                                 </p>
                             </div>
                         </div>
                         <a href="https://getsendport.com/dashboard/api-keys" target="_blank" rel="noopener noreferrer" style="background: #0284c7; color: #ffffff; text-decoration: none; padding: 10px 18px; border-radius: 8px; font-weight: 700; font-size: 12px; display: inline-flex; align-items: center; gap: 6px;">
-                            <?php esc_html_e('Get Sendport API Key →', 'sendport-smtp'); ?>
+                            <?php esc_html_e('Get Sendport API Key →', 'sendport-smtp-email-deliverability'); ?>
                         </a>
                     </div>
                 </div>
@@ -260,7 +258,7 @@ if (!class_exists('Sendport_SMTP_Plugin')) {
                 <!-- Test Feedback Alert -->
                 <?php if ($test_result): ?>
                     <div style="padding: 14px 18px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; <?php echo $test_result['success'] ? 'background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0;' : 'background: #fef2f2; color: #991b1b; border: 1px solid #fecaca;'; ?>">
-                        <strong><?php echo $test_result['success'] ? esc_html__('✓ Success:', 'sendport-smtp') : esc_html__('✕ Error:', 'sendport-smtp'); ?></strong>
+                        <strong><?php echo $test_result['success'] ? esc_html__('✓ Success:', 'sendport-smtp-email-deliverability') : esc_html__('✕ Error:', 'sendport-smtp-email-deliverability'); ?></strong>
                         <?php echo esc_html($test_result['message']); ?>
                     </div>
                 <?php endif; ?>
@@ -270,13 +268,13 @@ if (!class_exists('Sendport_SMTP_Plugin')) {
                     <?php settings_fields('sendport_smtp_group'); ?>
 
                     <h3 style="margin-top: 0; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px; font-size: 16px; font-weight: 700; color: #0f172a;">
-                        <?php esc_html_e('API Credentials & Sending Identity', 'sendport-smtp'); ?>
+                        <?php esc_html_e('API Credentials & Sending Identity', 'sendport-smtp-email-deliverability'); ?>
                     </h3>
 
                     <table class="form-table" role="presentation">
                         <tr>
                             <th scope="row">
-                                <label for="sendport_api_key"><?php esc_html_e('Sendport API Key', 'sendport-smtp'); ?></label>
+                                <label for="sendport_api_key"><?php esc_html_e('Sendport API Key', 'sendport-smtp-email-deliverability'); ?></label>
                             </th>
                             <td>
                                 <input type="password" id="sendport_api_key" name="sendport_api_key" value="<?php echo esc_attr(get_option('sendport_api_key')); ?>" class="regular-text" placeholder="sk_live_..." required autocomplete="off" />
@@ -284,8 +282,8 @@ if (!class_exists('Sendport_SMTP_Plugin')) {
                                     <?php
                                     printf(
                                         /* translators: %s: dashboard url */
-                                        esc_html__('Generated in your %s.', 'sendport-smtp'),
-                                        '<a href="https://getsendport.com/dashboard/api-keys" target="_blank" rel="noopener noreferrer">' . esc_html__('Sendport Dashboard > API Keys', 'sendport-smtp') . '</a>'
+                                        esc_html__('Generated in your %s.', 'sendport-smtp-email-deliverability'),
+                                        '<a href="https://getsendport.com/dashboard/api-keys" target="_blank" rel="noopener noreferrer">' . esc_html__('Sendport Dashboard > API Keys', 'sendport-smtp-email-deliverability') . '</a>'
                                     );
                                     ?>
                                 </p>
@@ -293,53 +291,53 @@ if (!class_exists('Sendport_SMTP_Plugin')) {
                         </tr>
                         <tr>
                             <th scope="row">
-                                <label for="sendport_from_email"><?php esc_html_e('From Email Address', 'sendport-smtp'); ?></label>
+                                <label for="sendport_from_email"><?php esc_html_e('From Email Address', 'sendport-smtp-email-deliverability'); ?></label>
                             </th>
                             <td>
                                 <input type="email" id="sendport_from_email" name="sendport_from_email" value="<?php echo esc_attr(get_option('sendport_from_email')); ?>" class="regular-text" placeholder="hello@yourdomain.com" />
                                 <p class="description">
-                                    <?php esc_html_e('Must match an active domain registered in your Sendport account.', 'sendport-smtp'); ?>
+                                    <?php esc_html_e('Must match an active domain registered in your Sendport account.', 'sendport-smtp-email-deliverability'); ?>
                                 </p>
                             </td>
                         </tr>
                         <tr>
                             <th scope="row">
-                                <label for="sendport_from_name"><?php esc_html_e('From Sender Name', 'sendport-smtp'); ?></label>
+                                <label for="sendport_from_name"><?php esc_html_e('From Sender Name', 'sendport-smtp-email-deliverability'); ?></label>
                             </th>
                             <td>
                                 <input type="text" id="sendport_from_name" name="sendport_from_name" value="<?php echo esc_attr(get_option('sendport_from_name')); ?>" class="regular-text" placeholder="<?php echo esc_attr(get_bloginfo('name')); ?>" />
                                 <p class="description">
-                                    <?php esc_html_e('The friendly name displayed in recipient inboxes (defaults to Site Title).', 'sendport-smtp'); ?>
+                                    <?php esc_html_e('The friendly name displayed in recipient inboxes (defaults to Site Title).', 'sendport-smtp-email-deliverability'); ?>
                                 </p>
                             </td>
                         </tr>
                         <tr>
-                            <th scope="row"><?php esc_html_e('Real-time Analytics', 'sendport-smtp'); ?></th>
+                            <th scope="row"><?php esc_html_e('Real-time Analytics', 'sendport-smtp-email-deliverability'); ?></th>
                             <td>
                                 <fieldset>
                                     <label>
                                         <input type="checkbox" name="sendport_track_opens" value="1" <?php checked(get_option('sendport_track_opens', '1'), '1'); ?> />
-                                        <?php esc_html_e('Enable real-time email open tracking', 'sendport-smtp'); ?>
+                                        <?php esc_html_e('Enable real-time email open tracking', 'sendport-smtp-email-deliverability'); ?>
                                     </label><br>
                                     <label style="margin-top: 6px; display: inline-block;">
                                         <input type="checkbox" name="sendport_track_clicks" value="1" <?php checked(get_option('sendport_track_clicks', '1'), '1'); ?> />
-                                        <?php esc_html_e('Enable click-through engagement tracking', 'sendport-smtp'); ?>
+                                        <?php esc_html_e('Enable click-through engagement tracking', 'sendport-smtp-email-deliverability'); ?>
                                     </label>
                                 </fieldset>
                             </td>
                         </tr>
                     </table>
 
-                    <?php submit_button(esc_html__('Save Sendport Credentials', 'sendport-smtp')); ?>
+                    <?php submit_button(esc_html__('Save Sendport Credentials', 'sendport-smtp-email-deliverability')); ?>
                 </form>
 
                 <!-- Live Test Dispatch Box -->
                 <div style="background: #ffffff; padding: 28px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                     <h3 style="margin-top: 0; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px; font-size: 16px; font-weight: 700; color: #0f172a;">
-                        <?php esc_html_e('Verify Email Deliverability (Live Test)', 'sendport-smtp'); ?>
+                        <?php esc_html_e('Verify Email Deliverability (Live Test)', 'sendport-smtp-email-deliverability'); ?>
                     </h3>
                     <p style="color: #64748b; font-size: 13px; margin: 0 0 16px 0;">
-                        <?php esc_html_e('Send an authenticated test message to verify your API Key and DNS records.', 'sendport-smtp'); ?>
+                        <?php esc_html_e('Send an authenticated test message to verify your API Key and DNS records.', 'sendport-smtp-email-deliverability'); ?>
                     </p>
 
                     <form method="post" action="">
@@ -349,7 +347,7 @@ if (!class_exists('Sendport_SMTP_Plugin')) {
                         <table class="form-table" role="presentation">
                             <tr>
                                 <th scope="row">
-                                    <label for="sendport_test_email"><?php esc_html_e('Recipient Email', 'sendport-smtp'); ?></label>
+                                    <label for="sendport_test_email"><?php esc_html_e('Recipient Email', 'sendport-smtp-email-deliverability'); ?></label>
                                 </th>
                                 <td>
                                     <input type="email" id="sendport_test_email" name="sendport_test_email" value="<?php echo esc_attr(wp_get_current_user()->user_email); ?>" class="regular-text" required />
@@ -358,7 +356,7 @@ if (!class_exists('Sendport_SMTP_Plugin')) {
                         </table>
 
                         <p class="submit">
-                            <input type="submit" class="button button-primary" value="<?php esc_attr_e('Send Test Email via Sendport', 'sendport-smtp'); ?>" />
+                            <input type="submit" class="button button-primary" value="<?php esc_attr_e('Send Test Email via Sendport', 'sendport-smtp-email-deliverability'); ?>" />
                         </p>
                     </form>
                 </div>
