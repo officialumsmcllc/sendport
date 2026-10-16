@@ -52,9 +52,33 @@ export function verifySessionToken(token: string): SessionPayload | null {
   }
 }
 
-export async function getCurrentUser(): Promise<SessionPayload | null> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+export async function getCurrentUser(req?: any): Promise<SessionPayload | null> {
+  let token: string | undefined;
+
+  // 1. Direct NextRequest check if passed
+  if (req?.cookies && typeof req.cookies.get === "function") {
+    token = req.cookies.get(SESSION_COOKIE_NAME)?.value;
+  }
+
+  // 2. Cookie header parsing fallback
+  if (!token && req?.headers && typeof req.headers.get === "function") {
+    const cookieHeader = req.headers.get("cookie");
+    if (cookieHeader) {
+      const match = cookieHeader.match(new RegExp(`(?:^|;\\s*)${SESSION_COOKIE_NAME}=([^;]*)`));
+      if (match) {
+        token = decodeURIComponent(match[1]);
+      }
+    }
+  }
+
+  // 3. Fallback to next/headers cookies() for Server Components & Actions
+  if (!token) {
+    try {
+      const cookieStore = await cookies();
+      token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+    } catch (_) {}
+  }
+
   if (!token) return null;
   return verifySessionToken(token);
 }

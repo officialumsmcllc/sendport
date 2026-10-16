@@ -69,11 +69,22 @@ export default function DashboardLayout({
   } | null>(null);
 
   React.useEffect(() => {
+    // 1. Instant optimistic load from localStorage
+    try {
+      const cached = localStorage.getItem("sendport_user");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed?.email) {
+          setUser(parsed);
+        }
+      }
+    } catch (_) {}
+
+    // 2. Background fresh telemetry fetch
     const fetchUser = () => {
       fetch("/api/auth/me")
         .then((res) => {
           if (!res.ok) {
-            router.push("/login");
             return null;
           }
           return res.json();
@@ -81,15 +92,18 @@ export default function DashboardLayout({
         .then((data) => {
           if (data?.user) {
             setUser(data.user);
+            try {
+              localStorage.setItem("sendport_user", JSON.stringify(data.user));
+            } catch (_) {}
           }
         })
         .catch(() => {});
     };
 
     fetchUser();
-    const interval = setInterval(fetchUser, 15000);
+    const interval = setInterval(fetchUser, 30000);
     return () => clearInterval(interval);
-  }, [router, pathname]);
+  }, []);
 
   const navItems = [
     { label: "Overview", href: "/dashboard", icon: LayoutDashboard },

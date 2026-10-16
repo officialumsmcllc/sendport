@@ -16,11 +16,7 @@ export default async function DashboardPage() {
   }
 
   if (!auth) {
-    try {
-      const cookieStore = await cookies();
-      cookieStore.delete(SESSION_COOKIE_NAME);
-    } catch (_) {}
-    redirect("/login");
+    redirect("/login?unauthenticated=1");
   }
 
   let initialData = defaultDashboardData(auth.user);

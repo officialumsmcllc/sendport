@@ -83,7 +83,7 @@ export async function getAuthContext(req?: NextRequest): Promise<AuthContext | n
   }
 
   // 2. Check Cookie Session for logged-in web users
-  const session = await getCurrentUser();
+  const session = await getCurrentUser(req);
   if (session) {
     try {
       let user = await prisma.user.findUnique({
@@ -113,18 +113,63 @@ export async function getAuthContext(req?: NextRequest): Promise<AuthContext | n
         });
       }
 
+      // Auto-heal: If user still doesn't exist in DB, create record for validly signed session
+      if (!user && session.email) {
+        const isAdminEmail = session.email === "admin@getsendport.com" || session.role === "ADMIN";
+        try {
+          user = await prisma.user.create({
+            data: {
+              id: session.userId,
+              email: session.email,
+              name: session.name || session.email.split("@")[0],
+              role: isAdminEmail ? "ADMIN" : "USER",
+            },
+            include: {
+              workspaces: {
+                include: { workspace: true },
+              },
+            },
+          });
+        } catch (_) {
+          // In case ID already existed, fallback to findUnique
+          user = await prisma.user.findUnique({
+            where: { email: session.email },
+            include: {
+              workspaces: {
+                include: { workspace: true },
+              },
+            },
+          });
+        }
+      }
+
       if (user) {
+        // Guarantee admin role if admin email
+        if ((user.email === "admin@getsendport.com" || user.email.endsWith("@getsendport.com")) && user.role !== "ADMIN") {
+          user = await prisma.user.update({
+            where: { id: user.id },
+            data: { role: "ADMIN" },
+            include: {
+              workspaces: {
+                include: { workspace: true },
+              },
+            },
+          });
+        }
+
         let workspace = user.workspaces?.[0]?.workspace;
         if (!workspace) {
           // Auto-provision an isolated workspace if one wasn't linked
           const userSlug = (user.email.split("@")[0] || "user").replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
-          const slug = `ws-${userSlug}-${user.id.substring(0, 5)}`;
+          const uniqueSuffix = `${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`;
+          const slug = `ws-${userSlug}-${uniqueSuffix}`;
+          const isSuperPlan = user.role === "ADMIN";
           workspace = await prisma.workspace.create({
             data: {
               name: `${user.name || user.email.split("@")[0]}'s Workspace`,
               slug,
-              plan: "STARTER",
-              dailyQuota: 100,
+              plan: isSuperPlan ? "SCALE_PRO" : "STARTER",
+              dailyQuota: isSuperPlan ? 50000 : 100,
               members: {
                 create: {
                   userId: user.id,

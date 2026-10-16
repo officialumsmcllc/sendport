@@ -137,7 +137,7 @@ export async function getDashboardOverviewData(
       time: new Date(l.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       date: new Date(l.createdAt).toLocaleDateString([], { month: "short", day: "numeric" }),
       dkim: l.dkimSigned,
-      domain: l.domain?.name || l.from.split("@")[1]?.replace(/[<>]/g, "").trim() || "unknown",
+      domain: l.domain?.name || (l.from?.includes("@") ? l.from.split("@")[1]?.replace(/[<>]/g, "").trim() : "unknown") || "unknown",
       domainId: l.domainId,
     }));
 

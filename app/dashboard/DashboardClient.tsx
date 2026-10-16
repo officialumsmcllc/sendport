@@ -27,13 +27,28 @@ import {
 } from "lucide-react";
 import type { DashboardInitialData } from "@/lib/data/dashboard-overview";
 
-export default function DashboardClient({ initialData }: { initialData: DashboardInitialData }) {
+export default function DashboardClient({ initialData }: { initialData?: DashboardInitialData | null }) {
+  const safeStats = initialData?.stats || {
+    sent: 0,
+    delivered: 0,
+    deliveredRate: "0%",
+    opened: 0,
+    openRate: "0%",
+    clicked: 0,
+    clickRate: "0%",
+    bounced: 0,
+    bounceRate: "0%",
+    quotaToday: 0,
+    quotaTotal: 100,
+    plan: "STARTER",
+  };
+
   const [loading, setLoading] = useState(false);
-  const [stats, setStats] = useState(initialData.stats);
-  const [user, setUser] = useState<any>(initialData.user);
-  const [domains, setDomains] = useState<any[]>(initialData.domains);
-  const [apiKeysCount, setApiKeysCount] = useState<number>(initialData.apiKeysCount);
-  const [recentEvents, setRecentEvents] = useState<any[]>(initialData.recentEmails);
+  const [stats, setStats] = useState(safeStats);
+  const [user, setUser] = useState<any>(initialData?.user || null);
+  const [domains, setDomains] = useState<any[]>(initialData?.domains || []);
+  const [apiKeysCount, setApiKeysCount] = useState<number>(initialData?.apiKeysCount || 0);
+  const [recentEvents, setRecentEvents] = useState<any[]>(initialData?.recentEmails || []);
   const [lastRefreshed, setLastRefreshed] = useState<string>("");
 
   // Onboarding Wizard State
@@ -43,10 +58,25 @@ export default function DashboardClient({ initialData }: { initialData: Dashboar
 
   // Quick Test Dispatch Modal
   const [testModalOpen, setTestModalOpen] = useState(false);
-  const [testTo, setTestTo] = useState(initialData.user?.email || "");
+  const [testTo, setTestTo] = useState(initialData?.user?.email || "");
   const [testSubject, setTestSubject] = useState("Hello from Sendport! 🚀 Your deliverability is active");
   const [sendingTest, setSendingTest] = useState(false);
   const [testFeedback, setTestFeedback] = useState<{ success: boolean; message: string } | null>(null);
+
+  // Optimistic client cache initialization
+  useEffect(() => {
+    try {
+      const cached = localStorage.getItem("sendport_user");
+      if (cached) {
+        const u = JSON.parse(cached);
+        if (u?.email) {
+          if (!user) setUser(u);
+          if (!testTo) setTestTo(u.email);
+        }
+      }
+    } catch (_) {}
+    fetchDashboardData(true);
+  }, []);
 
   // Silent Background Poller for real-time live data
   const fetchDashboardData = async (silent = true) => {
@@ -55,28 +85,31 @@ export default function DashboardClient({ initialData }: { initialData: Dashboar
       const res = await fetch("/api/auth/me", { cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
-        if (data.user) setUser(data.user);
-        if (data.domains) setDomains(data.domains);
+        if (data.user) {
+          setUser(data.user);
+          if (!testTo) setTestTo(data.user.email);
+        }
+        if (data.domains) setDomains(data.domains || []);
         if (data.apiKeysCount !== undefined) setApiKeysCount(data.apiKeysCount);
 
         if (data.stats) {
           setStats({
-            sent: data.stats.delivered + data.stats.bounced,
-            delivered: data.stats.delivered,
-            deliveredRate: data.stats.deliveredRate,
-            opened: data.stats.opened,
-            openRate: data.stats.openRate,
-            clicked: data.stats.clicked,
-            clickRate: data.stats.clickRate,
-            bounced: data.stats.bounced,
-            bounceRate: data.stats.bounceRate,
-            quotaToday: data.stats.usedToday,
-            quotaTotal: data.stats.dailyQuota,
+            sent: (data.stats.delivered || 0) + (data.stats.bounced || 0),
+            delivered: data.stats.delivered || 0,
+            deliveredRate: data.stats.deliveredRate || "0%",
+            opened: data.stats.opened || 0,
+            openRate: data.stats.openRate || "0%",
+            clicked: data.stats.clicked || 0,
+            clickRate: data.stats.clickRate || "0%",
+            bounced: data.stats.bounced || 0,
+            bounceRate: data.stats.bounceRate || "0%",
+            quotaToday: data.stats.usedToday || 0,
+            quotaTotal: data.stats.dailyQuota || 100,
             plan: data.stats.plan || "STARTER",
           });
         }
         if (data.recentEmails) {
-          setRecentEvents(data.recentEmails);
+          setRecentEvents(data.recentEmails || []);
         }
         setLastRefreshed(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
       }
@@ -87,11 +120,11 @@ export default function DashboardClient({ initialData }: { initialData: Dashboar
     }
   };
 
-  // 10-second silent background poller
+  // 15-second silent background poller
   useEffect(() => {
     const timer = setInterval(() => {
       fetchDashboardData(true);
-    }, 10000);
+    }, 15000);
     return () => clearInterval(timer);
   }, []);
 
@@ -104,7 +137,7 @@ export default function DashboardClient({ initialData }: { initialData: Dashboar
       setTestFeedback(null);
 
       // Identify verified domain sender
-      const verifiedDomain = domains.find((d) => d.status === "VERIFIED");
+      const verifiedDomain = (domains || []).find((d) => d?.status === "VERIFIED");
       if (!verifiedDomain) {
         setTestFeedback({
           success: false,
@@ -158,15 +191,15 @@ export default function DashboardClient({ initialData }: { initialData: Dashboar
 
   // Check Onboarding Steps Completion
   const step1 = true;
-  const step2 = apiKeysCount > 0;
-  const step3 = domains.some((d) => d.status === "VERIFIED");
-  const step4 = stats.delivered > 0 || recentEvents.length > 0;
+  const step2 = (apiKeysCount || 0) > 0;
+  const step3 = (domains || []).some((d) => d?.status === "VERIFIED");
+  const step4 = (stats?.delivered || 0) > 0 || (recentEvents || []).length > 0;
 
   const completedStepsCount = [step1, step2, step3, step4].filter(Boolean).length;
   const progressPercent = Math.round((completedStepsCount / 4) * 100);
 
   // Sample code snippets for Quickstart
-  const senderDomain = domains.find((d) => d.status === "VERIFIED")?.name || "yourdomain.com";
+  const senderDomain = (domains || []).find((d) => d?.status === "VERIFIED")?.name || "yourdomain.com";
 
   const codeSnippets = {
     curl: `curl -X POST https://getsendport.com/api/v1/emails/send \\
@@ -497,9 +530,9 @@ echo $response;`,
             </span>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-black text-slate-900">{stats.delivered}</span>
+            <span className="text-2xl font-black text-slate-900">{stats?.delivered ?? 0}</span>
             <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
-              {stats.deliveredRate}
+              {stats?.deliveredRate ?? "0%"}
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-2">100% 2048-bit RSA DKIM signed</p>
@@ -514,9 +547,9 @@ echo $response;`,
             </span>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-black text-slate-900">{stats.opened}</span>
+            <span className="text-2xl font-black text-slate-900">{stats?.opened ?? 0}</span>
             <span className="text-xs font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
-              {stats.openRate}
+              {stats?.openRate ?? "0%"}
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-2">Tracked via 1x1 transparent pixel</p>
@@ -531,9 +564,9 @@ echo $response;`,
             </span>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-black text-slate-900">{stats.clicked}</span>
+            <span className="text-2xl font-black text-slate-900">{stats?.clicked ?? 0}</span>
             <span className="text-xs font-bold text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded">
-              {stats.clickRate}
+              {stats?.clickRate ?? "0%"}
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-2">HMAC-signed click proxy redirects</p>
@@ -548,9 +581,9 @@ echo $response;`,
             </span>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-black text-slate-900">{stats.bounced}</span>
+            <span className="text-2xl font-black text-slate-900">{stats?.bounced ?? 0}</span>
             <span className="text-xs font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
-              {stats.bounceRate}
+              {stats?.bounceRate ?? "0%"}
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-2">Target &lt; 2.0% bounce threshold</p>
@@ -564,11 +597,11 @@ echo $response;`,
             <div className="flex items-center gap-2">
               <h2 className="text-base font-black text-slate-900">24-Hour Sending Quota</h2>
               <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-primary-100 text-primary-800">
-                {stats.plan} TIER
+                {stats?.plan || "STARTER"} TIER
               </span>
             </div>
             <p className="text-xs text-slate-500 mt-1">
-              Used {stats.quotaToday.toLocaleString()} of {stats.quotaTotal.toLocaleString()} emails today. Quota resets daily at 00:00 UTC.
+              Used {(stats?.quotaToday ?? 0).toLocaleString()} of {(stats?.quotaTotal ?? 100).toLocaleString()} emails today. Quota resets daily at 00:00 UTC.
             </p>
           </div>
           <Link
@@ -582,20 +615,20 @@ echo $response;`,
           <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full transition-all duration-500 ${
-                stats.quotaToday >= stats.quotaTotal * 0.9
+                (stats?.quotaToday ?? 0) >= (stats?.quotaTotal || 100) * 0.9
                   ? "bg-rose-500"
-                  : stats.quotaToday >= stats.quotaTotal * 0.75
+                  : (stats?.quotaToday ?? 0) >= (stats?.quotaTotal || 100) * 0.75
                   ? "bg-amber-500"
                   : "bg-primary-600"
               }`}
               style={{
-                width: `${Math.min(100, Math.round((stats.quotaToday / (stats.quotaTotal || 1)) * 100))}%`,
+                width: `${Math.min(100, Math.round(((stats?.quotaToday ?? 0) / (stats?.quotaTotal || 100)) * 100))}%`,
               }}
             />
           </div>
           <div className="flex items-center justify-between text-xs text-slate-400 mt-2 font-mono">
-            <span>{Math.round((stats.quotaToday / (stats.quotaTotal || 1)) * 100)}% Consumed</span>
-            <span>{(stats.quotaTotal - stats.quotaToday).toLocaleString()} Remaining</span>
+            <span>{Math.round(((stats?.quotaToday ?? 0) / (stats?.quotaTotal || 100)) * 100)}% Consumed</span>
+            <span>{Math.max(0, (stats?.quotaTotal ?? 100) - (stats?.quotaToday ?? 0)).toLocaleString()} Remaining</span>
           </div>
         </div>
       </div>
@@ -615,7 +648,7 @@ echo $response;`,
           </Link>
         </div>
 
-        {recentEvents.length === 0 ? (
+        {(recentEvents || []).length === 0 ? (
           <div className="p-12 text-center text-slate-500 space-y-3">
             <Mail className="w-10 h-10 mx-auto text-slate-300" />
             <h3 className="text-sm font-bold text-slate-800">No Email Activity Recorded Yet</h3>
@@ -654,7 +687,7 @@ echo $response;`,
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {recentEvents.map((evt) => (
+                {(recentEvents || []).map((evt) => (
                   <tr key={evt.id} className="hover:bg-slate-50/80 transition-colors">
                     <td className="px-6 py-4 font-semibold text-slate-900">{evt.to}</td>
                     <td className="px-6 py-4">
@@ -755,7 +788,7 @@ echo $response;`,
                 />
               </div>
 
-              {!domains.some((d) => d.status === "VERIFIED") && (
+              {!(domains || []).some((d) => d?.status === "VERIFIED") && (
                 <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div className="flex items-center gap-1.5">
                     <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
@@ -773,11 +806,11 @@ echo $response;`,
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 text-[11px] leading-relaxed">
                 <strong>Sender:</strong>{" "}
                 <span className="font-mono text-slate-800 font-bold">
-                  {domains.find((d) => d.status === "VERIFIED")
-                    ? `verify@${domains.find((d) => d.status === "VERIFIED").name}`
+                  {(domains || []).find((d) => d?.status === "VERIFIED")
+                    ? `verify@${(domains || []).find((d) => d?.status === "VERIFIED").name}`
                     : "Pending Domain Verification"}
                 </span>{" "}
-                {domains.some((d) => d.status === "VERIFIED") && "(2048-bit RSA DKIM Authenticated)"}
+                {(domains || []).some((d) => d?.status === "VERIFIED") && "(2048-bit RSA DKIM Authenticated)"}
               </div>
 
               <div className="pt-2 flex items-center justify-end gap-2.5">
@@ -790,9 +823,9 @@ echo $response;`,
                 </button>
                 <button
                   type="submit"
-                  disabled={sendingTest || !domains.some((d) => d.status === "VERIFIED")}
+                  disabled={sendingTest || !(domains || []).some((d) => d?.status === "VERIFIED")}
                   className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-extrabold shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                  title={!domains.some((d) => d.status === "VERIFIED") ? "Please verify your custom domain in Domains first" : ""}
+                  title={!(domains || []).some((d) => d?.status === "VERIFIED") ? "Please verify your custom domain in Domains first" : ""}
                 >
                   {sendingTest ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
                   <span>{sendingTest ? "Sending Live..." : "Send Test Now"}</span>

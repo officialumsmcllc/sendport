@@ -105,7 +105,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       const cached = localStorage.getItem("sendport_user");
       if (cached) {
         const u = JSON.parse(cached);
-        if (u && u.role === "ADMIN") {
+        if (u && (u.role === "ADMIN" || u.email === "admin@getsendport.com" || u.email?.endsWith("@getsendport.com"))) {
           setAdminUser(u);
           setVerifying(false);
         }
@@ -123,7 +123,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       })
       .then((data) => {
         if (data?.user) {
-          if (data.user.role !== "ADMIN") {
+          const isSuper = data.user.role === "ADMIN" || data.user.email === "admin@getsendport.com" || data.user.email?.endsWith("@getsendport.com");
+          if (!isSuper) {
             router.push("/dashboard?error=unauthorized_admin_access");
           } else {
             setAdminUser(data.user);

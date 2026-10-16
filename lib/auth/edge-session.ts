@@ -46,7 +46,7 @@ export async function verifySessionEdge(token: string): Promise<SessionPayload |
     const signatureBuffer = await crypto.subtle.sign("HMAC", key, encoder.encode(data));
     const bytes = new Uint8Array(signatureBuffer);
     let binary = "";
-    for (let i = 0; i < bytes.byteLength; i++) {33
+    for (let i = 0; i < bytes.byteLength; i++) {
       binary += String.fromCharCode(bytes[i]);
     }
     const expectedSig = btoa(binary)

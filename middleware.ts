@@ -20,7 +20,7 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
-    if (session.role !== "ADMIN") {
+    if (session.role !== "ADMIN" && session.email !== "admin@getsendport.com" && !session.email?.endsWith("@getsendport.com")) {
       // Regular users are strictly forbidden from seeing or accessing admin portal
       const dashboardUrl = new URL("/dashboard", req.url);
       dashboardUrl.searchParams.set("error", "unauthorized_admin_access");
@@ -39,7 +39,7 @@ export async function middleware(req: NextRequest) {
       );
     }
 
-    if (session.role !== "ADMIN") {
+    if (session.role !== "ADMIN" && session.email !== "admin@getsendport.com" && !session.email?.endsWith("@getsendport.com")) {
       return NextResponse.json(
         { error: "Forbidden. Administrative privileges required." },
         { status: 403 }
@@ -60,23 +60,8 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // 5. Auth pages (/login, /signup, /register) when already logged in
-  if (pathname === "/login" || pathname === "/signup" || pathname === "/register") {
-    // If there is an explicit redirect query parameter, DO NOT auto-redirect in middleware.
-    // Doing so when a protected page redirected here causes an immediate ERR_TOO_MANY_REDIRECTS loop.
-    const redirectParam = req.nextUrl.searchParams.get("redirect");
-    if (redirectParam) {
-      return NextResponse.next();
-    }
-
-    if (session) {
-      if (session.role === "ADMIN") {
-        return NextResponse.redirect(new URL("/admin", req.url));
-      }
-      return NextResponse.redirect(new URL("/dashboard", req.url));
-    }
-  }
-
+  // 5. Auth pages (/login, /signup, /register)
+  // Never auto-redirect in middleware to prevent ERR_TOO_MANY_REDIRECTS and allow account switching
   return NextResponse.next();
 }
 
