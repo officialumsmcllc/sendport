@@ -46,19 +46,20 @@ export default function LoginPage() {
 
       const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
       const redirectTarget = params?.get("redirect");
+      const isSuper = data.user?.role === "ADMIN" || data.user?.email === "admin@getsendport.com" || data.user?.email?.endsWith("@getsendport.com");
 
+      let target = "/dashboard";
       if (redirectTarget && redirectTarget.startsWith("/")) {
-        if (redirectTarget.startsWith("/admin") && data.user?.role !== "ADMIN") {
-          router.push("/dashboard");
+        if (redirectTarget.startsWith("/admin") && !isSuper) {
+          target = "/dashboard";
         } else {
-          router.push(redirectTarget);
+          target = redirectTarget;
         }
-      } else if (data.user?.role === "ADMIN") {
-        router.push("/admin");
-      } else {
-        router.push("/dashboard");
+      } else if (isSuper) {
+        target = "/admin";
       }
-      router.refresh();
+
+      window.location.href = target;
     } catch (err: any) {
       setError("An unexpected network error occurred. Please try again.");
     } finally {

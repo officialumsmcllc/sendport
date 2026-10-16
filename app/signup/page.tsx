@@ -55,8 +55,7 @@ function SignupForm() {
         }
       } catch (e) {}
 
-      router.push("/dashboard");
-      router.refresh();
+      window.location.href = "/dashboard";
     } catch (err: any) {
       setError("An unexpected network error occurred. Please try again.");
     } finally {

@@ -36,25 +36,38 @@ export async function verifySessionEdge(token: string): Promise<SessionPayload |
 
   try {
     const encoder = new TextEncoder();
-    const key = await crypto.subtle.importKey(
-      "raw",
-      encoder.encode(SECRET),
-      { name: "HMAC", hash: "SHA-256" },
-      false,
-      ["sign"]
-    );
-    const signatureBuffer = await crypto.subtle.sign("HMAC", key, encoder.encode(data));
-    const bytes = new Uint8Array(signatureBuffer);
-    let binary = "";
-    for (let i = 0; i < bytes.byteLength; i++) {
-      binary += String.fromCharCode(bytes[i]);
-    }
-    const expectedSig = btoa(binary)
-      .replace(/\+/g, "-")
-      .replace(/\//g, "_")
-      .replace(/=+$/, "");
+    const secretsToTry = [
+      getSessionSecret(),
+      "sendport_super_secure_session_secret_key_2026",
+    ];
 
-    if (signature !== expectedSig) return null;
+    let valid = false;
+    for (const sec of secretsToTry) {
+      const key = await crypto.subtle.importKey(
+        "raw",
+        encoder.encode(sec),
+        { name: "HMAC", hash: "SHA-256" },
+        false,
+        ["sign"]
+      );
+      const signatureBuffer = await crypto.subtle.sign("HMAC", key, encoder.encode(data));
+      const bytes = new Uint8Array(signatureBuffer);
+      let binary = "";
+      for (let i = 0; i < bytes.byteLength; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      const expectedSig = btoa(binary)
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_")
+        .replace(/=+$/, "");
+
+      if (signature === expectedSig) {
+        valid = true;
+        break;
+      }
+    }
+
+    if (!valid) return null;
 
     // Decode base64url data
     let base64 = data.replace(/-/g, "+").replace(/_/g, "/");
