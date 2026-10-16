@@ -50,14 +50,20 @@ export default function LoginPage() {
       const isSuper = isSuperAdminUser(data.user?.email, data.user?.role);
 
       let target = "/dashboard";
-      if (redirectTarget && redirectTarget.startsWith("/")) {
-        if (redirectTarget.startsWith("/admin") && !isSuper) {
-          target = "/dashboard";
-        } else {
+      if (isSuper) {
+        // Admins strictly go to Admin Panel (or specific /admin subpage)
+        if (redirectTarget && redirectTarget.startsWith("/admin")) {
           target = redirectTarget;
+        } else {
+          target = "/admin";
         }
-      } else if (isSuper) {
-        target = "/admin";
+      } else {
+        // Normal users strictly go to Customer Dashboard (never to /admin)
+        if (redirectTarget && redirectTarget.startsWith("/dashboard")) {
+          target = redirectTarget;
+        } else {
+          target = "/dashboard";
+        }
       }
 
       window.location.href = target;

@@ -58,12 +58,26 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
+    // Strict Role Isolation: Admin users are strictly routed to Admin Panel
+    if (isSuperAdminUser(session.email, session.role)) {
+      return NextResponse.redirect(new URL("/admin", req.url));
+    }
+
     return NextResponse.next();
   }
 
   // 5. Auth pages (/login, /signup, /register)
-  // Never auto-redirect in middleware to prevent ERR_TOO_MANY_REDIRECTS and allow account switching
-  return NextResponse.next();
+  // If no explicit redirect query param, route logged-in users to their dedicated portal
+  if (pathname === "/login" || pathname === "/signup" || pathname === "/register") {
+    const redirectParam = req.nextUrl.searchParams.get("redirect");
+    if (!redirectParam && session) {
+      if (isSuperAdminUser(session.email, session.role)) {
+        return NextResponse.redirect(new URL("/admin", req.url));
+      }
+      return NextResponse.redirect(new URL("/dashboard", req.url));
+    }
+    return NextResponse.next();
+  }
 }
 
 export const config = {

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { SendportLogo } from "@/components/brand/Logo";
 import { ArrowRight, Menu, X, Globe, Terminal, ShieldCheck, LogOut } from "lucide-react";
 import { CURRENCIES, SupportedCurrency } from "@/lib/payments/currencies";
+import { isSuperAdminUser } from "@/lib/auth/admin-guard";
 
 export function Navbar({
   activeCurrency = "USD",
@@ -148,26 +149,28 @@ export function Navbar({
 
           {user ? (
             <div className="flex items-center gap-2.5">
-              {user.role === "ADMIN" && (
+              {isSuperAdminUser(user.email, user.role) ? (
                 <Link
                   href="/admin"
-                  className="text-xs font-bold px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 hover:bg-amber-500/20 transition-all flex items-center gap-1.5"
+                  className="inline-flex items-center justify-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold bg-amber-400 text-slate-950 hover:bg-amber-300 transition-all shadow-sm"
                 >
-                  <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Admin Portal</span>
+                  <ShieldCheck className="w-3.5 h-3.5 text-slate-950" />
+                  Admin Panel
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              ) : (
+                <Link
+                  href="/dashboard"
+                  className={`inline-flex items-center justify-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold transition-all shadow-sm ${
+                    dark
+                      ? "bg-white text-black hover:bg-slate-200"
+                      : "bg-slate-900 text-white hover:bg-slate-800"
+                  }`}
+                >
+                  Dashboard
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               )}
-              <Link
-                href="/dashboard"
-                className={`inline-flex items-center justify-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold transition-all shadow-sm ${
-                  dark
-                    ? "bg-white text-black hover:bg-slate-200"
-                    : "bg-slate-900 text-white hover:bg-slate-800"
-                }`}
-              >
-                Dashboard
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
               <button
                 onClick={handleLogout}
                 title="Log out"
@@ -281,17 +284,23 @@ export function Navbar({
             <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
               <span className="text-xs text-slate-400 truncate max-w-[150px]">{user.email}</span>
               <div className="flex items-center gap-2">
-                {user.role === "ADMIN" && (
-                  <Link href="/admin" className="text-xs font-bold text-amber-400">
-                    Admin
+                {isSuperAdminUser(user.email, user.role) ? (
+                  <Link
+                    href="/admin"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-xs font-bold text-slate-950 bg-amber-400 px-3 py-1.5 rounded-lg flex items-center gap-1"
+                  >
+                    Admin Panel &rarr;
+                  </Link>
+                ) : (
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-xs font-bold text-black bg-white px-3 py-1.5 rounded-lg"
+                  >
+                    Dashboard &rarr;
                   </Link>
                 )}
-                <Link
-                  href="/dashboard"
-                  className="text-xs font-bold text-black bg-white px-3 py-1.5 rounded-lg"
-                >
-                  Dashboard &rarr;
-                </Link>
                 <button
                   onClick={handleLogout}
                   className="text-xs text-rose-400 font-semibold px-2 py-1 rounded hover:bg-rose-500/10"
