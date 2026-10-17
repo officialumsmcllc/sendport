@@ -7,14 +7,14 @@
   --foreground: #ffffff;
 }
 
-/* Global Selection Styling - subtle default that permits contextual Tailwind selection:* classes */
+/* Global Selection Styling - solid high-contrast blue with crisp white text */
 ::selection {
-  background-color: rgba(37, 99, 235, 0.35);
+  background-color: #2563eb;
   color: #ffffff;
 }
 
 ::-moz-selection {
-  background-color: rgba(37, 99, 235, 0.35);
+  background-color: #2563eb;
   color: #ffffff;
 }
 
@@ -24,9 +24,34 @@ input, textarea, select {
   caret-color: #2563eb;
 }
 
-input::selection, textarea::selection {
-  background-color: rgba(37, 99, 235, 0.35);
-  color: #ffffff;
+/* Universal Input Selection:
+   Ensures that pressing Select All (Ctrl+A) or highlighting text inside ANY input or textarea
+   never turns text invisible. Solid royal blue (#2563eb) with crisp white text (#ffffff)
+   guarantees maximum readability and overrides any parent selection:bg-white/20 classes. */
+input::selection,
+textarea::selection,
+select::selection,
+.bg-white input::selection,
+[class*="bg-white"] input::selection,
+.bg-slate-50 input::selection,
+input.force-dark-text::selection,
+.bg-white textarea::selection,
+[class*="bg-white"] textarea::selection {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+}
+
+input::-moz-selection,
+textarea::-moz-selection,
+select::-moz-selection,
+.bg-white input::-moz-selection,
+[class*="bg-white"] input::-moz-selection,
+.bg-slate-50 input::-moz-selection,
+input.force-dark-text::-moz-selection,
+.bg-white textarea::-moz-selection,
+[class*="bg-white"] textarea::-moz-selection {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
 }
 
 /* Universal Dark panels & modal form controls (including Tailwind opacity modifiers and selects) */
