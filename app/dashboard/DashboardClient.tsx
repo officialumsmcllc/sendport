@@ -136,18 +136,11 @@ export default function DashboardClient({ initialData }: { initialData?: Dashboa
       setSendingTest(true);
       setTestFeedback(null);
 
-      // Identify verified domain sender
-      const verifiedDomain = (domains || []).find((d) => d?.status === "VERIFIED");
-      if (!verifiedDomain) {
-        setTestFeedback({
-          success: false,
-          message: "A verified domain is required to dispatch emails. Please add and verify your custom domain in Dashboard > Domains first.",
-        });
-        setSendingTest(false);
-        return;
-      }
-
-      const fromEmail = `verify@${verifiedDomain.name}`;
+      // Identify verified domain sender or use sandbox test sender
+      const verifiedDomain = (domains || []).find((d) => d?.status?.toUpperCase() === "VERIFIED");
+      const fromEmail = verifiedDomain
+        ? `verify@${verifiedDomain.name}`
+        : `Sendport Demo <hello@getsendport.com>`;
 
       const res = await fetch("/api/v1/emails/send", {
         method: "POST",

@@ -123,7 +123,7 @@ export default function PlaygroundPage() {
           .then((domainData) => {
             if (domainData.domains && domainData.domains.length > 0) {
               setDomains(domainData.domains);
-              const verified = domainData.domains.find((d: DomainItem) => d.status === "VERIFIED");
+              const verified = domainData.domains.find((d: DomainItem) => d.status?.toUpperCase() === "VERIFIED");
               if (verified) {
                 setFrom(`${displayName} <hello@${verified.name}>`);
               } else {
@@ -365,7 +365,7 @@ print(response.status_code, response.json())`;
                 {domains.length > 0 && (
                   <span className="text-[11px] text-slate-400 flex items-center gap-1">
                     <Globe className="w-3 h-3 text-emerald-500" />
-                    {domains.filter((d) => d.status === "VERIFIED").length} Verified Domain(s)
+                    {domains.filter((d) => d.status?.toUpperCase() === "VERIFIED").length} Verified Domain(s)
                   </span>
                 )}
               </div>
@@ -389,7 +389,7 @@ print(response.status_code, response.json())`;
                     hello@getsendport.com (Sandbox)
                   </button>
                   {domains
-                    .filter((d) => d.status === "VERIFIED")
+                    .filter((d) => d.status?.toUpperCase() === "VERIFIED")
                     .map((d) => (
                       <button
                         key={d.id}

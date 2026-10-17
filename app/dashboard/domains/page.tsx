@@ -26,6 +26,9 @@ interface DomainItem {
   name: string;
   status: "VERIFIED" | "PENDING" | "FAILED";
   dkimSelector: string;
+  dkimPublicKey?: string;
+  spfRecord?: string;
+  dmarcRecord?: string;
   spfValid: boolean;
   dkimValid: boolean;
   dmarcValid: boolean;
@@ -82,6 +85,9 @@ export default function DomainsPage() {
             name: d.name,
             status: d.status || "PENDING",
             dkimSelector: d.dkimSelector || "sendport",
+            dkimPublicKey: d.dkimPublicKey || "",
+            spfRecord: d.spfRecord || "v=spf1 include:mail.getsendport.com ~all",
+            dmarcRecord: d.dmarcRecord || "v=DMARC1; p=none; rua=mailto:dmarc@getsendport.com",
             spfValid: d.isSpfValid || false,
             dkimValid: d.isDkimValid || false,
             dmarcValid: d.isDmarcValid || false,
@@ -248,11 +254,17 @@ export default function DomainsPage() {
       });
       if (res.ok) {
         const data = await res.json();
+        const dkimRec = data.records?.find((r: any) => r.type === "TXT" && r.name?.includes("_domainkey"));
+        const spfRec = data.records?.find((r: any) => r.type === "TXT" && r.priority?.includes("SPF"));
+        const dmarcRec = data.records?.find((r: any) => r.type === "TXT" && r.name?.includes("_dmarc"));
         const newDom: DomainItem = {
           id: data.id || `dom_${Date.now()}`,
           name: clean,
           status: "PENDING",
           dkimSelector: "sendport",
+          dkimPublicKey: dkimRec?.value || "",
+          spfRecord: spfRec?.value || "v=spf1 include:mail.getsendport.com ~all",
+          dmarcRecord: dmarcRec?.value || "v=DMARC1; p=none; rua=mailto:dmarc@getsendport.com",
           spfValid: false,
           dkimValid: false,
           dmarcValid: false,
@@ -633,55 +645,71 @@ export default function DomainsPage() {
             ) : (
               /* TAB CONTENT: MANUAL DNS */
               <div className="space-y-3 font-mono text-xs">
-                {/* DKIM */}
-                <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 space-y-1.5">
-                  <div className="flex justify-between items-center text-slate-500 font-sans text-xs font-semibold">
-                    <span>1. DKIM Public Key (TXT Record)</span>
-                    <button
-                      onClick={() => handleCopy(`v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA0...`, "dkim")}
-                      className="text-primary-600 hover:underline flex items-center gap-1 font-sans text-xs"
-                    >
-                      {copiedKey === "dkim" ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                      Copy
-                    </button>
-                  </div>
-                  <div className="text-slate-700"><strong>Name:</strong> sendport._domainkey.{selectedDomain.name}</div>
-                  <div className="text-slate-700 truncate">
-                    <strong>Value:</strong> v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA0x...
-                  </div>
-                </div>
+                {(() => {
+                  const dkimVal = selectedDomain.dkimPublicKey
+                    ? (selectedDomain.dkimPublicKey.startsWith("v=DKIM1") ? selectedDomain.dkimPublicKey : `v=DKIM1; k=rsa; p=${selectedDomain.dkimPublicKey}`)
+                    : "v=DKIM1; k=rsa; p=...";
+                  const spfVal = selectedDomain.spfRecord || "v=spf1 include:mail.getsendport.com ~all";
+                  const dmarcVal = selectedDomain.dmarcRecord || "v=DMARC1; p=none; rua=mailto:dmarc@getsendport.com";
 
-                {/* SPF */}
-                <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 space-y-1.5">
-                  <div className="flex justify-between items-center text-slate-500 font-sans text-xs font-semibold">
-                    <span>2. SPF Authorization (TXT Record)</span>
-                    <button
-                      onClick={() => handleCopy("v=spf1 include:mail.getsendport.com ~all", "spf")}
-                      className="text-primary-600 hover:underline flex items-center gap-1 font-sans text-xs"
-                    >
-                      {copiedKey === "spf" ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                      Copy
-                    </button>
-                  </div>
-                  <div className="text-slate-700"><strong>Name:</strong> @ (or {selectedDomain.name})</div>
-                  <div className="text-slate-700"><strong>Value:</strong> v=spf1 include:mail.getsendport.com ~all</div>
-                </div>
+                  return (
+                    <>
+                      {/* DKIM */}
+                      <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 space-y-1.5">
+                        <div className="flex justify-between items-center text-slate-500 font-sans text-xs font-semibold">
+                          <span>1. DKIM Public Key (TXT Record)</span>
+                          <button
+                            onClick={() => handleCopy(dkimVal, "dkim")}
+                            className="text-primary-600 hover:underline flex items-center gap-1 font-sans text-xs font-bold"
+                          >
+                            {copiedKey === "dkim" ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                            Copy Value
+                          </button>
+                        </div>
+                        <div className="text-slate-700"><strong>Name:</strong> sendport._domainkey.{selectedDomain.name}</div>
+                        <div className="text-slate-700 break-all select-all font-mono text-[11px] bg-white p-2 rounded border border-slate-200 max-h-24 overflow-y-auto">
+                          {dkimVal}
+                        </div>
+                      </div>
 
-                {/* DMARC */}
-                <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 space-y-1.5">
-                  <div className="flex justify-between items-center text-slate-500 font-sans text-xs font-semibold">
-                    <span>3. DMARC Anti-Spoofing Policy (TXT Record)</span>
-                    <button
-                      onClick={() => handleCopy("v=DMARC1; p=none; rua=mailto:dmarc@getsendport.com", "dmarc")}
-                      className="text-primary-600 hover:underline flex items-center gap-1 font-sans text-xs"
-                    >
-                      {copiedKey === "dmarc" ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                      Copy
-                    </button>
-                  </div>
-                  <div className="text-slate-700"><strong>Name:</strong> _dmarc.{selectedDomain.name}</div>
-                  <div className="text-slate-700"><strong>Value:</strong> v=DMARC1; p=none; rua=mailto:dmarc@getsendport.com</div>
-                </div>
+                      {/* SPF */}
+                      <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 space-y-1.5">
+                        <div className="flex justify-between items-center text-slate-500 font-sans text-xs font-semibold">
+                          <span>2. SPF Authorization (TXT Record)</span>
+                          <button
+                            onClick={() => handleCopy(spfVal, "spf")}
+                            className="text-primary-600 hover:underline flex items-center gap-1 font-sans text-xs font-bold"
+                          >
+                            {copiedKey === "spf" ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                            Copy Value
+                          </button>
+                        </div>
+                        <div className="text-slate-700"><strong>Name:</strong> @ (or {selectedDomain.name})</div>
+                        <div className="text-slate-700 break-all select-all font-mono text-[11px] bg-white p-2 rounded border border-slate-200">
+                          {spfVal}
+                        </div>
+                      </div>
+
+                      {/* DMARC */}
+                      <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 space-y-1.5">
+                        <div className="flex justify-between items-center text-slate-500 font-sans text-xs font-semibold">
+                          <span>3. DMARC Anti-Spoofing Policy (TXT Record)</span>
+                          <button
+                            onClick={() => handleCopy(dmarcVal, "dmarc")}
+                            className="text-primary-600 hover:underline flex items-center gap-1 font-sans text-xs font-bold"
+                          >
+                            {copiedKey === "dmarc" ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                            Copy Value
+                          </button>
+                        </div>
+                        <div className="text-slate-700"><strong>Name:</strong> _dmarc.{selectedDomain.name}</div>
+                        <div className="text-slate-700 break-all select-all font-mono text-[11px] bg-white p-2 rounded border border-slate-200">
+                          {dmarcVal}
+                        </div>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             )}
 

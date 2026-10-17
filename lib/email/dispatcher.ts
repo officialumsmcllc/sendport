@@ -56,39 +56,67 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
 
   // 1. Strictly verify that the domain belongs to this user's workspace & prevent domain spoofing
   const normalizedDomain = senderDomain.toLowerCase().trim();
-  const domainRecord = await prisma.domain.findFirst({
+
+  // Find domain belonging to this workspace or associated user memberships
+  let domainRecord = await prisma.domain.findFirst({
     where: {
-      workspaceId: options.workspaceId,
       name: { equals: normalizedDomain, mode: "insensitive" },
+      OR: [
+        { workspaceId: options.workspaceId },
+        { workspace: { members: { some: { workspaceId: options.workspaceId } } } },
+      ],
     },
   });
 
+  // Fallback: If sending from a subdomain (e.g. mail.brand.com), check if parent domain (brand.com) is verified
+  if (!domainRecord && normalizedDomain.includes(".")) {
+    const parts = normalizedDomain.split(".");
+    if (parts.length > 2) {
+      const parentDomain = parts.slice(1).join(".");
+      domainRecord = await prisma.domain.findFirst({
+        where: {
+          name: { equals: parentDomain, mode: "insensitive" },
+          OR: [
+            { workspaceId: options.workspaceId },
+            { workspace: { members: { some: { workspaceId: options.workspaceId } } } },
+          ],
+        },
+      });
+    }
+  }
+
   const isPlatformCoreDomain = normalizedDomain === "getsendport.com";
   if (isPlatformCoreDomain) {
-    // Only platform administrators can send from the root @getsendport.com domain
+    // Platform administrators can send anywhere from @getsendport.com
     const workspace = options.workspaceId
       ? await prisma.workspace.findUnique({
           where: { id: options.workspaceId },
-          include: { members: { include: { user: { select: { role: true } } } } },
+          include: { members: { include: { user: { select: { role: true, email: true } } } } },
         })
       : null;
 
     const isPlatformAdmin = workspace?.members.some((m) => m.user.role === "ADMIN");
     if (!isPlatformAdmin) {
-      throw new Error(
-        `Unauthorized sender domain: Only Sendport platform administrators can dispatch from "@getsendport.com". Please add and verify your own custom domain in Dashboard > Domains.`
-      );
+      // Sandbox testing: Non-admins can test send from @getsendport.com ONLY to their own registered account email
+      const memberEmails = workspace?.members.map((m) => m.user.email.toLowerCase().trim()) || [];
+      const isInternalSandboxTest = recipients.every((r) => memberEmails.includes(r.toLowerCase().trim()));
+
+      if (!isInternalSandboxTest) {
+        throw new Error(
+          `Unauthorized sender domain: Dispatching from "@getsendport.com" to external recipients is restricted. Please add and verify your custom domain in Dashboard > Domains to send emails to any destination.`
+        );
+      }
     }
   } else if (normalizedDomain !== "localhost") {
     if (!domainRecord) {
       throw new Error(
-        `Domain "${senderDomain}" is not added or verified in your Sendport account. Please add and verify your domain in your dashboard before sending.`
+        `Domain "${senderDomain}" is not added to your Sendport account. Please add and verify your domain in Dashboard > Domains before sending.`
       );
     }
 
-    if (domainRecord.status !== "VERIFIED") {
+    if (domainRecord.status?.toUpperCase() !== "VERIFIED") {
       throw new Error(
-        `Domain "${senderDomain}" DNS records are pending verification. Please verify DKIM & SPF records in your dashboard before sending.`
+        `Domain "${senderDomain}" DNS records are pending verification. Please verify DKIM & SPF records in Dashboard > Domains before sending.`
       );
     }
   }
