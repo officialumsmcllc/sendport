@@ -42,6 +42,10 @@ services:
         sync: false
       - key: CLOUDFLARE_CLIENT_SECRET
         sync: false
+      - key: MTA_SERVER_URL
+        value: http://mail.getsendport.com
+      - key: MTA_SECRET_KEY
+        value: sendport_mta_master_secret_key_2026
       - key: STRIPE_SECRET_KEY
         sync: false
       - key: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY

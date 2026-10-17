@@ -279,10 +279,48 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
   let deliveryError: string | null = null;
 
   // 6. Real-time Internet Delivery:
-  // Priority 1: Hostinger Enterprise Engine (Full DKIM Injection & Custom Envelope Sender - 0% 'via' tag)
+  // Priority 1: Dedicated Autonomous MTA Server (DigitalOcean / Custom VPS with 2048-bit DKIM & Direct MX)
+  if (process.env.MTA_SERVER_URL) {
+    try {
+      const mtaRes = await fetch(`${process.env.MTA_SERVER_URL}/v1/deliver`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-MTA-Key": process.env.MTA_SECRET_KEY || "sendport_mta_master_secret_key_2026",
+        },
+        body: JSON.stringify({
+          from_address: options.from,
+          to_addresses: recipients,
+          subject: options.subject,
+          html: processedHtml,
+          text: plainTextBody,
+          reply_to: options.replyTo,
+          headers: {
+            "List-Unsubscribe": listUnsubscribeHeader,
+            "List-Unsubscribe-Post": listUnsubscribePostHeader,
+            ...options.headers,
+          },
+          dkim_selector: domainRecord?.dkimSelector || "sendport",
+          dkim_private_key: domainRecord?.dkimPrivateKey || undefined,
+        }),
+      });
+
+      if (mtaRes.ok) {
+        deliveryStatus = "DELIVERED";
+        console.log(`[AUTONOMOUS MTA DISPATCH] Direct MX Delivery Success via VPS MTA Daemon`);
+      } else {
+        const mtaErr = await mtaRes.text();
+        deliveryError = `VPS MTA Error: ${mtaErr || mtaRes.statusText}`;
+      }
+    } catch (mtaErr: any) {
+      deliveryError = `VPS MTA connection error: ${mtaErr.message}`;
+    }
+  }
+
+  // Priority 2: Hostinger Enterprise Engine (Full DKIM Injection & Custom Envelope Sender - 0% 'via' tag)
   const hostingerEngineUrl = process.env.HOSTINGER_ENGINE_URL || "https://engine.getsendport.com/sendport_engine.php";
 
-  if (process.env.USE_HOSTINGER_ENGINE !== "false") {
+  if (deliveryStatus !== "DELIVERED" && process.env.USE_HOSTINGER_ENGINE !== "false") {
     try {
       const hRes = await fetch(hostingerEngineUrl, {
         method: "POST",
@@ -324,7 +362,7 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
     }
   }
 
-  // Priority 2: Cloudflare Edge Worker Layer
+  // Priority 3: Cloudflare Edge Worker Layer
   if (deliveryStatus !== "DELIVERED" && process.env.CLOUDFLARE_WORKER_URL) {
     try {
       const cfRes = await fetch(process.env.CLOUDFLARE_WORKER_URL, {
@@ -361,43 +399,6 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
       }
     } catch (cfErr: any) {
       deliveryError = `Cloudflare Worker Connection Error: ${cfErr.message}`;
-    }
-  }
-
-  if (deliveryStatus !== "DELIVERED" && process.env.MTA_SERVER_URL) {
-    try {
-      const mtaRes = await fetch(`${process.env.MTA_SERVER_URL}/v1/deliver`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-MTA-Key": process.env.MTA_SECRET_KEY || "sendport_mta_master_secret_key_2026",
-        },
-        body: JSON.stringify({
-          from_address: options.from,
-          to_addresses: recipients,
-          subject: options.subject,
-          html: processedHtml,
-          text: plainTextBody,
-          reply_to: options.replyTo,
-          headers: {
-            "List-Unsubscribe": listUnsubscribeHeader,
-            "List-Unsubscribe-Post": listUnsubscribePostHeader,
-            ...options.headers,
-          },
-          dkim_selector: domainRecord?.dkimSelector || "sendport",
-          dkim_private_key: domainRecord?.dkimPrivateKey || undefined,
-        }),
-      });
-
-      if (mtaRes.ok) {
-        deliveryStatus = "DELIVERED";
-        console.log(`[AUTONOMOUS MTA DISPATCH] Direct MX Delivery Success via Python Daemon`);
-      } else {
-        const mtaErr = await mtaRes.text();
-        deliveryError = `Python MTA Error: ${mtaErr || mtaRes.statusText}`;
-      }
-    } catch (mtaErr: any) {
-      deliveryError = `MTA connection error: ${mtaErr.message}`;
     }
   }
 
