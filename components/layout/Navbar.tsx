@@ -88,7 +88,7 @@ export function Navbar({
           <Link href="/features" className="hover:text-primary-400 transition-colors">
             Features
           </Link>
-          <Link href="/#pricing" className="hover:text-primary-400 transition-colors">
+          <Link href="/pricing" className="hover:text-primary-400 transition-colors">
             Pricing
           </Link>
           <Link
@@ -260,7 +260,7 @@ export function Navbar({
           <Link href="/features" className="block text-sm py-1 font-medium hover:text-primary-400">
             Features
           </Link>
-          <Link href="/#pricing" className="block text-sm py-1 font-medium hover:text-primary-400">
+          <Link href="/pricing" onClick={() => setMobileMenuOpen(false)} className="block text-sm py-1 font-medium hover:text-primary-400">
             Pricing
           </Link>
           <Link href="/docs" className="block text-sm py-1 font-medium hover:text-primary-400">
