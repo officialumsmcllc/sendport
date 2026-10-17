@@ -16,19 +16,11 @@ export default async function DashboardPage() {
     console.error("Failed to retrieve auth context during dashboard SSR:", err);
   }
 
-  // Strict Role Isolation: If user is admin, send them directly to Admin Panel
-  if (auth?.user && isSuperAdminUser(auth.user.email, auth.user.role)) {
-    redirect("/admin");
-  }
-
   // If full DB workspace resolution wasn't completed in SSR, verify session token
   if (!auth) {
     const session = await getCurrentUser();
     if (!session) {
       redirect("/login?unauthenticated=1");
-    }
-    if (isSuperAdminUser(session.email, session.role)) {
-      redirect("/admin");
     }
   }
 

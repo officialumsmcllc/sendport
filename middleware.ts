@@ -58,11 +58,6 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
-    // Strict Role Isolation: Admin users are strictly routed to Admin Panel
-    if (isSuperAdminUser(session.email, session.role)) {
-      return NextResponse.redirect(new URL("/admin", req.url));
-    }
-
     return NextResponse.next();
   }
 
