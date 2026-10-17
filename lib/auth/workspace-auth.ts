@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { getCurrentUser } from "./session";
 import { isSuperAdminUser } from "./admin-guard";
 import { prisma } from "@/lib/db/prisma";
+import { ensureDbSchema } from "@/lib/db/ensure-schema";
 
 export interface AuthContext {
   user: {
@@ -244,12 +245,14 @@ export async function getAuthContext(req?: NextRequest): Promise<AuthContext | n
           const uniqueSuffix = `${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`;
           const slug = `ws-${userSlug}-${uniqueSuffix}`;
           const isSuperPlan = user.role === "ADMIN";
+          await ensureDbSchema();
           workspace = await prisma.workspace.create({
             data: {
               name: `${user.name || user.email.split("@")[0]}'s Workspace`,
               slug,
               plan: isSuperPlan ? "SCALE_PRO" : "STARTER",
               dailyQuota: isSuperPlan ? 50000 : 100,
+              credits: 0,
               members: {
                 create: {
                   userId: user.id,
