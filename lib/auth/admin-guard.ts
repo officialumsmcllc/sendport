@@ -9,7 +9,6 @@
 
 export const DEFAULT_SUPER_ADMIN_EMAILS: string[] = [
   "admin@getsendport.com",
-  "umar.mumtaz37@yahoo.com",
 ];
 
 /**
@@ -18,6 +17,9 @@ export const DEFAULT_SUPER_ADMIN_EMAILS: string[] = [
 export function isSuperAdminEmail(email?: string | null): boolean {
   if (!email || typeof email !== "string") return false;
   const normalized = email.toLowerCase().trim();
+
+  // Explicit normal user test accounts should never be super admin
+  if (normalized === "umar.mumtaz37@yahoo.com") return false;
 
   // Check default master emails
   if (DEFAULT_SUPER_ADMIN_EMAILS.includes(normalized)) return true;
@@ -37,6 +39,9 @@ export function isSuperAdminEmail(email?: string | null): boolean {
  * Checks whether a user has administrative privileges based on either their role or email.
  */
 export function isSuperAdminUser(email?: string | null, role?: string | null): boolean {
+  if (email && email.toLowerCase().trim() === "umar.mumtaz37@yahoo.com") {
+    return false;
+  }
   if (role === "ADMIN") return true;
   return isSuperAdminEmail(email);
 }

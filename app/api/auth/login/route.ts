@@ -109,6 +109,16 @@ export async function POST(req: NextRequest) {
       } catch (err) {
         console.warn("Failed to auto-promote admin role in DB:", err);
       }
+    } else if (!isAdmin && (user.role === "ADMIN" || normalizedEmail === "umar.mumtaz37@yahoo.com")) {
+      try {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { role: "USER" },
+        });
+        effectiveRole = "USER";
+      } catch (err) {
+        console.warn("Failed to demote normal user in DB:", err);
+      }
     } else if (isAdmin) {
       effectiveRole = "ADMIN";
     }
