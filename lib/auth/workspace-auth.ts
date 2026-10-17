@@ -298,6 +298,17 @@ export async function getAuthContext(req?: NextRequest): Promise<AuthContext | n
           } catch (_) {}
         }
 
+        // Auto-heal Starter plan quota if it was previously set to admin quota (50000)
+        if (workspace?.id && workspace.plan === "STARTER" && workspace.dailyQuota > 100 && !isSuperAdminUser(user.email, user.role)) {
+          try {
+            await prisma.workspace.update({
+              where: { id: workspace.id },
+              data: { dailyQuota: 100 },
+            });
+            workspace.dailyQuota = 100;
+          } catch (_) {}
+        }
+
         await autoResetDailyQuotaIfExpired(workspace);
 
         return {
@@ -325,7 +336,7 @@ export async function getAuthContext(req?: NextRequest): Promise<AuthContext | n
           name: "Primary Workspace",
           slug: `ws-${session.userId}`,
           plan: isSuperAdminUser(session.email, session.role) ? "SCALE_PRO" : "STARTER",
-          dailyQuota: 50000,
+          dailyQuota: isSuperAdminUser(session.email, session.role) ? 50000 : 100,
           usedToday: 0,
         },
       };

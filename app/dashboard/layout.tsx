@@ -128,7 +128,7 @@ export default function DashboardLayout({
 
   const currentWs = user?.workspaces?.[0]?.workspace;
   const quotaUsed = currentWs?.usedToday || 0;
-  const quotaLimit = currentWs?.dailyQuota || 100;
+  const quotaLimit = (currentWs?.plan === "STARTER" && (currentWs?.dailyQuota || 0) > 100 && !isSuperAdminUser(user?.email, user?.role)) ? 100 : (currentWs?.dailyQuota || 100);
   const quotaPct = Math.min(100, Math.round((quotaUsed / quotaLimit) * 100));
 
   return (

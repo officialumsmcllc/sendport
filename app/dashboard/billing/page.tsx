@@ -260,10 +260,10 @@ export default function BillingPage() {
             </div>
             <h2 className="text-xl font-black text-slate-900">
               {currentPlan === "GROWTH"
-                ? `Growth Plan (${workspaceStats.dailyQuota.toLocaleString()} emails/day)`
+                ? `Growth Plan (${(workspaceStats.dailyQuota || 3000).toLocaleString()} emails/day)`
                 : currentPlan === "SCALE_PRO"
-                ? `Scale Pro Plan (${workspaceStats.dailyQuota.toLocaleString()} emails/day)`
-                : `Starter Plan (${workspaceStats.dailyQuota.toLocaleString()} emails/day)`}
+                ? `Scale Pro Plan (${(workspaceStats.dailyQuota || 25000).toLocaleString()} emails/day)`
+                : `Starter Plan (${(currentPlan === "STARTER" && workspaceStats.dailyQuota > 100 ? 100 : workspaceStats.dailyQuota).toLocaleString()} emails/day)`}
             </h2>
             <p className="text-xs text-slate-500">Daily quota resets automatically at 00:00 UTC.</p>
           </div>
@@ -345,7 +345,7 @@ export default function BillingPage() {
 
           // Determine quota display: if it's the current plan, show actual assigned quota
           const displayQuota = isCurrentPlan
-            ? `${workspaceStats.dailyQuota.toLocaleString()} emails / day (Active)`
+            ? (p.id === "STARTER" ? "100 emails / day (Active)" : `${workspaceStats.dailyQuota.toLocaleString()} emails / day (Active)`)
             : p.defaultQuota;
 
           return (
