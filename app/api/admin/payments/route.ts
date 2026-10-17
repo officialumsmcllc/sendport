@@ -50,19 +50,22 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      let userWorkspaces = await prisma.workspaceMember.findMany({
+      const members = await prisma.workspaceMember.findMany({
         where: { userId: tx.userId },
+        select: { workspaceId: true },
       });
+
+      let workspaceIds: string[] = members.map((m) => m.workspaceId);
 
       const quota = tx.plan === "SCALE_PRO" ? 25000 : tx.plan === "GROWTH" ? 3000 : 100;
 
-      if (userWorkspaces.length === 0) {
+      if (workspaceIds.length === 0) {
         const u = await prisma.user.findUnique({
           where: { id: tx.userId },
           include: { workspaces: true },
         });
         if (u?.workspaces && u.workspaces.length > 0) {
-          userWorkspaces = u.workspaces.map((w: any) => ({ workspaceId: w.workspaceId }));
+          workspaceIds = u.workspaces.map((w: any) => w.workspaceId);
         } else if (u) {
           const slug = `ws-${(u.email.split("@")[0] || "user").replace(/[^a-zA-Z0-9]/g, "").toLowerCase()}-${Date.now().toString(36)}`;
           const newWs = await prisma.workspace.create({
@@ -80,15 +83,15 @@ export async function POST(req: NextRequest) {
               },
             },
           });
-          userWorkspaces = [{ workspaceId: newWs.id } as any];
+          workspaceIds = [newWs.id];
         }
       }
 
       if (tx.isCreditTopup && tx.creditsPurchased) {
         // Automatically add top-up credits to user's workspaces
-        for (const wm of userWorkspaces) {
+        for (const wsId of workspaceIds) {
           await prisma.workspace.update({
-            where: { id: wm.workspaceId },
+            where: { id: wsId },
             data: {
               credits: { increment: tx.creditsPurchased },
             },
@@ -96,9 +99,9 @@ export async function POST(req: NextRequest) {
         }
       } else {
         // Automatically upgrade user's workspace daily quota based on plan
-        for (const wm of userWorkspaces) {
+        for (const wsId of workspaceIds) {
           await prisma.workspace.update({
-            where: { id: wm.workspaceId },
+            where: { id: wsId },
             data: {
               plan: tx.plan,
               dailyQuota: quota,
