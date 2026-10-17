@@ -19,7 +19,7 @@ export default function BrevoAlternativePage() {
     { feature: "React Email & Next.js 15 Support", sendport: "Native (@react-email/components)", brevo: "Legacy HTML copy-paste only", note: "Modern developer DX" },
     { feature: "Custom Verified Domains", sendport: "Up to 5 on Growth ($20)", brevo: "Domain add-on limitations", note: "Manage multiple projects easily" },
     { feature: "Audience Marketing Contact Fees", sendport: "$0 Extra (Included in plan)", brevo: "Separate contact tiered pricing", note: "Zero contact storage tax" },
-    { feature: "2048-bit RSA DKIM & DMARC", sendport: "1-Click Cloudflare DNS sync", brevo: "Supported", note: "Cryptographic email authentication" },
+    { feature: "2048-bit RSA DKIM & DMARC", sendport: "Automatic 2048-bit RSA Keys & Instant Verification", brevo: "Supported", note: "Cryptographic email authentication" },
   ];
 
   const faqs = [

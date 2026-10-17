@@ -17,7 +17,7 @@ export default function AwsSesAlternativePage() {
     { feature: "Visual Dashboard & Analytics", sendport: "Real-time opens, clicks & latency", awsSes: "Raw SNS/CloudWatch metrics only", note: "Modern developer interface" },
     { feature: "Multi-Currency & Regional Payments", sendport: "USD, PKR, EUR, GBP, USDT, Easypaisa, Raast", awsSes: "AWS Consolidated Billing (USD Credit Card)", note: "Flexible local payment rails" },
     { feature: "Monthly Volume on Growth ($20)", sendport: "90,000 emails/mo", awsSes: "Variable (plus SNS & data transfer add-ons)", note: "Transparent all-inclusive pricing" },
-    { feature: "2048-bit RSA DKIM & DMARC", sendport: "1-Click Cloudflare DNS sync", awsSes: "Manual Route 53 CNAME entry", note: "Zero DNS misconfiguration risk" },
+    { feature: "2048-bit RSA DKIM & DMARC", sendport: "Automatic 2048-bit RSA Keys & Instant Verification", awsSes: "Manual Route 53 CNAME entry", note: "Zero DNS misconfiguration risk" },
     { feature: "Audience Marketing Contact Fees", sendport: "$0 Extra (Included in plan)", awsSes: "Requires separate Amazon Pinpoint", note: "All-in-one transactional & marketing" },
     { feature: "Inbound Email Webhook Parsing", sendport: "Included Free", awsSes: "Requires S3 bucket + Lambda + SNS", note: "Native JSON webhooks without AWS bloat" },
   ];
