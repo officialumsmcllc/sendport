@@ -305,10 +305,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="p-4 pb-3 space-y-3 shrink-0 border-b border-white/5">
           <div className="flex items-center justify-between">
             <Link href="/admin" className="flex items-center gap-2.5 group">
-              <SendportLogo size={28} dark={true} />
+              <SendportLogo size={28} dark={true} showText={false} />
               <div>
                 <span className="text-sm font-black text-white tracking-tight flex items-center gap-1.5">
-                  Sendport <span className="text-amber-400 font-mono text-[10px] tracking-widest uppercase">Admin</span>
+                  Sendport <span className="text-amber-400 font-mono text-[10px] tracking-widest uppercase px-1 py-0.2 rounded bg-amber-500/10 border border-amber-500/20">Admin</span>
                 </span>
               </div>
             </Link>
