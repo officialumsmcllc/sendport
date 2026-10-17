@@ -26,10 +26,13 @@ import {
   ShieldAlert,
   Search,
   BookUser,
-  SlidersHorizontal,
-  Command,
   FileText,
   MessageSquare,
+  Activity,
+  Terminal,
+  Cpu,
+  Layers,
+  ChevronDown,
 } from "lucide-react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -47,9 +50,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const navSections = [
     {
-      title: "OPERATIONS",
+      title: "OPERATIONS & CONTROL",
       items: [
-        { label: "Executive Mission Control", href: "/admin", icon: ShieldAlert, description: "System throughput, KPIs & health", category: "Operations" },
+        { label: "Executive Mission Control", href: "/admin", icon: ShieldAlert, description: "Live cluster throughput, KPIs & real-time telemetry", category: "Operations" },
         { label: "Support Tickets & Inbox", href: "/admin/support", icon: MessageSquare, badge: newTicketsCount, description: "Customer inquiries & direct DKIM email replies", category: "Action Required" },
         { label: "Payment Slip Approvals", href: "/admin/payments", icon: CreditCard, badge: pendingSlipsCount, description: "Review manual bank & crypto transfers", category: "Action Required" },
         { label: "Global Analytics & Revenue", href: "/admin/analytics", icon: BarChart3, description: "Platform revenue & volume projections", category: "Operations" },
@@ -83,6 +86,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   ];
 
   const navItems = navSections.flatMap((s) => s.items);
+
+  // Derive current breadcrumb label
+  const currentNavItem = navItems.find((item) => item.href === pathname);
+  const pageTitle = currentNavItem?.label || "Mission Control";
 
   // Cmd+K / Ctrl+K keyboard shortcut listener
   useEffect(() => {
@@ -167,7 +174,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const filteredPaletteItems = navItems.filter(
     (item) =>
       item.label.toLowerCase().includes(paletteSearch.toLowerCase()) ||
-      item.description?.toLowerCase().includes(paletteSearch.toLowerCase())
+      item.description?.toLowerCase().includes(paletteSearch.toLowerCase()) ||
+      item.category.toLowerCase().includes(paletteSearch.toLowerCase())
   );
 
   const handlePaletteKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -189,31 +197,31 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-950 text-slate-100 selection:bg-amber-500/30 selection:text-amber-200">
+    <div className="flex min-h-screen bg-[#070b14] text-slate-100 selection:bg-amber-500/30 selection:text-amber-200 antialiased">
       {/* COMMAND PALETTE MODAL */}
       {paletteOpen && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-black/75 backdrop-blur-md">
-          <div className="w-full max-w-xl rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-800 bg-slate-950/80">
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-24 px-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-150">
+          <div className="w-full max-w-xl rounded-2xl border border-white/10 bg-[#0d1424] shadow-2xl overflow-hidden ring-1 ring-white/10">
+            <div className="flex items-center gap-3 px-4 py-3.5 border-b border-white/10 bg-[#080d19]">
               <Search className="w-4 h-4 text-amber-400 shrink-0" />
               <input
                 type="text"
                 autoFocus
-                placeholder="Search admin module or use ↑ ↓ to navigate, ↵ to jump..."
+                placeholder="Type a command or search admin modules..."
                 value={paletteSearch}
                 onChange={(e) => {
                   setPaletteSearch(e.target.value);
                   setPaletteSelectedIndex(0);
                 }}
                 onKeyDown={handlePaletteKeyDown}
-                className="w-full bg-transparent text-sm text-white placeholder-slate-500 focus:outline-none"
+                className="w-full bg-transparent text-sm text-white placeholder-slate-500 focus:outline-none font-medium"
               />
               <div className="flex items-center gap-1.5 shrink-0">
                 <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
                   ↑↓ Navigate
                 </span>
                 <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
-                  ↵ Jump
+                  ↵ Select
                 </span>
                 <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
                   ESC
@@ -224,10 +232,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div className="max-h-80 overflow-y-auto p-2 space-y-1">
               <div className="flex items-center justify-between px-3 py-1.5">
                 <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500">
-                  Platform Administration Modules
+                  Platform Navigation
                 </p>
                 <span className="text-[10px] font-mono text-amber-400">
-                  {filteredPaletteItems.length} available
+                  {filteredPaletteItems.length} results
                 </span>
               </div>
 
@@ -247,10 +255,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         setPaletteOpen(false);
                       }}
                       onMouseEnter={() => setPaletteSelectedIndex(index)}
-                      className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-left transition-all ${
+                      className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-left transition-all ${
                         isSelected
                           ? "bg-amber-500/15 border border-amber-500/40 text-white shadow-sm"
-                          : "hover:bg-slate-800/60 text-slate-300 border border-transparent"
+                          : "hover:bg-slate-800/40 text-slate-300 border border-transparent"
                       }`}
                     >
                       <div className="flex items-center gap-3">
@@ -258,7 +266,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                           className={`p-2 rounded-lg border transition-colors ${
                             isSelected
                               ? "bg-amber-500/20 border-amber-500/50 text-amber-300"
-                              : "bg-slate-950 border-slate-800 text-amber-400"
+                              : "bg-[#080d19] border-white/5 text-amber-400"
                           }`}
                         >
                           <Icon className="w-4 h-4" />
@@ -270,7 +278,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                             </span>
                             {item.badge !== undefined && item.badge > 0 && (
                               <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold bg-amber-500 text-slate-950">
-                                {item.badge} pending
+                                {item.badge}
                               </span>
                             )}
                           </div>
@@ -291,31 +299,43 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
       )}
 
-      {/* DESKTOP ADMIN SIDEBAR */}
-      <aside className="hidden lg:flex w-72 h-screen sticky top-0 flex-col justify-between border-r border-slate-800/80 bg-slate-950/95 backdrop-blur-2xl shrink-0 z-30 shadow-2xl">
+      {/* MODERN DESKTOP SIDEBAR */}
+      <aside className="hidden lg:flex w-72 h-screen sticky top-0 flex-col justify-between border-r border-white/5 bg-[#090f1d] shrink-0 z-30 shadow-2xl">
         {/* Top Header & Superadmin Context */}
-        <div className="p-4 pb-3 space-y-3 shrink-0 border-b border-slate-900">
+        <div className="p-4 pb-3 space-y-3 shrink-0 border-b border-white/5">
           <div className="flex items-center justify-between">
-            <Link href="/admin" className="flex items-center gap-2">
+            <Link href="/admin" className="flex items-center gap-2.5 group">
               <SendportLogo size={28} dark={true} />
+              <div>
+                <span className="text-sm font-black text-white tracking-tight flex items-center gap-1.5">
+                  Sendport <span className="text-amber-400 font-mono text-[10px] tracking-widest uppercase">Admin</span>
+                </span>
+              </div>
             </Link>
             <div className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="rounded-md bg-amber-500/10 px-2 py-0.5 text-[10px] font-mono font-bold uppercase text-amber-400 border border-amber-500/25 tracking-wider">
-                ROOT ADMIN
+              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[9px] font-mono font-bold uppercase text-emerald-400 border border-emerald-500/20">
+                PROD
               </span>
             </div>
           </div>
 
-          {/* Superadmin Context Box */}
-          <div className="rounded-xl border border-slate-800/80 bg-slate-900/60 p-2.5 flex items-center justify-between">
-            <div className="min-w-0 flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0">
-                <Lock className="w-3.5 h-3.5" />
+          {/* Superadmin Context Card */}
+          <div className="rounded-xl border border-white/5 bg-[#0e1629] p-2.5 flex items-center justify-between shadow-inner">
+            <div className="min-w-0 flex items-center gap-2.5">
+              <div className="h-8 w-8 rounded-lg bg-gradient-to-tr from-amber-500 to-amber-300 text-slate-950 font-black text-xs flex items-center justify-center shrink-0 shadow-sm">
+                {adminUser?.email?.[0]?.toUpperCase() || "A"}
               </div>
               <div className="min-w-0">
-                <p className="text-[10px] font-mono uppercase tracking-wider text-slate-500">Root Access</p>
-                <p className="text-[11px] font-mono text-slate-200 truncate font-semibold">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-bold text-white truncate">
+                    {adminUser?.name || "Root Admin"}
+                  </span>
+                  <span className="text-[9px] px-1 rounded bg-amber-500/20 text-amber-300 font-mono font-bold">
+                    SU
+                  </span>
+                </div>
+                <p className="text-[10px] font-mono text-slate-400 truncate">
                   {adminUser?.email || "admin@getsendport.com"}
                 </p>
               </div>
@@ -325,13 +345,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {/* Quick Command Palette Button */}
           <button
             onClick={() => setPaletteOpen(true)}
-            className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-slate-900/70 border border-slate-800/80 text-xs text-slate-400 hover:text-white hover:border-slate-700 hover:bg-slate-900 transition-all shadow-sm"
+            className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-[#0e1629] border border-white/5 text-xs text-slate-400 hover:text-white hover:border-amber-500/30 hover:bg-[#121c33] transition-all shadow-sm cursor-pointer group"
           >
             <div className="flex items-center gap-2">
-              <Search className="w-3.5 h-3.5 text-amber-400" />
-              <span className="text-xs">Quick Search...</span>
+              <Search className="w-3.5 h-3.5 text-amber-400/80 group-hover:text-amber-400" />
+              <span className="text-xs font-medium">Quick Find...</span>
             </div>
-            <kbd className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
+            <kbd className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-slate-800/80 text-slate-400 border border-white/5 group-hover:border-white/10">
               ⌘K
             </kbd>
           </button>
@@ -341,7 +361,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-4">
           {navSections.map((section) => (
             <div key={section.title} className="space-y-1">
-              <p className="px-2.5 text-[10px] font-mono font-bold tracking-widest text-slate-500 uppercase">
+              <p className="px-2.5 text-[9px] font-mono font-bold tracking-widest text-slate-500 uppercase">
                 {section.title}
               </p>
               {section.items.map((item) => {
@@ -351,18 +371,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`group flex items-center justify-between rounded-xl px-2.5 py-2 text-xs font-medium transition-all ${
+                    className={`group flex items-center justify-between rounded-xl px-2.5 py-2 text-xs font-semibold transition-all ${
                       isActive
-                        ? "bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent border-l-2 border-amber-400 text-white font-bold shadow-sm"
-                        : "text-slate-400 hover:text-slate-100 hover:bg-slate-900/60"
+                        ? "bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent border-l-2 border-amber-400 text-white shadow-sm"
+                        : "text-slate-400 hover:text-slate-100 hover:bg-white/[0.03]"
                     }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
                       <div
                         className={`p-1.5 rounded-lg transition-colors ${
                           isActive
-                            ? "bg-amber-400/20 text-amber-300 border border-amber-400/30"
-                            : "text-slate-400 group-hover:text-amber-400 group-hover:bg-slate-900"
+                            ? "bg-amber-400/20 text-amber-300 border border-amber-400/30 shadow-xs"
+                            : "text-slate-400 group-hover:text-amber-400 group-hover:bg-[#0e1629]"
                         }`}
                       >
                         <Icon className="w-3.5 h-3.5 shrink-0" />
@@ -381,12 +401,30 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           ))}
         </nav>
 
-        {/* Pinned Bottom Footer Actions */}
-        <div className="p-3 border-t border-slate-900 bg-slate-950/80 shrink-0 space-y-2">
+        {/* Pinned Bottom Node Telemetry & Footer Actions */}
+        <div className="p-3 border-t border-white/5 bg-[#070c18] shrink-0 space-y-2.5">
+          {/* Active Sending Node Micro-Widget */}
+          <div className="p-2.5 rounded-xl border border-emerald-500/20 bg-emerald-950/20 flex items-center justify-between text-xs">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+              <div className="min-w-0">
+                <p className="text-[10px] font-mono font-bold text-emerald-400 truncate">
+                  NYC1 Droplet • Active
+                </p>
+                <p className="text-[9px] font-mono text-slate-400 truncate">
+                  142.93.120.58 (MTA Node)
+                </p>
+              </div>
+            </div>
+            <span className="text-[9px] font-mono text-emerald-300/80 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 shrink-0">
+              2048 RSA
+            </span>
+          </div>
+
           <div className="flex items-center gap-2">
             <Link
               href="/dashboard"
-              className="flex-1 flex items-center justify-between py-1.5 px-2.5 rounded-lg border border-slate-800 bg-slate-900/80 text-slate-300 hover:bg-slate-800 hover:text-white text-xs font-semibold transition-colors"
+              className="flex-1 flex items-center justify-between py-1.5 px-2.5 rounded-lg border border-white/5 bg-[#0e1629] text-slate-300 hover:bg-[#141f38] hover:text-white text-xs font-semibold transition-colors"
             >
               <span className="flex items-center gap-1.5 text-[11px]">
                 <ArrowLeft className="w-3.5 h-3.5 text-amber-400" /> Customer App
@@ -396,7 +434,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
             <Link
               href="/"
-              className="flex items-center gap-1 py-1.5 px-2.5 rounded-lg border border-slate-800 bg-slate-900/80 text-slate-300 hover:bg-slate-800 hover:text-white text-xs font-semibold transition-colors"
+              target="_blank"
+              className="flex items-center gap-1 py-1.5 px-2.5 rounded-lg border border-white/5 bg-[#0e1629] text-slate-300 hover:bg-[#141f38] hover:text-white text-xs font-semibold transition-colors"
               title="Visit Public Website"
             >
               <Globe2 className="w-3.5 h-3.5 text-slate-400" />
@@ -406,9 +445,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20 transition-colors text-xs font-semibold"
+            className="w-full flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-lg border border-rose-500/20 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20 transition-colors text-xs font-semibold cursor-pointer"
           >
-            <LogOut className="w-3.5 h-3.5" /> Sign Out Root Admin
+            <LogOut className="w-3.5 h-3.5" /> Sign Out Root
           </button>
         </div>
       </aside>
@@ -416,20 +455,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* MOBILE DRAWER */}
       {mobileNavOpen && (
         <div className="fixed inset-0 z-50 flex lg:hidden">
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileNavOpen(false)} />
-          <div className="relative flex w-4/5 max-w-xs flex-1 flex-col bg-slate-950 p-4 border-r border-slate-800 justify-between">
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setMobileNavOpen(false)} />
+          <div className="relative flex w-4/5 max-w-xs flex-1 flex-col bg-[#090f1d] p-4 border-r border-white/10 justify-between">
             <div className="flex flex-col h-full justify-between">
               <div>
-                <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+                <div className="flex items-center justify-between pb-4 border-b border-white/10">
                   <SendportLogo size={26} dark={true} />
-                  <button onClick={() => setMobileNavOpen(false)} className="p-1 text-slate-400">
+                  <button onClick={() => setMobileNavOpen(false)} className="p-1 text-slate-400 hover:text-white">
                     <X className="w-5 h-5" />
                   </button>
                 </div>
                 <nav className="mt-4 space-y-4 overflow-y-auto max-h-[calc(100vh-180px)] pr-1">
                   {navSections.map((section) => (
                     <div key={section.title} className="space-y-1">
-                      <p className="px-2 text-[10px] font-mono font-bold tracking-widest text-slate-500 uppercase">
+                      <p className="px-2 text-[9px] font-mono font-bold tracking-widest text-slate-500 uppercase">
                         {section.title}
                       </p>
                       {section.items.map((item) => {
@@ -443,7 +482,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                             className={`flex items-center justify-between rounded-lg px-3 py-2 text-xs font-semibold ${
                               isActive
                                 ? "bg-amber-500 text-slate-950 font-bold"
-                                : "text-slate-300 hover:bg-slate-800"
+                                : "text-slate-300 hover:bg-white/5"
                             }`}
                           >
                             <div className="flex items-center gap-2.5">
@@ -463,26 +502,26 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </nav>
               </div>
 
-              <div className="border-t border-slate-800 pt-3 space-y-2">
+              <div className="border-t border-white/10 pt-3 space-y-2">
                 <div className="flex items-center gap-2">
                   <Link
                     href="/dashboard"
                     onClick={() => setMobileNavOpen(false)}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-lg border border-slate-700 bg-slate-800/50 text-slate-300 text-xs font-semibold"
+                    className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-lg border border-white/10 bg-[#0e1629] text-slate-300 text-xs font-semibold"
                   >
                     <ArrowLeft className="w-3.5 h-3.5" /> Dashboard
                   </Link>
                   <Link
                     href="/"
                     onClick={() => setMobileNavOpen(false)}
-                    className="flex items-center justify-center gap-1 py-1.5 px-3 rounded-lg border border-slate-700 bg-slate-800/50 text-slate-300 text-xs font-semibold"
+                    className="flex items-center justify-center gap-1 py-1.5 px-3 rounded-lg border border-white/10 bg-[#0e1629] text-slate-300 text-xs font-semibold"
                   >
                     <Globe2 className="w-3.5 h-3.5" /> Site
                   </Link>
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-300 text-xs font-semibold"
+                  className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg border border-rose-500/20 bg-rose-500/10 text-rose-300 text-xs font-semibold"
                 >
                   <LogOut className="w-3.5 h-3.5" /> Sign Out
                 </button>
@@ -494,38 +533,50 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* MAIN ADMIN CONTENT WRAPPER */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Top Header Bar with Command Palette Trigger */}
-        <header className="flex items-center justify-between p-4 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md">
+        {/* Top Header Bar with Breadcrumbs & Global Controls */}
+        <header className="sticky top-0 z-20 flex items-center justify-between px-4 sm:px-8 py-3.5 border-b border-white/5 bg-[#090f1d]/90 backdrop-blur-xl">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMobileNavOpen(true)}
-              className="lg:hidden p-1.5 rounded-lg border border-slate-800 text-slate-400 hover:text-white"
+              className="lg:hidden p-1.5 rounded-lg border border-white/10 text-slate-400 hover:text-white"
             >
               <Menu className="w-5 h-5" />
             </button>
-            <div className="hidden sm:flex items-center gap-2">
-              <span className="text-xs font-bold text-white">Sendport Platform Root</span>
-              <span className="text-slate-600">•</span>
-              <span className="text-[11px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                PostgreSQL Online
+            <div className="flex items-center gap-2 text-xs">
+              <span className="font-semibold text-slate-400">Admin</span>
+              <span className="text-slate-600">/</span>
+              <span className="font-bold text-white flex items-center gap-1.5">
+                {pageTitle}
               </span>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Live Infrastructure Status */}
+            <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-mono">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span>Cluster Live • NYC1</span>
+            </div>
+
             <button
               onClick={() => setPaletteOpen(true)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-400 hover:text-white hover:border-slate-700 transition-colors shadow-sm"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#0e1629] border border-white/5 text-xs text-slate-400 hover:text-white hover:border-white/10 transition-colors shadow-sm cursor-pointer"
             >
               <Search className="w-3.5 h-3.5 text-amber-400" />
-              <span className="hidden sm:inline">Search modules or press</span>
-              <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
+              <span className="hidden sm:inline text-xs">Search</span>
+              <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 border border-white/5">
                 ⌘K
               </span>
             </button>
-            <span className="text-[11px] font-mono text-slate-400 truncate max-w-[160px] hidden md:inline">
-              {adminUser?.email}
-            </span>
+
+            <Link
+              href="/dashboard"
+              target="_blank"
+              className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 hover:bg-amber-500/20 text-xs font-bold transition-all"
+            >
+              <span>Buyer View</span>
+              <ExternalLink className="w-3 h-3" />
+            </Link>
           </div>
         </header>
 
