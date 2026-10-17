@@ -46,6 +46,7 @@ export default function DomainsPage() {
     canAddMore: true,
   });
   const [newDomainName, setNewDomainName] = useState("");
+  const [addingDomain, setAddingDomain] = useState(false);
   const [verifyingId, setVerifyingId] = useState<string | null>(null);
   const [scanAllVerifying, setScanAllVerifying] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
@@ -236,9 +237,10 @@ export default function DomainsPage() {
   };
 
   const handleAddDomain = async () => {
-    if (!newDomainName) return;
+    if (!newDomainName.trim() || addingDomain) return;
     const clean = newDomainName.toLowerCase().replace(/https?:\/\//, "").trim();
     try {
+      setAddingDomain(true);
       const res = await fetch("/api/v1/domains", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -260,6 +262,7 @@ export default function DomainsPage() {
         setSelectedDomain(newDom);
         setShowAddModal(false);
         setNewDomainName("");
+        fetchDomains();
       } else {
         const err = await res.json();
         if (res.status === 403 || err.code === "DOMAIN_LIMIT_REACHED") {
@@ -271,6 +274,8 @@ export default function DomainsPage() {
       }
     } catch {
       alert("Network error adding domain.");
+    } finally {
+      setAddingDomain(false);
     }
   };
 
@@ -577,7 +582,7 @@ export default function DomainsPage() {
                           placeholder="Paste your Cloudflare API Token here (e.g. 7abc89...)"
                           value={cfToken}
                           onChange={(e) => setCfToken(e.target.value)}
-                          className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 font-mono text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none bg-white"
+                          className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 font-mono text-xs text-slate-900 placeholder:text-slate-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none shadow-sm"
                         />
                       </div>
 
@@ -782,27 +787,44 @@ export default function DomainsPage() {
               Enter your domain to generate 2048-bit RSA DKIM keys or auto-connect with Cloudflare.
             </p>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Domain Name</label>
+              <label className="block text-xs font-bold text-slate-800 mb-1">Domain Name</label>
               <input
                 type="text"
-                placeholder="acme.corp or mail.startup.io"
+                autoFocus
+                placeholder="e.g. acme.corp or mail.startup.io"
                 value={newDomainName}
                 onChange={(e) => setNewDomainName(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs focus:ring-2 focus:ring-primary-500"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAddDomain();
+                  }
+                }}
+                className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 font-bold focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 focus:outline-none shadow-sm"
               />
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <button
+                type="button"
                 onClick={() => setShowAddModal(false)}
-                className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
               >
                 Cancel
               </button>
               <button
+                type="button"
+                disabled={addingDomain || !newDomainName.trim()}
                 onClick={handleAddDomain}
-                className="rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-4 py-2 text-xs font-bold text-white hover:bg-slate-800 disabled:opacity-50 transition-colors shadow-sm"
               >
-                Generate Records
+                {addingDomain ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  "Generate Records"
+                )}
               </button>
             </div>
           </div>
