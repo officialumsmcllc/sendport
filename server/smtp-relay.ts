@@ -66,8 +66,8 @@ export function createSendportSmtpServer() {
           } catch (_) {}
         }
 
-        if (workspace.usedToday >= workspace.dailyQuota) {
-          return callback(new Error("452 4.4.5 Daily email quota exceeded for your workspace. Please upgrade your plan."));
+        if (workspace.usedToday >= workspace.dailyQuota && (!workspace.credits || workspace.credits <= 0)) {
+          return callback(new Error("452 4.4.5 Daily email quota exceeded for your workspace. Please upgrade your plan or top up credits."));
         }
 
         // Asynchronously update apiKey lastUsedAt

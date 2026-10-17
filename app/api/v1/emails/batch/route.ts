@@ -34,10 +34,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (workspace.usedToday + body.length > workspace.dailyQuota) {
+    const availableCredits = (workspace as any).credits || 0;
+    const overage = (workspace.usedToday + body.length) - workspace.dailyQuota;
+    if (overage > 0 && availableCredits < overage) {
       return NextResponse.json(
         {
-          error: `Daily email quota would be exceeded (${workspace.usedToday}/${workspace.dailyQuota}). Batch requires ${body.length} sends. Upgrade your plan at /dashboard/billing to increase limits.`,
+          error: `Daily email quota would be exceeded (${workspace.usedToday}/${workspace.dailyQuota}) and insufficient top-up credits (${availableCredits} available). Batch requires ${body.length} sends. Top up credits or upgrade at /dashboard/billing.`,
         },
         { status: 429 }
       );
