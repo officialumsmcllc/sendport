@@ -10,6 +10,13 @@ import {
   Sliders,
   RotateCcw,
   Building2,
+  KeyRound,
+  Eye,
+  EyeOff,
+  Mail,
+  Sparkles,
+  Copy,
+  Check,
 } from "lucide-react";
 
 export default function AdminUsersPage() {
@@ -23,6 +30,11 @@ export default function AdminUsersPage() {
   const [editRole, setEditRole] = useState("USER");
   const [editPlan, setEditPlan] = useState("STARTER");
   const [editQuota, setEditQuota] = useState(500);
+  const [newPassword, setNewPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [sendingReset, setSendingReset] = useState(false);
+  const [recoveryCodeInfo, setRecoveryCodeInfo] = useState<string | null>(null);
+  const [copiedCode, setCopiedCode] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [toastMsg, setToastMsg] = useState("");
 
@@ -56,6 +68,45 @@ export default function AdminUsersPage() {
     const ws = user.workspaces?.[0]?.workspace;
     setEditPlan(ws?.plan || "STARTER");
     setEditQuota(ws?.dailyQuota || 100);
+    setNewPassword("");
+    setShowPassword(false);
+    setRecoveryCodeInfo(null);
+    setCopiedCode(false);
+  };
+
+  const generateRandomPassword = () => {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%";
+    let pwd = "";
+    for (let i = 0; i < 10; i++) {
+      pwd += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setNewPassword(pwd);
+    setShowPassword(true);
+  };
+
+  const handleSendResetEmail = async () => {
+    if (!selectedUser) return;
+    try {
+      setSendingReset(true);
+      const res = await fetch("/api/admin/users/send-reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: selectedUser.id }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setRecoveryCodeInfo(data.recoveryCode || "CODE_SENT");
+        setToastMsg(`Password reset verification email sent to ${selectedUser.email}`);
+        setTimeout(() => setToastMsg(""), 4500);
+      } else {
+        alert(data.error || "Failed to dispatch reset email");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Network error sending reset email");
+    } finally {
+      setSendingReset(false);
+    }
   };
 
   const handleSaveUser = async (e: React.FormEvent) => {
@@ -64,26 +115,41 @@ export default function AdminUsersPage() {
     try {
       setUpdating(true);
       const ws = selectedUser.workspaces?.[0]?.workspace;
+      const payload: any = {
+        userId: selectedUser.id,
+        workspaceId: ws?.id,
+        role: editRole,
+        plan: editPlan,
+        dailyQuota: Number(editQuota),
+      };
+
+      if (newPassword.trim()) {
+        payload.newPassword = newPassword.trim();
+      }
+
       const res = await fetch("/api/admin/users", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: selectedUser.id,
-          workspaceId: ws?.id,
-          role: editRole,
-          plan: editPlan,
-          dailyQuota: Number(editQuota),
-        }),
+        body: JSON.stringify(payload),
       });
+
+      const resData = await res.json();
 
       if (res.ok) {
         setSelectedUser(null);
-        setToastMsg(`Updated permissions for ${selectedUser.email}`);
+        setToastMsg(
+          newPassword.trim()
+            ? `Updated permissions & reset password for ${selectedUser.email}`
+            : `Updated permissions for ${selectedUser.email}`
+        );
         setTimeout(() => setToastMsg(""), 3500);
         fetchUsers();
+      } else {
+        alert(resData.error || "Failed to update account settings.");
       }
     } catch (e) {
       console.error(e);
+      alert("Network error updating account.");
     } finally {
       setUpdating(false);
     }
@@ -275,11 +341,11 @@ export default function AdminUsersPage() {
                       <td className="p-4 text-right space-x-1.5 whitespace-nowrap">
                         <button
                           onClick={() => handleResetQuota(user)}
-                          title="Reset Used Today to 0"
+                          title="Reset today's used quota counter back to 0"
                           className="p-1.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-amber-400 transition-colors inline-flex items-center gap-1 text-[11px]"
                         >
                           <RotateCcw className="w-3.5 h-3.5" />
-                          Reset
+                          Reset Quota
                         </button>
                         <button
                           onClick={() => openEditModal(user)}
@@ -301,7 +367,7 @@ export default function AdminUsersPage() {
       {/* Edit User & Quotas Modal */}
       {selectedUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl space-y-4">
+          <div className="w-full max-w-md max-h-[92vh] overflow-y-auto rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between pb-2 border-b border-slate-800">
               <h3 className="text-base font-bold text-white flex items-center gap-2">
                 <Sliders className="w-4 h-4 text-amber-400" />
@@ -400,6 +466,89 @@ export default function AdminUsersPage() {
                   >
                     +5k
                   </button>
+                </div>
+              </div>
+
+              {/* Security & Password Override Section */}
+              <div className="pt-3 border-t border-slate-800 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-300 font-bold flex items-center gap-1.5 text-xs">
+                    <KeyRound className="w-3.5 h-3.5 text-amber-400" />
+                    Security & Password Override
+                  </span>
+                  <span className="text-[10px] text-slate-500 font-mono">Instant DB Update</span>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-slate-400 text-[11px]">Direct Password Override</label>
+                    <button
+                      type="button"
+                      onClick={generateRandomPassword}
+                      className="text-[10px] text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 transition-colors"
+                    >
+                      <Sparkles className="w-3 h-3" />
+                      Generate Strong
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Leave blank to keep current password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="w-full rounded-xl border border-slate-700 bg-slate-800/90 pl-3 pr-9 py-2 text-white font-mono text-xs placeholder-slate-500 focus:border-amber-400 focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-2.5 top-2.5 text-slate-400 hover:text-white"
+                    >
+                      {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                  {newPassword && (
+                    <p className="text-[10px] text-amber-300/80 mt-1">
+                      ⚠️ Password will be updated in database immediately upon clicking "Update Account".
+                    </p>
+                  )}
+                </div>
+
+                {/* 1-Click Send Reset Verification Email */}
+                <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800 flex flex-col gap-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <p className="text-[11px] font-bold text-slate-300">Self-Serve Recovery Email</p>
+                      <p className="text-[10px] text-slate-500">Send 6-digit verification code to user</p>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={sendingReset}
+                      onClick={handleSendResetEmail}
+                      className="px-2.5 py-1.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-amber-400 text-[11px] font-bold transition-all flex items-center gap-1.5 disabled:opacity-50 whitespace-nowrap"
+                    >
+                      <Mail className="w-3 h-3 text-amber-400" />
+                      {sendingReset ? "Sending..." : "Send Reset Email"}
+                    </button>
+                  </div>
+
+                  {recoveryCodeInfo && (
+                    <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] flex items-center justify-between">
+                      <span>✓ Dispatched code: <strong className="font-mono text-white tracking-wider ml-1">{recoveryCodeInfo}</strong></span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(recoveryCodeInfo);
+                          setCopiedCode(true);
+                          setTimeout(() => setCopiedCode(false), 2000);
+                        }}
+                        className="text-slate-400 hover:text-white flex items-center gap-1"
+                      >
+                        {copiedCode ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                        {copiedCode ? "Copied" : "Copy"}
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 

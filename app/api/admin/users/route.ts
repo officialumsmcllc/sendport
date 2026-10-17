@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
 import { isSuperAdminUser } from "@/lib/auth/admin-guard";
 import { logSecurityAudit } from "@/lib/security/audit";
+import { hashPassword } from "@/lib/auth/password";
 
 export async function GET() {
   try {
@@ -68,9 +69,25 @@ export async function PATCH(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { userId, workspaceId, role, plan, dailyQuota, resetUsedToday } = body;
+    const { userId, workspaceId, role, plan, dailyQuota, resetUsedToday, newPassword } = body;
 
-    // 1. Update user role if provided
+    // 1. Update user password directly if provided by admin
+    if (userId && newPassword) {
+      if (typeof newPassword !== "string" || newPassword.trim().length < 6) {
+        return NextResponse.json(
+          { error: "New password must be at least 6 characters long." },
+          { status: 400 }
+        );
+      }
+      const passwordHash = hashPassword(newPassword.trim());
+      await prisma.user.update({
+        where: { id: userId },
+        data: { passwordHash },
+      });
+      logSecurityAudit("ADMIN_USER_PASSWORD_RESET", session.userId, { targetUserId: userId });
+    }
+
+    // 2. Update user role if provided
     if (userId && role) {
       await prisma.user.update({
         where: { id: userId },
