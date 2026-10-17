@@ -244,7 +244,7 @@ export default function DomainsPage() {
 
   const handleAddDomain = async () => {
     if (!newDomainName.trim() || addingDomain) return;
-    const clean = newDomainName.toLowerCase().replace(/https?:\/\//, "").trim();
+    const clean = newDomainName.toLowerCase().replace(/^https?:\/\//, "").replace(/\/+$/, "").trim();
     try {
       setAddingDomain(true);
       const res = await fetch("/api/v1/domains", {
@@ -481,264 +481,270 @@ export default function DomainsPage() {
       </div>
 
       {/* DNS RECORDS & CLOUDFLARE 1-CLICK MODAL */}
-      {selectedDomain && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-              <div>
-                <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                  <span>DNS Setup for</span>
-                  <span className="font-mono text-primary-600">{selectedDomain.name}</span>
-                </h3>
-                <p className="text-xs text-slate-500">
-                  Choose 1-Click Cloudflare automated setup or configure records manually.
-                </p>
-              </div>
-              <button
-                onClick={() => {
-                  setSelectedDomain(null);
-                  setCfSuccessMsg(null);
-                }}
-                className="text-xs font-bold text-slate-400 hover:text-slate-600"
-              >
-                ✕ Close
-              </button>
-            </div>
+      {selectedDomain && (() => {
+        const cleanSelectedDomainName = selectedDomain.name.replace(/\/+$/, "");
 
-            {/* TAB SELECTOR */}
-            <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
-              <button
-                onClick={() => setModalTab("cloudflare")}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  modalTab === "cloudflare"
-                    ? "bg-[#F6821F] text-white shadow-sm"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                }`}
-              >
-                <Zap className="w-3.5 h-3.5 fill-current" /> 1-Click Cloudflare
-              </button>
-              <button
-                onClick={() => setModalTab("manual")}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                  modalTab === "manual"
-                    ? "bg-slate-900 text-white shadow-sm"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                }`}
-              >
-                <Layers className="w-3.5 h-3.5" /> Manual DNS Records
-              </button>
-            </div>
-
-            {/* TAB CONTENT: CLOUDFLARE AUTO */}
-            {modalTab === "cloudflare" ? (
-              <div className="space-y-4">
-                {cfSuccessMsg ? (
-                  <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-                    <span>{cfSuccessMsg}</span>
-                  </div>
-                ) : (
-                  <>
-                    {/* PRIMARY ACTION: LOGIN WITH CLOUDFLARE OAUTH */}
-                    <div className="p-5 rounded-2xl bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent border border-amber-200/90 space-y-3.5">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2.5">
-                          <div className="h-9 w-9 rounded-xl bg-[#F6821F] flex items-center justify-center text-white shadow-sm font-black text-base">
-                            ☁️
-                          </div>
-                          <div>
-                            <h4 className="text-sm font-black text-slate-900 flex items-center gap-1.5">
-                              <span>Log in with Cloudflare</span>
-                              <span className="rounded bg-amber-100 text-[#c25e0c] px-1.5 py-0.2 text-[10px] font-bold uppercase tracking-wider">
-                                {oauthConfigured ? "Connected" : "1-Click"}
-                              </span>
-                            </h4>
-                            <p className="text-xs text-slate-600 mt-0.5">
-                              Cloudflare account se login karein, Sendport khud ba khud تمام DKIM, SPF, aur DMARC records configure kar dega.
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <button
-                        onClick={handleCloudflareOAuthClick}
-                        className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#F6821F] hover:bg-[#e27316] text-white font-bold text-xs shadow-md shadow-orange-500/20 transition-all hover:scale-[1.01]"
-                      >
-                        <Zap className="w-4 h-4 fill-white" />
-                        <span>Log in with Cloudflare & Auto-Verify</span>
-                        <ArrowRight className="w-3.5 h-3.5 ml-1" />
-                      </button>
-                    </div>
-
-                    {/* DIVIDER */}
-                    <div className="relative flex py-1 items-center">
-                      <div className="flex-grow border-t border-slate-200"></div>
-                      <span className="flex-shrink mx-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                        ⚡ ya 10-second fast token paste (Ready)
-                      </span>
-                      <div className="flex-grow border-t border-slate-200"></div>
-                    </div>
-
-                    {/* DIRECT API TOKEN */}
-                    <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-3">
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
-                          <span>Cloudflare API Token</span>
-                          <span className="text-[11px] font-normal text-slate-500">
-                            (Zone:DNS:Edit permission)
-                          </span>
-                        </label>
-                        <input
-                          ref={tokenInputRef}
-                          type="password"
-                          placeholder="Paste your Cloudflare API Token here (e.g. 7abc89...)"
-                          value={cfToken}
-                          onChange={(e) => setCfToken(e.target.value)}
-                          className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 font-mono text-xs text-slate-900 placeholder:text-slate-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none shadow-sm"
-                        />
-                      </div>
-
-                      <div className="p-3 rounded-lg bg-amber-50/60 border border-amber-200/60 text-[11px] text-slate-700 space-y-1">
-                        <p className="font-bold text-amber-950 flex items-center gap-1">
-                          <Key className="w-3.5 h-3.5 text-amber-700" />
-                          Aapki dosri tab mein Cloudflare khula hua hai:
-                        </p>
-                        <ol className="list-decimal pl-4 space-y-0.5 text-slate-600">
-                          <li>
-                            Cloudflare tab mein jayein ya{" "}
-                            <a
-                              href="https://dash.cloudflare.com/profile/api-tokens"
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-primary-600 hover:underline font-bold inline-flex items-center gap-0.5"
-                            >
-                              My Profile → API Tokens <ExternalLink className="w-2.5 h-2.5" />
-                            </a>{" "}
-                            kholein.
-                          </li>
-                          <li><strong>&quot;Create Token&quot;</strong> dabayein aur <strong>&quot;Edit zone DNS&quot;</strong> template select karein.</li>
-                          <li>Zone Resources mein <strong>{selectedDomain.name}</strong> select kar ke Continue dabayein aur Token copy kar ke yahan paste karein.</li>
-                        </ol>
-                      </div>
-
-                      <div className="flex justify-end pt-1">
-                        <button
-                          onClick={handleCloudflareSync}
-                          disabled={cfSyncing || !cfToken.trim()}
-                          className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 px-5 py-2.5 text-xs font-bold text-white shadow-sm disabled:opacity-50 transition-all"
-                        >
-                          {cfSyncing ? (
-                            <>
-                              <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Auto-Configuring Records...
-                            </>
-                          ) : (
-                            <>
-                              <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-400" /> Auto-Configure & Verify Now
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            ) : (
-              /* TAB CONTENT: MANUAL DNS */
-              <div className="space-y-3 font-mono text-xs">
-                {(() => {
-                  const dkimVal = selectedDomain.dkimPublicKey
-                    ? (selectedDomain.dkimPublicKey.startsWith("v=DKIM1") ? selectedDomain.dkimPublicKey : `v=DKIM1; k=rsa; p=${selectedDomain.dkimPublicKey}`)
-                    : "v=DKIM1; k=rsa; p=...";
-                  const spfVal = selectedDomain.spfRecord || "v=spf1 include:mail.getsendport.com ~all";
-                  const dmarcVal = selectedDomain.dmarcRecord || "v=DMARC1; p=none; rua=mailto:dmarc@getsendport.com";
-
-                  return (
-                    <>
-                      {/* DKIM */}
-                      <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 space-y-1.5">
-                        <div className="flex justify-between items-center text-slate-500 font-sans text-xs font-semibold">
-                          <span>1. DKIM Public Key (TXT Record)</span>
-                          <button
-                            onClick={() => handleCopy(dkimVal, "dkim")}
-                            className="text-primary-600 hover:underline flex items-center gap-1 font-sans text-xs font-bold"
-                          >
-                            {copiedKey === "dkim" ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                            Copy Value
-                          </button>
-                        </div>
-                        <div className="text-slate-700"><strong>Name:</strong> sendport._domainkey.{selectedDomain.name}</div>
-                        <div className="text-slate-700 break-all select-all font-mono text-[11px] bg-white p-2 rounded border border-slate-200 max-h-24 overflow-y-auto">
-                          {dkimVal}
-                        </div>
-                      </div>
-
-                      {/* SPF */}
-                      <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 space-y-1.5">
-                        <div className="flex justify-between items-center text-slate-500 font-sans text-xs font-semibold">
-                          <span>2. SPF Authorization (TXT Record)</span>
-                          <button
-                            onClick={() => handleCopy(spfVal, "spf")}
-                            className="text-primary-600 hover:underline flex items-center gap-1 font-sans text-xs font-bold"
-                          >
-                            {copiedKey === "spf" ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                            Copy Value
-                          </button>
-                        </div>
-                        <div className="text-slate-700"><strong>Name:</strong> @ (or {selectedDomain.name})</div>
-                        <div className="text-slate-700 break-all select-all font-mono text-[11px] bg-white p-2 rounded border border-slate-200">
-                          {spfVal}
-                        </div>
-                      </div>
-
-                      {/* DMARC */}
-                      <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 space-y-1.5">
-                        <div className="flex justify-between items-center text-slate-500 font-sans text-xs font-semibold">
-                          <span>3. DMARC Anti-Spoofing Policy (TXT Record)</span>
-                          <button
-                            onClick={() => handleCopy(dmarcVal, "dmarc")}
-                            className="text-primary-600 hover:underline flex items-center gap-1 font-sans text-xs font-bold"
-                          >
-                            {copiedKey === "dmarc" ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                            Copy Value
-                          </button>
-                        </div>
-                        <div className="text-slate-700"><strong>Name:</strong> _dmarc.{selectedDomain.name}</div>
-                        <div className="text-slate-700 break-all select-all font-mono text-[11px] bg-white p-2 rounded border border-slate-200">
-                          {dmarcVal}
-                        </div>
-                      </div>
-                    </>
-                  );
-                })()}
-              </div>
-            )}
-
-            <div className="flex justify-between items-center pt-2">
-              <span className="text-xs text-slate-400">DNS changes propagate worldwide in 5-15 mins.</span>
-              <div className="flex items-center gap-2">
-                {selectedDomain.status !== "VERIFIED" && modalTab === "manual" && (
-                  <button
-                    onClick={() => handleVerifyDomain(selectedDomain)}
-                    disabled={verifyingId === selectedDomain.id}
-                    className="rounded-xl border border-emerald-600 bg-emerald-50 px-4 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-100"
-                  >
-                    Check & Verify DNS
-                  </button>
-                )}
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    <span>DNS Setup for</span>
+                    <span className="font-mono text-primary-600">{cleanSelectedDomainName}</span>
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Choose 1-Click Cloudflare automated setup or configure records manually.
+                  </p>
+                </div>
                 <button
                   onClick={() => {
                     setSelectedDomain(null);
                     setCfSuccessMsg(null);
                   }}
-                  className="rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800"
+                  className="text-xs font-bold text-slate-400 hover:text-slate-600"
                 >
-                  Done
+                  ✕ Close
                 </button>
+              </div>
+
+              {/* TAB SELECTOR */}
+              <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
+                <button
+                  onClick={() => setModalTab("cloudflare")}
+                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    modalTab === "cloudflare"
+                      ? "bg-[#F6821F] text-white shadow-sm"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  <Zap className="w-3.5 h-3.5 fill-current" /> 1-Click Cloudflare
+                </button>
+                <button
+                  onClick={() => setModalTab("manual")}
+                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    modalTab === "manual"
+                      ? "bg-slate-900 text-white shadow-sm"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  <Layers className="w-3.5 h-3.5" /> Manual DNS Records
+                </button>
+              </div>
+
+              {/* TAB CONTENT: CLOUDFLARE AUTO */}
+              {modalTab === "cloudflare" ? (
+                <div className="space-y-4">
+                  {cfSuccessMsg ? (
+                    <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2">
+                      <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                      <span>{cfSuccessMsg}</span>
+                    </div>
+                  ) : (
+                    <>
+                      {/* PRIMARY: DIRECT API TOKEN (INSTANT & 100% RELIABLE) */}
+                      <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-3">
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
+                            <span className="flex items-center gap-1.5">
+                              <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                              <span>Instant Cloudflare DNS Automation (API Token)</span>
+                            </span>
+                            <span className="text-[11px] font-normal text-slate-500">
+                              (Zone:DNS:Edit permission)
+                            </span>
+                          </label>
+                          <input
+                            ref={tokenInputRef}
+                            type="password"
+                            placeholder="Paste your Cloudflare API Token here (e.g. 7abc89...)"
+                            value={cfToken}
+                            onChange={(e) => setCfToken(e.target.value)}
+                            className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 font-mono text-xs text-slate-900 placeholder:text-slate-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none shadow-sm"
+                          />
+                        </div>
+
+                        <div className="p-3 rounded-lg bg-amber-50/70 border border-amber-200/70 text-[11px] text-slate-700 space-y-1">
+                          <p className="font-bold text-amber-950 flex items-center gap-1">
+                            <Key className="w-3.5 h-3.5 text-amber-700" />
+                            How to get your Cloudflare API Token in 15 seconds:
+                          </p>
+                          <ol className="list-decimal pl-4 space-y-0.5 text-slate-600">
+                            <li>
+                              Open Cloudflare in a new tab:{" "}
+                              <a
+                                href="https://dash.cloudflare.com/profile/api-tokens"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-primary-600 hover:underline font-bold inline-flex items-center gap-0.5"
+                              >
+                                My Profile → API Tokens <ExternalLink className="w-2.5 h-2.5" />
+                              </a>
+                            </li>
+                            <li>Click <strong>&quot;Create Token&quot;</strong> and select the <strong>&quot;Edit zone DNS&quot;</strong> template.</li>
+                            <li>Under Zone Resources, select <strong>{cleanSelectedDomainName}</strong>, click Continue to summary, and copy your token here.</li>
+                          </ol>
+                        </div>
+
+                        <div className="flex justify-end pt-1">
+                          <button
+                            onClick={handleCloudflareSync}
+                            disabled={cfSyncing || !cfToken.trim()}
+                            className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 px-5 py-2.5 text-xs font-bold text-white shadow-sm disabled:opacity-50 transition-all cursor-pointer"
+                          >
+                            {cfSyncing ? (
+                              <>
+                                <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Auto-Configuring Records...
+                              </>
+                            ) : (
+                              <>
+                                <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-400" /> Auto-Configure & Verify Now
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* DIVIDER */}
+                      <div className="relative flex py-1 items-center">
+                        <div className="flex-grow border-t border-slate-200"></div>
+                        <span className="flex-shrink mx-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                          Alternative: Cloudflare OAuth
+                        </span>
+                        <div className="flex-grow border-t border-slate-200"></div>
+                      </div>
+
+                      {/* SECONDARY: CLOUDFLARE OAUTH */}
+                      <div className="p-4 rounded-xl border border-slate-200 bg-white space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2.5">
+                            <div className="h-8 w-8 rounded-lg bg-[#F6821F] flex items-center justify-center text-white shadow-sm font-black text-sm">
+                              ☁️
+                            </div>
+                            <div>
+                              <h4 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                                <span>Sign in with Cloudflare OAuth</span>
+                                <span className={`rounded px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wider ${oauthConfigured ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>
+                                  {oauthConfigured ? "Configured" : "Requires App Setup"}
+                                </span>
+                              </h4>
+                              <p className="text-[11px] text-slate-500">
+                                Authorize Sendport directly via your Cloudflare account consent screen.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={handleCloudflareOAuthClick}
+                          className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-all cursor-pointer"
+                        >
+                          <Zap className="w-3.5 h-3.5 text-[#F6821F] fill-[#F6821F]" />
+                          <span>{oauthConfigured ? "Authorize with Cloudflare" : "Configure Cloudflare OAuth Client"}</span>
+                          <ArrowRight className="w-3.5 h-3.5 ml-1 text-slate-400" />
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ) : (
+                /* TAB CONTENT: MANUAL DNS */
+                <div className="space-y-3 font-mono text-xs">
+                  {(() => {
+                    const dkimVal = selectedDomain.dkimPublicKey
+                      ? (selectedDomain.dkimPublicKey.startsWith("v=DKIM1") ? selectedDomain.dkimPublicKey : `v=DKIM1; k=rsa; p=${selectedDomain.dkimPublicKey}`)
+                      : "v=DKIM1; k=rsa; p=...";
+                    const spfVal = selectedDomain.spfRecord || "v=spf1 include:mail.getsendport.com ~all";
+                    const dmarcVal = selectedDomain.dmarcRecord || "v=DMARC1; p=none; rua=mailto:dmarc@getsendport.com";
+
+                    return (
+                      <>
+                        {/* DKIM */}
+                        <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 space-y-1.5">
+                          <div className="flex justify-between items-center text-slate-500 font-sans text-xs font-semibold">
+                            <span>1. DKIM Public Key (TXT Record)</span>
+                            <button
+                              onClick={() => handleCopy(dkimVal, "dkim")}
+                              className="text-primary-600 hover:underline flex items-center gap-1 font-sans text-xs font-bold"
+                            >
+                              {copiedKey === "dkim" ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                              Copy Value
+                            </button>
+                          </div>
+                          <div className="text-slate-700"><strong>Name:</strong> sendport._domainkey.{cleanSelectedDomainName}</div>
+                          <div className="text-slate-700 break-all select-all font-mono text-[11px] bg-white p-2 rounded border border-slate-200 max-h-24 overflow-y-auto">
+                            {dkimVal}
+                          </div>
+                        </div>
+
+                        {/* SPF */}
+                        <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 space-y-1.5">
+                          <div className="flex justify-between items-center text-slate-500 font-sans text-xs font-semibold">
+                            <span>2. SPF Authorization (TXT Record)</span>
+                            <button
+                              onClick={() => handleCopy(spfVal, "spf")}
+                              className="text-primary-600 hover:underline flex items-center gap-1 font-sans text-xs font-bold"
+                            >
+                              {copiedKey === "spf" ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                              Copy Value
+                            </button>
+                          </div>
+                          <div className="text-slate-700"><strong>Name:</strong> @ (or {cleanSelectedDomainName})</div>
+                          <div className="text-slate-700 break-all select-all font-mono text-[11px] bg-white p-2 rounded border border-slate-200">
+                            {spfVal}
+                          </div>
+                        </div>
+
+                        {/* DMARC */}
+                        <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 space-y-1.5">
+                          <div className="flex justify-between items-center text-slate-500 font-sans text-xs font-semibold">
+                            <span>3. DMARC Anti-Spoofing Policy (TXT Record)</span>
+                            <button
+                              onClick={() => handleCopy(dmarcVal, "dmarc")}
+                              className="text-primary-600 hover:underline flex items-center gap-1 font-sans text-xs font-bold"
+                            >
+                              {copiedKey === "dmarc" ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                              Copy Value
+                            </button>
+                          </div>
+                          <div className="text-slate-700"><strong>Name:</strong> _dmarc.{cleanSelectedDomainName}</div>
+                          <div className="text-slate-700 break-all select-all font-mono text-[11px] bg-white p-2 rounded border border-slate-200">
+                            {dmarcVal}
+                          </div>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+              )}
+
+              <div className="flex justify-between items-center pt-2">
+                <span className="text-xs text-slate-400">DNS changes propagate worldwide in 5-15 mins.</span>
+                <div className="flex items-center gap-2">
+                  {selectedDomain.status !== "VERIFIED" && modalTab === "manual" && (
+                    <button
+                      onClick={() => handleVerifyDomain(selectedDomain)}
+                      disabled={verifyingId === selectedDomain.id}
+                      className="rounded-xl border border-emerald-600 bg-emerald-50 px-4 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-100"
+                    >
+                      Check & Verify DNS
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      setSelectedDomain(null);
+                      setCfSuccessMsg(null);
+                    }}
+                    className="rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 cursor-pointer"
+                  >
+                    Done
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* CLOUDFLARE OAUTH APP SETUP HELP MODAL */}
       {showOauthSetupModal && (
@@ -751,7 +757,7 @@ export default function DomainsPage() {
               </h3>
               <button
                 onClick={() => setShowOauthSetupModal(false)}
-                className="text-slate-400 hover:text-slate-600 text-xs font-bold"
+                className="text-slate-400 hover:text-slate-600 text-xs font-bold cursor-pointer"
               >
                 ✕ Close
               </button>
@@ -759,7 +765,7 @@ export default function DomainsPage() {
 
             <div className="space-y-3 text-xs text-slate-600 leading-relaxed">
               <p>
-                Direct <strong>&quot;Log in with Cloudflare&quot;</strong> button ko apne platform ke tamam users ke liye activate karne ke liye, Render dashboard mein yeh 2 environment variables add karein:
+                To enable the direct <strong>&quot;Sign in with Cloudflare&quot;</strong> button for all users on your platform, add these two environment variables to your deployment settings:
               </p>
 
               <div className="p-3 rounded-xl bg-slate-900 text-white font-mono text-[11px] space-y-1">
@@ -768,26 +774,26 @@ export default function DomainsPage() {
               </div>
 
               <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 space-y-1">
-                <p className="font-bold">Cloudflare par OAuth Client kaise banayein?</p>
+                <p className="font-bold">How to create a Cloudflare OAuth Client:</p>
                 <ol className="list-decimal pl-4 space-y-0.5 text-[11px]">
-                  <li>Cloudflare Dashboard → <strong>Manage Account</strong> → <strong>OAuth clients</strong> par jayein.</li>
-                  <li><strong>Create client</strong> dabayein.</li>
-                  <li>Redirect URI mein daalein: <code className="bg-amber-100 px-1 rounded">https://getsendport.com/api/auth/cloudflare/callback</code></li>
-                  <li>Scopes mein <code className="bg-amber-100 px-1 rounded">zone:read</code> aur <code className="bg-amber-100 px-1 rounded">dns:edit</code> add karein.</li>
+                  <li>Go to Cloudflare Dashboard → <strong>Manage Account</strong> → <strong>OAuth clients</strong>.</li>
+                  <li>Click <strong>Create client</strong>.</li>
+                  <li>Set the Redirect URI to: <code className="bg-amber-100 px-1 rounded">https://getsendport.com/api/auth/cloudflare/callback</code></li>
+                  <li>Select the required scopes: <code className="bg-amber-100 px-1 rounded">#dns_records:edit</code> and <code className="bg-amber-100 px-1 rounded">#zone:read</code>.</li>
                 </ol>
               </div>
 
               <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 flex items-center justify-between">
                 <div>
-                  <p className="font-bold text-[11px]">Right now bina kisi setup ke verify karna chahte hain?</p>
-                  <p className="text-[11px] text-emerald-800">Neeche mojood API Token paste kar ke foran verify karein!</p>
+                  <p className="font-bold text-[11px]">Want instant verification right now without any server setup?</p>
+                  <p className="text-[11px] text-emerald-800">Paste your Cloudflare API Token to configure all records in 10 seconds!</p>
                 </div>
                 <button
                   onClick={() => {
                     setShowOauthSetupModal(false);
                     tokenInputRef.current?.focus();
                   }}
-                  className="px-3 py-1.5 rounded-lg bg-emerald-700 text-white font-bold text-[11px] hover:bg-emerald-800 shrink-0 ml-2"
+                  className="px-3 py-1.5 rounded-lg bg-emerald-700 text-white font-bold text-[11px] hover:bg-emerald-800 shrink-0 ml-2 cursor-pointer"
                 >
                   Use Token
                 </button>
@@ -797,7 +803,7 @@ export default function DomainsPage() {
             <div className="flex justify-end pt-1">
               <button
                 onClick={() => setShowOauthSetupModal(false)}
-                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg"
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer"
               >
                 Dismiss
               </button>

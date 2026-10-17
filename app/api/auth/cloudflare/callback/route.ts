@@ -7,8 +7,26 @@ import { autoConfigureCloudflareDns } from "@/lib/dns/cloudflare";
  * Handles OAuth callback from Cloudflare, exchanges code for access token,
  * automatically provisions DKIM/SPF/DMARC records, and verifies domain.
  */
+function getPublicAppUrl(req: NextRequest): string {
+  if (process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes("0.0.0.0")) {
+    return process.env.NEXT_PUBLIC_APP_URL.replace(/\/+$/, "");
+  }
+  const xForwardedHost = req.headers.get("x-forwarded-host");
+  const host = xForwardedHost || req.headers.get("host");
+  if (host && !host.includes("0.0.0.0") && !host.includes("10000")) {
+    const proto = req.headers.get("x-forwarded-proto") || "https";
+    return `${proto}://${host}`;
+  }
+  return "https://getsendport.com";
+}
+
+/**
+ * GET /api/auth/cloudflare/callback
+ * Handles OAuth callback from Cloudflare, exchanges code for access token,
+ * automatically provisions DKIM/SPF/DMARC records, and verifies domain.
+ */
 export async function GET(req: NextRequest) {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || (req.headers.get("host") ? `https://${req.headers.get("host")}` : "https://getsendport.com");
+  const appUrl = getPublicAppUrl(req);
   const redirectUri = `${appUrl}/api/auth/cloudflare/callback`;
 
   try {
@@ -20,13 +38,13 @@ export async function GET(req: NextRequest) {
 
     if (oauthError) {
       return NextResponse.redirect(
-        new URL(`/dashboard/domains?cf_error=${encodeURIComponent(errorDescription || oauthError)}`, req.url)
+        `${appUrl}/dashboard/domains?cf_error=${encodeURIComponent(errorDescription || oauthError)}`
       );
     }
 
     if (!code || !state) {
       return NextResponse.redirect(
-        new URL("/dashboard/domains?cf_error=Missing+authorization+code+or+state", req.url)
+        `${appUrl}/dashboard/domains?cf_error=Missing+authorization+code+or+state`
       );
     }
 
@@ -37,16 +55,16 @@ export async function GET(req: NextRequest) {
       stateData = JSON.parse(stateJson);
     } catch {
       return NextResponse.redirect(
-        new URL("/dashboard/domains?cf_error=Invalid+OAuth+state+parameter", req.url)
+        `${appUrl}/dashboard/domains?cf_error=Invalid+OAuth+state+parameter`
       );
     }
 
-    const clientId = process.env.CLOUDFLARE_CLIENT_ID || "86333fde52ca339731b8f6593edc3e40";
-    const clientSecret = process.env.CLOUDFLARE_CLIENT_SECRET || "cfoc_rXUaIBdIyrg3xd74QSiqKQIcBaG2kqZZBkvtBVzi20336754";
+    const clientId = process.env.CLOUDFLARE_CLIENT_ID;
+    const clientSecret = process.env.CLOUDFLARE_CLIENT_SECRET;
 
-    if (!clientId || !clientSecret) {
+    if (!clientId || !clientSecret || clientId.startsWith("86333fde52ca339731b8f6593edc3e40")) {
       return NextResponse.redirect(
-        new URL("/dashboard/domains?cf_error=Cloudflare+OAuth+credentials+not+configured+on+server", req.url)
+        `${appUrl}/dashboard/domains?cf_error=Cloudflare+OAuth+credentials+not+configured+on+server`
       );
     }
 
@@ -73,7 +91,7 @@ export async function GET(req: NextRequest) {
       const errText = await tokenRes.text();
       console.error("Cloudflare OAuth token error:", errText);
       return NextResponse.redirect(
-        new URL(`/dashboard/domains?cf_error=Token+exchange+failed:+${encodeURIComponent(errText.substring(0, 80))}`, req.url)
+        `${appUrl}/dashboard/domains?cf_error=Token+exchange+failed:+${encodeURIComponent(errText.substring(0, 80))}`
       );
     }
 
@@ -82,7 +100,7 @@ export async function GET(req: NextRequest) {
 
     if (!accessToken) {
       return NextResponse.redirect(
-        new URL("/dashboard/domains?cf_error=No+access+token+returned+from+Cloudflare", req.url)
+        `${appUrl}/dashboard/domains?cf_error=No+access+token+returned+from+Cloudflare`
       );
     }
 
@@ -121,21 +139,21 @@ export async function GET(req: NextRequest) {
           });
 
           return NextResponse.redirect(
-            new URL(`/dashboard/domains?cf_verified=true&domain=${encodeURIComponent(domain.name)}`, req.url)
+            `${appUrl}/dashboard/domains?cf_verified=true&domain=${encodeURIComponent(domain.name)}`
           );
         } else {
           return NextResponse.redirect(
-            new URL(`/dashboard/domains?cf_error=${encodeURIComponent(syncResult.error || "DNS Provisioning failed")}`, req.url)
+            `${appUrl}/dashboard/domains?cf_error=${encodeURIComponent(syncResult.error || "DNS Provisioning failed")}`
           );
         }
       }
     }
 
-    return NextResponse.redirect(new URL("/dashboard/domains?cf_connected=true", req.url));
+    return NextResponse.redirect(`${appUrl}/dashboard/domains?cf_connected=true`);
   } catch (error: any) {
     console.error("Cloudflare callback error:", error);
     return NextResponse.redirect(
-      new URL(`/dashboard/domains?cf_error=${encodeURIComponent(error.message || "OAuth callback error")}`, req.url)
+      `${appUrl}/dashboard/domains?cf_error=${encodeURIComponent(error.message || "OAuth callback error")}`
     );
   }
 }
