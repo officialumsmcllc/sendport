@@ -470,7 +470,7 @@ export default function DomainsPage() {
 
       {/* DNS RECORDS & CLOUDFLARE 1-CLICK MODAL */}
       {selectedDomain && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-slate-200 pb-3">
               <div>
@@ -714,7 +714,7 @@ export default function DomainsPage() {
 
       {/* CLOUDFLARE OAUTH APP SETUP HELP MODAL */}
       {showOauthSetupModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
@@ -780,8 +780,8 @@ export default function DomainsPage() {
 
       {/* ADD DOMAIN MODAL */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl space-y-4 border border-slate-200">
             <h3 className="text-lg font-bold text-slate-900">Add Sending Domain</h3>
             <p className="text-xs text-slate-500">
               Enter your domain to generate 2048-bit RSA DKIM keys or auto-connect with Cloudflare.
@@ -800,6 +800,7 @@ export default function DomainsPage() {
                     handleAddDomain();
                   }
                 }}
+                style={{ color: "#0f172a", backgroundColor: "#ffffff" }}
                 className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 font-bold focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 focus:outline-none shadow-sm"
               />
             </div>
@@ -833,7 +834,7 @@ export default function DomainsPage() {
 
       {/* UPGRADE PLAN MODAL */}
       {showUpgradeModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl space-y-4 border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-50 text-primary-700 text-xs font-bold border border-primary-100">

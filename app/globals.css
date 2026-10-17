@@ -52,6 +52,22 @@ input::selection, textarea::selection {
   caret-color: #60a5fa;
 }
 
+/* Explicit override: Inputs, textareas, and selects inside white cards/modals must ALWAYS be dark */
+.bg-white input,
+[class*="bg-white"] input,
+.bg-slate-50 input,
+.bg-white textarea,
+[class*="bg-white"] textarea,
+.bg-white select,
+[class*="bg-white"] select,
+input[class*="text-slate-900"],
+input[class*="text-black"],
+input.force-dark-text {
+  color: #0f172a !important;
+  caret-color: #0f172a !important;
+  background-color: #ffffff;
+}
+
 /* Style native select options on Chromium/Windows */
 select option {
   background-color: #0f172a;
