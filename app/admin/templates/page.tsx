@@ -357,7 +357,7 @@ export default function AdminTemplatesPage() {
                   <span className="truncate" title={template.workspace?.user?.email}>
                     {template.workspace?.user?.email || "Unknown user"}
                   </span>
-                  <span className="shrink-0 text-slate-500 font-mono text-[10px]">
+                  <span className="shrink-0 text-slate-500 font-mono text-[10px]" suppressHydrationWarning>
                     {new Date(template.createdAt).toLocaleDateString()}
                   </span>
                 </div>
@@ -443,7 +443,7 @@ export default function AdminTemplatesPage() {
                         <span className="text-slate-500 text-[11px]">—</span>
                       )}
                     </td>
-                    <td className="p-4 font-mono text-[11px] text-slate-400">
+                    <td className="p-4 font-mono text-[11px] text-slate-400" suppressHydrationWarning>
                       {new Date(template.createdAt).toLocaleDateString()}
                     </td>
                     <td className="p-4 text-right">

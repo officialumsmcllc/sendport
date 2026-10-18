@@ -214,7 +214,7 @@ export default function AdminSubscriptionsPage() {
                         ● {sub.status}
                       </span>
                     </td>
-                    <td className="p-4 text-right text-[11px] font-mono text-slate-400">
+                    <td className="p-4 text-right text-[11px] font-mono text-slate-400" suppressHydrationWarning>
                       <p>{new Date(sub.startedAt).toLocaleDateString()}</p>
                       {sub.expiresAt && (
                         <p className="text-[10px] text-amber-400 mt-0.5">

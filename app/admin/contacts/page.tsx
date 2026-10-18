@@ -342,7 +342,7 @@ export default function AdminContactsPage() {
                         </span>
                       )}
                     </td>
-                    <td className="py-3.5 px-4 font-mono text-slate-400 text-[11px]">
+                    <td className="py-3.5 px-4 font-mono text-slate-400 text-[11px]" suppressHydrationWarning>
                       {new Date(c.createdAt).toLocaleDateString(undefined, {
                         month: "short",
                         day: "numeric",

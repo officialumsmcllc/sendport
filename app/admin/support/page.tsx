@@ -385,7 +385,7 @@ export default function AdminSupportPage() {
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-sm font-black text-amber-400">#{selectedTicket.ticketNumber}</span>
                     <span className="text-xs text-slate-600">•</span>
-                    <span className="text-xs text-slate-400 font-mono">
+                    <span className="text-xs text-slate-400 font-mono" suppressHydrationWarning>
                       Logged on {new Date(selectedTicket.createdAt).toLocaleString()}
                     </span>
                   </div>

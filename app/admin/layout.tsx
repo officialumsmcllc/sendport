@@ -321,21 +321,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
 
           {/* Superadmin Context Card */}
-          <div className="rounded-xl border border-white/5 bg-[#0e1629] p-2.5 flex items-center justify-between shadow-inner">
+          <div className="rounded-xl border border-white/5 bg-[#0e1629] p-2.5 flex items-center justify-between shadow-inner" suppressHydrationWarning>
             <div className="min-w-0 flex items-center gap-2.5">
-              <div className="h-8 w-8 rounded-lg bg-gradient-to-tr from-amber-500 to-amber-300 text-slate-950 font-black text-xs flex items-center justify-center shrink-0 shadow-sm">
+              <div className="h-8 w-8 rounded-lg bg-gradient-to-tr from-amber-500 to-amber-300 text-slate-950 font-black text-xs flex items-center justify-center shrink-0 shadow-sm" suppressHydrationWarning>
                 {adminUser?.email?.[0]?.toUpperCase() || "A"}
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-bold text-white truncate">
+                  <span className="text-xs font-bold text-white truncate" suppressHydrationWarning>
                     {adminUser?.name || "Root Admin"}
                   </span>
                   <span className="text-[9px] px-1 rounded bg-amber-500/20 text-amber-300 font-mono font-bold">
                     SU
                   </span>
                 </div>
-                <p className="text-[10px] font-mono text-slate-400 truncate">
+                <p className="text-[10px] font-mono text-slate-400 truncate" suppressHydrationWarning>
                   {adminUser?.email || "admin@getsendport.com"}
                 </p>
               </div>
