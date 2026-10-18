@@ -35,6 +35,10 @@ app = FastAPI(
 
 MTA_SECRET_KEY = os.getenv("MTA_SECRET_KEY", "sendport_mta_master_secret_key_2026")
 DEFAULT_HELO_HOST = os.getenv("MTA_HELO_HOST", "mail.getsendport.com")
+RELAY_HOST = os.getenv("RELAY_HOST", "").strip() or None
+RELAY_PORT = int(os.getenv("RELAY_PORT", "2525"))
+RELAY_USER = os.getenv("RELAY_USER", "").strip() or None
+RELAY_PASS = os.getenv("RELAY_PASS", "").strip() or None
 
 class AttachmentItem(BaseModel):
     filename: str
@@ -144,39 +148,62 @@ async def deliver_email_direct(payload: SendEmailPayload):
         except Exception as dkim_err:
             logger.error(f"DKIM signing warning for {sender_domain}: {dkim_err}")
 
-    # 5. Direct Socket Transmission to Recipient MX (Port 25 with opportunistic STARTTLS)
+    # 5. Socket Transmission: Either via Port 2525 Smart Relay (DO Unblocked) or Direct MX Port 25
     try:
-        smtp_client = aiosmtplib.SMTP(
-            hostname=mx_host,
-            port=25,
-            timeout=15,
-            start_tls=True,
-            validate_certs=False
-        )
-        await smtp_client.connect()
-        await smtp_client.helo(hostname=DEFAULT_HELO_HOST)
+        if RELAY_HOST:
+            logger.info(f"⚡ Smart Relay Transmission via [{RELAY_HOST}:{RELAY_PORT}] (Port 2525 Allowed by DigitalOcean)")
+            smtp_client = aiosmtplib.SMTP(
+                hostname=RELAY_HOST,
+                port=RELAY_PORT,
+                timeout=20,
+                start_tls=True,
+                validate_certs=False
+            )
+            await smtp_client.connect()
+            await smtp_client.helo(hostname=DEFAULT_HELO_HOST)
+            if RELAY_USER and RELAY_PASS:
+                await smtp_client.login(RELAY_USER, RELAY_PASS)
 
-        response = await smtp_client.sendmail(
-            sender=payload.from_address,
-            recipients=payload.to_addresses,
-            message=raw_email_bytes
-        )
-        await smtp_client.quit()
+            response = await smtp_client.sendmail(
+                sender=payload.from_address,
+                recipients=payload.to_addresses,
+                message=raw_email_bytes
+            )
+            await smtp_client.quit()
+            delivery_target = f"Relay:{RELAY_HOST}:{RELAY_PORT}"
+        else:
+            smtp_client = aiosmtplib.SMTP(
+                hostname=mx_host,
+                port=25,
+                timeout=15,
+                start_tls=True,
+                validate_certs=False
+            )
+            await smtp_client.connect()
+            await smtp_client.helo(hostname=DEFAULT_HELO_HOST)
+
+            response = await smtp_client.sendmail(
+                sender=payload.from_address,
+                recipients=payload.to_addresses,
+                message=raw_email_bytes
+            )
+            await smtp_client.quit()
+            delivery_target = f"MX:{mx_host}:25"
 
         latency_ms = round((time.time() - start_time) * 1000, 2)
-        logger.info(f"🏁 Direct MX Delivery SUCCESS to [{mx_host}] in {latency_ms}ms")
+        logger.info(f"🏁 Transmission SUCCESS to [{delivery_target}] in {latency_ms}ms")
 
         return {
             "status": "delivered",
-            "mx_host": mx_host,
+            "target": delivery_target,
             "latency_ms": latency_ms,
             "recipient_count": len(payload.to_addresses),
             "response": str(response)
         }
 
     except Exception as smtp_err:
-        logger.error(f"❌ Direct MX Transmission to [{mx_host}] failed: {smtp_err}")
-        raise HTTPException(status_code=502, detail=f"Direct MX Delivery failed to {mx_host}: {str(smtp_err)}")
+        logger.error(f"❌ Transmission failed: {smtp_err}")
+        raise HTTPException(status_code=502, detail=f"Transmission failed via {RELAY_HOST or mx_host}: {str(smtp_err)}")
 
 if __name__ == "__main__":
     import uvicorn
