@@ -6,6 +6,11 @@ import {
   Plus,
   RefreshCw,
   CheckCircle2,
+  Sparkles,
+  Zap,
+  Calendar,
+  Layers,
+  ArrowRight
 } from "lucide-react";
 
 export default function AdminSubscriptionsPage() {
@@ -20,7 +25,7 @@ export default function AdminSubscriptionsPage() {
   const [plan, setPlan] = useState("GROWTH");
   const [dailyLimit, setDailyLimit] = useState(5000);
   const [billingCycle, setBillingCycle] = useState("MONTHLY");
-  const [amount, setAmount] = useState("19");
+  const [amount, setAmount] = useState("20");
   const [expiryDays, setExpiryDays] = useState("30");
   const [saving, setSaving] = useState(false);
 
@@ -99,7 +104,14 @@ export default function AdminSubscriptionsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 uppercase tracking-wider">
+              Commercial Tier Provisioning
+            </span>
+            <span className="text-xs text-slate-500">•</span>
+            <span className="text-xs text-slate-400 font-mono">Manual Overrides & Recurring Quotas</span>
+          </div>
+          <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-2.5 mt-1.5">
             <CreditCard className="w-6 h-6 text-amber-400" />
             Manual Subscriptions & Plan Provisions
           </h1>
@@ -111,14 +123,14 @@ export default function AdminSubscriptionsPage() {
           <button
             onClick={fetchData}
             disabled={loading}
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-xs font-bold text-white hover:bg-slate-700 transition-all"
+            className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-[#0d1424] px-3.5 py-2 text-xs font-bold text-white hover:bg-white/5 transition-all shadow-sm"
           >
             <RefreshCw className={`w-3.5 h-3.5 text-amber-400 ${loading ? "animate-spin" : ""}`} />
             Refresh
           </button>
           <button
             onClick={() => setShowModal(true)}
-            className="inline-flex items-center gap-2 rounded-xl bg-amber-500 hover:bg-amber-400 px-3.5 py-2 text-xs font-black text-slate-950 transition-all shadow-lg shadow-amber-500/20"
+            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 px-4 py-2 text-xs font-black text-slate-950 transition-all shadow-md shadow-amber-500/20 active:scale-95"
           >
             <Plus className="w-4 h-4" />
             Manual Upgrade / Provision
@@ -127,15 +139,15 @@ export default function AdminSubscriptionsPage() {
       </div>
 
       {toastMsg && (
-        <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 font-bold flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4" />
+        <div className="p-3.5 rounded-xl bg-emerald-950/80 border border-emerald-500/30 text-xs text-emerald-300 font-bold flex items-center gap-2 animate-in fade-in">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
           {toastMsg}
         </div>
       )}
 
       {/* Subscriptions Table */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/60 shadow-2xl overflow-hidden">
-        <div className="p-4 border-b border-slate-800 bg-slate-950/60 flex items-center justify-between">
+      <div className="rounded-2xl border border-white/5 bg-[#0d1424] shadow-2xl overflow-hidden">
+        <div className="p-4 border-b border-white/5 bg-[#080d19] flex items-center justify-between">
           <h2 className="text-xs font-bold uppercase tracking-wider text-slate-300">
             Active Subscriptions ({loading ? "Loading..." : subscriptions.length})
           </h2>
@@ -145,7 +157,7 @@ export default function AdminSubscriptionsPage() {
         {loading ? (
           <div className="p-6 space-y-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-14 bg-slate-800/60 rounded-xl animate-pulse" />
+              <div key={i} className="h-14 bg-white/5 rounded-xl animate-pulse" />
             ))}
           </div>
         ) : subscriptions.length === 0 ? (
@@ -155,7 +167,7 @@ export default function AdminSubscriptionsPage() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="border-b border-slate-800 bg-slate-950 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              <thead className="border-b border-white/5 bg-[#080d19] text-[10px] font-bold uppercase tracking-wider text-slate-400">
                 <tr>
                   <th className="p-4">Customer Account</th>
                   <th className="p-4">Assigned Plan Tier</th>
@@ -165,21 +177,21 @@ export default function AdminSubscriptionsPage() {
                   <th className="p-4 text-right">Started / Expiry</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
+              <tbody className="divide-y divide-white/5 font-medium">
                 {subscriptions.map((sub) => (
-                  <tr key={sub.id} className="hover:bg-slate-800/30 transition-colors">
+                  <tr key={sub.id} className="hover:bg-white/[0.02] transition-colors">
                     <td className="p-4">
                       <p className="font-bold text-white">{sub.user?.email || "Unknown"}</p>
-                      <p className="text-[11px] text-slate-400">{sub.user?.name || "Customer"}</p>
+                      <p className="text-[11px] text-slate-400 mt-0.5">{sub.user?.name || "Customer"}</p>
                     </td>
                     <td className="p-4">
                       <span
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
                           sub.plan === "SCALE_PRO"
-                            ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                            ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
                             : sub.plan === "GROWTH"
-                            ? "bg-blue-500/10 text-blue-400 border-blue-500/20"
-                            : "bg-slate-800 text-slate-300 border-slate-700"
+                            ? "bg-sky-500/10 text-sky-400 border border-sky-500/20"
+                            : "bg-white/5 text-slate-300 border border-white/10"
                         }`}
                       >
                         {sub.plan}
@@ -193,10 +205,10 @@ export default function AdminSubscriptionsPage() {
                     </td>
                     <td className="p-4">
                       <span
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold ${
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
                           sub.status === "ACTIVE"
-                            ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                            : "bg-slate-800 text-slate-400 border border-slate-700"
+                            ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
+                            : "bg-white/5 text-slate-400 border border-white/10"
                         }`}
                       >
                         ● {sub.status}
@@ -205,7 +217,7 @@ export default function AdminSubscriptionsPage() {
                     <td className="p-4 text-right text-[11px] font-mono text-slate-400">
                       <p>{new Date(sub.startedAt).toLocaleDateString()}</p>
                       {sub.expiresAt && (
-                        <p className="text-[10px] text-amber-400">
+                        <p className="text-[10px] text-amber-400 mt-0.5">
                           Exp: {new Date(sub.expiresAt).toLocaleDateString()}
                         </p>
                       )}
@@ -220,16 +232,16 @@ export default function AdminSubscriptionsPage() {
 
       {/* Manual Provision Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-md animate-in fade-in">
+          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0d1424] p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-white/5">
               <h3 className="text-base font-bold text-white flex items-center gap-2">
                 <CreditCard className="w-4 h-4 text-amber-400" />
                 Manual Upgrade / Downgrade Provision
               </h3>
               <button
                 onClick={() => setShowModal(false)}
-                className="text-slate-400 hover:text-white text-xs font-bold"
+                className="text-slate-400 hover:text-white text-xs font-bold p-1 rounded-lg hover:bg-white/10 transition-colors"
               >
                 ✕
               </button>
@@ -237,12 +249,12 @@ export default function AdminSubscriptionsPage() {
 
             <form onSubmit={handleCreateSubscription} className="space-y-4 text-xs">
               <div>
-                <label className="block text-slate-400 font-bold mb-1">Select Customer Account</label>
+                <label className="block text-slate-300 font-bold mb-1">Select Customer Account</label>
                 <select
                   required
                   value={selectedUserId}
                   onChange={(e) => setSelectedUserId(e.target.value)}
-                  className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-white font-bold focus:border-amber-500 focus:outline-none"
+                  className="w-full rounded-xl border border-white/10 bg-[#080d19] px-3.5 py-2 text-white font-bold focus:border-amber-400 focus:outline-none transition-colors"
                 >
                   {users.map((u) => (
                     <option key={u.id} value={u.id}>
@@ -253,49 +265,61 @@ export default function AdminSubscriptionsPage() {
               </div>
 
               <div>
-                <label className="block text-slate-400 font-bold mb-1">Target Plan Tier</label>
-                <select
-                  value={plan}
-                  onChange={(e) => handlePlanChange(e.target.value)}
-                  className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-white font-bold focus:border-amber-500 focus:outline-none"
-                >
-                  <option value="STARTER">STARTER (Free - 100 emails/day)</option>
-                  <option value="GROWTH">GROWTH ($20/mo - 3,000 emails/day)</option>
-                  <option value="SCALE_PRO">SCALE PRO ($79/mo - 25,000 emails/day)</option>
-                </select>
+                <label className="block text-slate-300 font-bold mb-1">Target Plan Tier</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { id: "STARTER", name: "Starter", sub: "100/day" },
+                    { id: "GROWTH", name: "Growth", sub: "3K/day ($20)" },
+                    { id: "SCALE_PRO", name: "Scale Pro", sub: "25K/day ($79)" },
+                  ].map((tier) => (
+                    <button
+                      key={tier.id}
+                      type="button"
+                      onClick={() => handlePlanChange(tier.id)}
+                      className={`p-2.5 rounded-xl border text-center transition-all ${
+                        plan === tier.id
+                          ? "border-amber-500 bg-amber-500/10 text-amber-400 shadow-sm"
+                          : "border-white/5 bg-[#080d19] text-slate-400 hover:text-white"
+                      }`}
+                    >
+                      <div className="font-bold text-xs">{tier.name}</div>
+                      <div className="text-[9px] text-slate-500 mt-0.5">{tier.sub}</div>
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-400 font-bold mb-1">Daily Sending Quota</label>
+                  <label className="block text-slate-300 font-bold mb-1">Daily Sending Quota</label>
                   <input
                     type="number"
                     min="100"
                     step="100"
                     value={dailyLimit}
                     onChange={(e) => setDailyLimit(Number(e.target.value))}
-                    className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-white font-mono font-bold focus:border-amber-500 focus:outline-none"
+                    className="w-full rounded-xl border border-white/10 bg-[#080d19] px-3 py-2 text-white font-mono font-bold focus:border-amber-400 focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-400 font-bold mb-1">Validity Period (Days)</label>
+                  <label className="block text-slate-300 font-bold mb-1">Validity (Days)</label>
                   <input
                     type="number"
                     min="1"
                     value={expiryDays}
                     onChange={(e) => setExpiryDays(e.target.value)}
-                    className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-white font-mono focus:border-amber-500 focus:outline-none"
+                    className="w-full rounded-xl border border-white/10 bg-[#080d19] px-3 py-2 text-white font-mono focus:border-amber-400 focus:outline-none"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-400 font-bold mb-1">Billing Cycle</label>
+                  <label className="block text-slate-300 font-bold mb-1">Billing Cycle</label>
                   <select
                     value={billingCycle}
                     onChange={(e) => setBillingCycle(e.target.value)}
-                    className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-white focus:border-amber-500 focus:outline-none"
+                    className="w-full rounded-xl border border-white/10 bg-[#080d19] px-3 py-2 text-white focus:border-amber-400 focus:outline-none"
                   >
                     <option value="MONTHLY">Monthly</option>
                     <option value="YEARLY">Yearly</option>
@@ -303,12 +327,12 @@ export default function AdminSubscriptionsPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-slate-400 font-bold mb-1">Recorded Amount ($)</label>
+                  <label className="block text-slate-300 font-bold mb-1">Amount ($ USD)</label>
                   <input
                     type="number"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-white font-mono focus:border-amber-500 focus:outline-none"
+                    className="w-full rounded-xl border border-white/10 bg-[#080d19] px-3 py-2 text-white font-mono focus:border-amber-400 focus:outline-none"
                   />
                 </div>
               </div>
@@ -317,14 +341,14 @@ export default function AdminSubscriptionsPage() {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="w-1/2 py-2.5 rounded-xl border border-slate-700 bg-slate-800 text-white font-bold hover:bg-slate-700 transition-colors"
+                  className="w-1/2 py-2.5 rounded-xl border border-white/10 bg-white/5 text-white font-bold hover:bg-white/10 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="w-1/2 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black transition-colors shadow-lg shadow-amber-500/20"
+                  className="w-1/2 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black transition-all shadow-md shadow-amber-500/20 active:scale-95 disabled:opacity-50"
                 >
                   {saving ? "Provisioning..." : "Apply Plan Upgrade"}
                 </button>

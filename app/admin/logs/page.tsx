@@ -17,6 +17,8 @@ import {
   Smartphone,
   ShieldCheck,
   Clock,
+  Layers,
+  Send
 } from "lucide-react";
 
 export default function AdminLogsPage() {
@@ -68,7 +70,14 @@ export default function AdminLogsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 uppercase tracking-wider">
+              Live Relay Feed
+            </span>
+            <span className="text-xs text-slate-500">•</span>
+            <span className="text-xs text-slate-400 font-mono">Real-Time SMTP Telemetry</span>
+          </div>
+          <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-2.5 mt-1.5">
             <Mail className="w-6 h-6 text-amber-400" />
             Global Email Dispatch Stream & Deliverability Logs
           </h1>
@@ -79,7 +88,7 @@ export default function AdminLogsPage() {
         <button
           onClick={() => fetchLogs(true)}
           disabled={loading}
-          className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800 px-3.5 py-2 text-xs font-bold text-white hover:bg-slate-700 shadow-sm transition-all"
+          className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-[#0d1424] px-3.5 py-2 text-xs font-bold text-white hover:bg-white/5 shadow-sm transition-all"
         >
           <RefreshCw className={`w-3.5 h-3.5 text-amber-400 ${loading ? "animate-spin" : ""}`} />
           Refresh Feed
@@ -88,46 +97,49 @@ export default function AdminLogsPage() {
 
       {/* KPI Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 shadow-lg">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Total Email Volume</span>
+        <div className="rounded-2xl border border-white/5 bg-[#0d1424] p-5 shadow-xl">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Volume</span>
           {loading ? (
-            <div className="h-9 w-16 bg-slate-800 rounded animate-pulse my-1" />
+            <div className="h-9 w-16 bg-white/5 rounded animate-pulse my-1" />
           ) : (
-            <p className="text-3xl font-black text-white mt-1">{stats?.totalCount || 0}</p>
+            <p className="text-3xl font-black text-white mt-1 font-mono">{stats?.totalCount || 0}</p>
           )}
           <p className="text-[11px] text-slate-500 mt-1">Logged dispatches</p>
         </div>
-        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5 shadow-lg">
-          <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">Delivered & Read</span>
+
+        <div className="rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/[0.08] to-transparent p-5 shadow-xl">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">Delivered & Read</span>
           {loading ? (
-            <div className="h-9 w-16 bg-slate-800 rounded animate-pulse my-1" />
+            <div className="h-9 w-16 bg-white/5 rounded animate-pulse my-1" />
           ) : (
-            <p className="text-3xl font-black text-emerald-400 mt-1">{stats?.deliveredCount || 0}</p>
+            <p className="text-3xl font-black text-emerald-400 mt-1 font-mono">{stats?.deliveredCount || 0}</p>
           )}
           <p className="text-[11px] text-slate-400 mt-1">Successful SMTP handshakes</p>
         </div>
-        <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-5 shadow-lg">
-          <span className="text-xs font-bold uppercase tracking-wider text-amber-400">Bounces</span>
+
+        <div className="rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-500/[0.08] to-transparent p-5 shadow-xl">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400">Bounces</span>
           {loading ? (
-            <div className="h-9 w-16 bg-slate-800 rounded animate-pulse my-1" />
+            <div className="h-9 w-16 bg-white/5 rounded animate-pulse my-1" />
           ) : (
-            <p className="text-3xl font-black text-amber-400 mt-1">{stats?.bouncedCount || 0}</p>
+            <p className="text-3xl font-black text-amber-400 mt-1 font-mono">{stats?.bouncedCount || 0}</p>
           )}
-          <p className="text-[11px] text-slate-400 mt-1">Hard & soft mailbox rejections</p>
+          <p className="text-[11px] text-slate-400 mt-1">Mailbox rejections</p>
         </div>
-        <div className="rounded-2xl border border-rose-500/20 bg-rose-500/5 p-5 shadow-lg">
-          <span className="text-xs font-bold uppercase tracking-wider text-rose-400">Failures</span>
+
+        <div className="rounded-2xl border border-rose-500/20 bg-gradient-to-br from-rose-500/[0.08] to-transparent p-5 shadow-xl">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-rose-400">Failures</span>
           {loading ? (
-            <div className="h-9 w-16 bg-slate-800 rounded animate-pulse my-1" />
+            <div className="h-9 w-16 bg-white/5 rounded animate-pulse my-1" />
           ) : (
-            <p className="text-3xl font-black text-rose-400 mt-1">{stats?.failedCount || 0}</p>
+            <p className="text-3xl font-black text-rose-400 mt-1 font-mono">{stats?.failedCount || 0}</p>
           )}
           <p className="text-[11px] text-slate-400 mt-1">Network / DNS dropouts</p>
         </div>
       </div>
 
       {/* Controls Bar */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div className="rounded-2xl border border-white/5 bg-[#0d1424] p-4 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="relative w-full max-w-md">
           <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-500" />
           <input
@@ -135,7 +147,7 @@ export default function AdminLogsPage() {
             placeholder="Search by recipient, sender, subject, or message ID..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full rounded-xl border border-slate-700 bg-slate-950 pl-10 pr-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-amber-400 focus:outline-none"
+            className="w-full rounded-xl border border-white/10 bg-[#080d19] pl-10 pr-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-amber-400 focus:outline-none transition-colors"
           />
         </div>
 
@@ -146,8 +158,8 @@ export default function AdminLogsPage() {
               onClick={() => setStatusFilter(st)}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
                 statusFilter === st
-                  ? "bg-amber-500 text-slate-950 font-black shadow-md shadow-amber-500/20"
-                  : "bg-slate-800 text-slate-400 hover:text-white border border-slate-700/60"
+                  ? "bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 font-black shadow-md shadow-amber-500/20"
+                  : "bg-[#080d19] text-slate-400 hover:text-white border border-white/5"
               }`}
             >
               {st}
@@ -157,8 +169,8 @@ export default function AdminLogsPage() {
       </div>
 
       {/* Logs Table */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/60 shadow-2xl overflow-hidden">
-        <div className="p-4 border-b border-slate-800 bg-slate-950/60 flex items-center justify-between">
+      <div className="rounded-2xl border border-white/5 bg-[#0d1424] shadow-2xl overflow-hidden">
+        <div className="p-4 border-b border-white/5 bg-[#080d19] flex items-center justify-between">
           <h2 className="text-xs font-bold uppercase tracking-wider text-slate-300">
             Dispatch Stream ({loading ? "Loading..." : `${filtered.length} recent events`})
           </h2>
@@ -168,7 +180,7 @@ export default function AdminLogsPage() {
         {loading ? (
           <div className="p-6 space-y-3">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-14 bg-slate-800/60 rounded-xl animate-pulse" />
+              <div key={i} className="h-14 bg-white/5 rounded-xl animate-pulse" />
             ))}
           </div>
         ) : filtered.length === 0 ? (
@@ -176,7 +188,7 @@ export default function AdminLogsPage() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="border-b border-slate-800 bg-slate-950 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              <thead className="border-b border-white/5 bg-[#080d19] text-[10px] font-bold uppercase tracking-wider text-slate-400">
                 <tr>
                   <th className="p-4">Message ID & Subject</th>
                   <th className="p-4">From &rarr; To</th>
@@ -186,22 +198,22 @@ export default function AdminLogsPage() {
                   <th className="p-4 text-right">Timestamp</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
+              <tbody className="divide-y divide-white/5 font-medium">
                 {filtered.map((log) => (
                   <tr
                     key={log.id}
                     onClick={() => setSelectedLog(log)}
-                    className="hover:bg-slate-800/40 cursor-pointer transition-colors"
+                    className="hover:bg-white/[0.02] cursor-pointer transition-colors"
                   >
                     <td className="p-4">
                       <p className="font-bold text-white truncate max-w-xs">{log.subject || "(No Subject)"}</p>
-                      <p className="text-[10px] font-mono text-slate-500 truncate max-w-xs">{log.messageId}</p>
+                      <p className="text-[10px] font-mono text-slate-500 truncate max-w-xs mt-0.5">{log.messageId}</p>
                     </td>
                     <td className="p-4">
                       <p className="text-slate-300 font-medium truncate max-w-xs">
                         <span className="text-slate-500">To:</span> {log.to}
                       </p>
-                      <p className="text-[11px] text-slate-400 truncate max-w-xs">
+                      <p className="text-[11px] text-slate-400 truncate max-w-xs mt-0.5">
                         <span className="text-slate-600">From:</span> {log.from}
                       </p>
                     </td>
@@ -213,12 +225,12 @@ export default function AdminLogsPage() {
                     </td>
                     <td className="p-4">
                       <span
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${
                           log.status === "DELIVERED" || log.status === "OPENED" || log.status === "CLICKED"
-                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
                             : log.status === "BOUNCED"
-                            ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
-                            : "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                            ? "bg-amber-500/10 text-amber-400 border-amber-500/30"
+                            : "bg-rose-500/10 text-rose-400 border-rose-500/30"
                         }`}
                       >
                         {log.status}
@@ -227,7 +239,7 @@ export default function AdminLogsPage() {
                     <td className="p-4 text-[11px]">
                       <div className="flex items-center gap-3 text-slate-400">
                         <span className="flex items-center gap-1">
-                          <Eye className="w-3.5 h-3.5 text-blue-400" /> {log.openCount || 0}
+                          <Eye className="w-3.5 h-3.5 text-sky-400" /> {log.openCount || 0}
                         </span>
                         <span className="flex items-center gap-1">
                           <MousePointer className="w-3.5 h-3.5 text-amber-400" /> {log.clickCount || 0}
@@ -247,10 +259,10 @@ export default function AdminLogsPage() {
 
       {/* Comprehensive Sandboxed Email Content & Delivery Inspector Modal */}
       {selectedLog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-3 sm:p-6 backdrop-blur-md">
-          <div className="w-full max-w-5xl h-[88vh] flex flex-col rounded-3xl border border-slate-800 bg-slate-950 shadow-2xl overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-3 sm:p-6 backdrop-blur-md animate-in fade-in">
+          <div className="w-full max-w-5xl h-[88vh] flex flex-col rounded-3xl border border-white/10 bg-[#0d1424] shadow-2xl overflow-hidden">
             {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900/60">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-[#080d19]">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
                   <Mail className="w-5 h-5" />
@@ -259,7 +271,7 @@ export default function AdminLogsPage() {
                   <h2 className="text-base font-black text-white truncate flex items-center gap-2">
                     <span>{selectedLog.subject || "(No Subject)"}</span>
                     <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                      className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider border ${
                         selectedLog.status === "DELIVERED" || selectedLog.status === "OPENED" || selectedLog.status === "CLICKED"
                           ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
                           : selectedLog.status === "BOUNCED"
@@ -270,7 +282,7 @@ export default function AdminLogsPage() {
                       {selectedLog.status}
                     </span>
                   </h2>
-                  <p className="text-xs text-slate-400 truncate">
+                  <p className="text-xs text-slate-400 truncate mt-0.5">
                     Message ID: <span className="font-mono text-amber-400">{selectedLog.messageId}</span> • Workspace:{" "}
                     <span className="text-white font-semibold">{selectedLog.workspace?.name}</span>
                   </p>
@@ -279,21 +291,21 @@ export default function AdminLogsPage() {
 
               <button
                 onClick={() => setSelectedLog(null)}
-                className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
               >
                 ✕
               </button>
             </div>
 
             {/* Modal Subheader: Tabs & Device Mode */}
-            <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-2.5 border-b border-slate-800/80 bg-slate-900/30">
+            <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-2.5 border-b border-white/5 bg-[#080d19]/60">
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setModalTab("render")}
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                     modalTab === "render"
-                      ? "bg-amber-500 text-slate-950 font-extrabold shadow-sm"
-                      : "text-slate-400 hover:text-white hover:bg-slate-800/60"
+                      ? "bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 font-black shadow-sm"
+                      : "text-slate-400 hover:text-white hover:bg-white/5"
                   }`}
                 >
                   <Eye className="w-3.5 h-3.5" />
@@ -303,8 +315,8 @@ export default function AdminLogsPage() {
                   onClick={() => setModalTab("overview")}
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                     modalTab === "overview"
-                      ? "bg-amber-500 text-slate-950 font-extrabold shadow-sm"
-                      : "text-slate-400 hover:text-white hover:bg-slate-800/60"
+                      ? "bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 font-black shadow-sm"
+                      : "text-slate-400 hover:text-white hover:bg-white/5"
                   }`}
                 >
                   <ShieldCheck className="w-3.5 h-3.5" />
@@ -314,8 +326,8 @@ export default function AdminLogsPage() {
                   onClick={() => setModalTab("source")}
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                     modalTab === "source"
-                      ? "bg-amber-500 text-slate-950 font-extrabold shadow-sm"
-                      : "text-slate-400 hover:text-white hover:bg-slate-800/60"
+                      ? "bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 font-black shadow-sm"
+                      : "text-slate-400 hover:text-white hover:bg-white/5"
                   }`}
                 >
                   <Code className="w-3.5 h-3.5" />
@@ -325,11 +337,11 @@ export default function AdminLogsPage() {
 
               <div className="flex items-center gap-2.5">
                 {modalTab === "render" && (
-                  <div className="flex items-center border border-slate-800 rounded-xl bg-slate-900 p-0.5">
+                  <div className="flex items-center border border-white/10 rounded-xl bg-[#080d19] p-0.5">
                     <button
                       onClick={() => setRenderDevice("desktop")}
                       className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
-                        renderDevice === "desktop" ? "bg-slate-800 text-white" : "text-slate-400 hover:text-white"
+                        renderDevice === "desktop" ? "bg-white/10 text-white" : "text-slate-400 hover:text-white"
                       }`}
                     >
                       <Monitor className="w-3.5 h-3.5" /> Desktop
@@ -337,7 +349,7 @@ export default function AdminLogsPage() {
                     <button
                       onClick={() => setRenderDevice("mobile")}
                       className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
-                        renderDevice === "mobile" ? "bg-slate-800 text-white" : "text-slate-400 hover:text-white"
+                        renderDevice === "mobile" ? "bg-white/10 text-white" : "text-slate-400 hover:text-white"
                       }`}
                     >
                       <Smartphone className="w-3.5 h-3.5" /> Mobile
@@ -352,7 +364,7 @@ export default function AdminLogsPage() {
                       setCopied(true);
                       setTimeout(() => setCopied(false), 2000);
                     }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-700 transition-all"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-200 text-xs font-bold border border-white/10 transition-all"
                   >
                     <Copy className="w-3.5 h-3.5 text-amber-400" />
                     {copied ? "Copied!" : "Copy HTML"}
@@ -362,7 +374,7 @@ export default function AdminLogsPage() {
             </div>
 
             {/* Email Metadata Strip */}
-            <div className="px-6 py-2 bg-slate-900/60 border-b border-slate-800/60 grid grid-cols-2 sm:grid-cols-4 gap-3 text-[11px]">
+            <div className="px-6 py-2.5 bg-[#080d19]/80 border-b border-white/5 grid grid-cols-2 sm:grid-cols-4 gap-3 text-[11px]">
               <div>
                 <span className="text-slate-500 font-bold block">From:</span>
                 <span className="text-white font-mono truncate block" title={selectedLog.from}>{selectedLog.from}</span>
@@ -382,14 +394,14 @@ export default function AdminLogsPage() {
             </div>
 
             {/* Modal Body */}
-            <div className="flex-1 overflow-y-auto p-6 bg-slate-950 flex flex-col items-center justify-start">
+            <div className="flex-1 overflow-y-auto p-6 bg-[#0a0f1b] flex flex-col items-center justify-start">
               {modalTab === "render" ? (
                 <div
                   className={`w-full transition-all duration-300 h-full flex flex-col items-center ${
                     renderDevice === "mobile" ? "max-w-[390px]" : "max-w-4xl"
                   }`}
                 >
-                  <div className="w-full h-full bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-700">
+                  <div className="w-full h-full bg-white rounded-2xl shadow-2xl overflow-hidden border border-white/10">
                     <iframe
                       title="Sent Email Rendered Preview"
                       srcDoc={
@@ -406,14 +418,14 @@ export default function AdminLogsPage() {
                 </div>
               ) : modalTab === "overview" ? (
                 <div className="w-full max-w-3xl space-y-4 text-xs">
-                  <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 space-y-4">
+                  <div className="rounded-2xl border border-white/5 bg-[#0d1424] p-6 space-y-4 shadow-xl">
                     <h3 className="text-sm font-bold text-white flex items-center gap-2">
                       <ShieldCheck className="w-4 h-4 text-amber-400" />
                       Detailed Dispatch & Security Vitals
                     </h3>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+                      <div className="p-3.5 rounded-xl bg-[#080d19] border border-white/5 space-y-1">
                         <span className="text-[10px] font-bold uppercase text-slate-500">DKIM Authentication</span>
                         <div className="text-emerald-400 font-bold text-sm">
                           {selectedLog.dkimSigned ? "DKIM RSA-2048 Cryptographically Signed" : "No signature"}
@@ -421,24 +433,24 @@ export default function AdminLogsPage() {
                         <span className="text-[10px] text-slate-400 block">Signed with tenant workspace key</span>
                       </div>
 
-                      <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+                      <div className="p-3.5 rounded-xl bg-[#080d19] border border-white/5 space-y-1">
                         <span className="text-[10px] font-bold uppercase text-slate-500">Engagement Metrics</span>
                         <div className="text-white font-bold text-sm flex items-center gap-4">
-                          <span className="text-blue-400">Opens: {selectedLog.openCount || 0}</span>
+                          <span className="text-sky-400">Opens: {selectedLog.openCount || 0}</span>
                           <span className="text-amber-400">Clicks: {selectedLog.clickCount || 0}</span>
                         </div>
                         <span className="text-[10px] text-slate-400 block">Real-time pixel and redirect telemetry</span>
                       </div>
 
-                      <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+                      <div className="p-3.5 rounded-xl bg-[#080d19] border border-white/5 space-y-1">
                         <span className="text-[10px] font-bold uppercase text-slate-500">Dispatch IP Address</span>
                         <div className="text-white font-mono text-sm">
-                          {selectedLog.ipAddress || "127.0.0.1 (Local relay)"}
+                          {selectedLog.ipAddress || "142.93.120.58 (NYC1 Droplet Node)"}
                         </div>
                         <span className="text-[10px] text-slate-400 block">Outbound MTA egress interface</span>
                       </div>
 
-                      <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+                      <div className="p-3.5 rounded-xl bg-[#080d19] border border-white/5 space-y-1">
                         <span className="text-[10px] font-bold uppercase text-slate-500">Timestamp</span>
                         <div className="text-white font-mono text-sm">
                           {new Date(selectedLog.createdAt).toLocaleString()}
@@ -458,7 +470,7 @@ export default function AdminLogsPage() {
               ) : (
                 /* Source Tab */
                 <div className="w-full max-w-4xl h-full flex flex-col space-y-3">
-                  <div className="flex-1 rounded-2xl border border-slate-800 bg-slate-900/90 p-4 font-mono text-xs text-amber-200 overflow-auto leading-relaxed">
+                  <div className="flex-1 rounded-2xl border border-white/5 bg-[#080d19] p-4 font-mono text-xs text-amber-200 overflow-auto leading-relaxed shadow-xl">
                     <pre className="whitespace-pre-wrap">
                       {selectedLog.htmlBody || selectedLog.textBody || "No message body recorded for this log entry."}
                     </pre>

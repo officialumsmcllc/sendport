@@ -25,6 +25,7 @@ import {
   ChevronRight,
   Code,
   Tag,
+  ShieldCheck
 } from "lucide-react";
 
 interface UserTemplate {
@@ -154,7 +155,6 @@ export default function AdminTemplatesPage() {
     }
   };
 
-  // Filter templates by risk in view if needed
   const displayedTemplates = templates.filter((t) => {
     if (filterRisk === "ALL") return true;
     return t.safety?.riskLevel === filterRisk;
@@ -167,10 +167,10 @@ export default function AdminTemplatesPage() {
       {/* Toast Notification */}
       {toast && (
         <div
-          className={`fixed bottom-6 right-6 z-50 flex items-center gap-2.5 rounded-xl px-4 py-3 text-xs font-bold shadow-2xl transition-all ${
+          className={`fixed bottom-6 right-6 z-50 flex items-center gap-2.5 rounded-xl px-4 py-3 text-xs font-bold shadow-2xl transition-all backdrop-blur-xl ${
             toast.type === "success"
-              ? "bg-emerald-950/90 text-emerald-300 border border-emerald-800"
-              : "bg-rose-950/90 text-rose-300 border border-rose-800"
+              ? "bg-emerald-950/90 text-emerald-300 border border-emerald-500/30"
+              : "bg-rose-950/90 text-rose-300 border border-rose-500/30"
           }`}
         >
           {toast.type === "success" ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <AlertTriangle className="w-4 h-4 text-rose-400" />}
@@ -181,11 +181,15 @@ export default function AdminTemplatesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-3 py-1 text-xs font-bold text-indigo-400 mb-2">
-            <FileText className="w-3.5 h-3.5" />
-            <span>Customer Content Auditing • User Templates</span>
+          <div className="flex items-center gap-2">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 uppercase tracking-wider">
+              Content Safety & Inspection
+            </span>
+            <span className="text-xs text-slate-500">•</span>
+            <span className="text-xs text-slate-400 font-mono">Customer Template Archive</span>
           </div>
-          <h1 className="text-2xl font-black text-white tracking-tight">
+          <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-2.5 mt-1.5">
+            <FileText className="w-6 h-6 text-amber-400" />
             User-Created Email Templates
           </h1>
           <p className="text-xs text-slate-400 mt-1">
@@ -197,9 +201,9 @@ export default function AdminTemplatesPage() {
           <button
             onClick={fetchTemplates}
             disabled={loading}
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800 px-3.5 py-2 text-xs font-bold text-white hover:bg-slate-700 shadow-sm transition-all"
+            className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-[#0d1424] px-3.5 py-2 text-xs font-bold text-white hover:bg-white/5 shadow-sm transition-all"
           >
-            <RefreshCw className={`w-3.5 h-3.5 text-indigo-400 ${loading ? "animate-spin" : ""}`} />
+            <RefreshCw className={`w-3.5 h-3.5 text-amber-400 ${loading ? "animate-spin" : ""}`} />
             Refresh
           </button>
         </div>
@@ -207,36 +211,33 @@ export default function AdminTemplatesPage() {
 
       {/* KPI Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 shadow-lg">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Total User Templates</span>
-          <div className="text-2xl font-black text-white mt-2 flex items-center gap-2">
-            <FileText className="w-5 h-5 text-indigo-400" />
+        <div className="rounded-2xl border border-white/5 bg-[#0d1424] p-5 shadow-xl">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total User Templates</span>
+          <div className="text-2xl font-black text-white mt-1.5 flex items-center gap-2 font-mono">
             {loading ? "..." : stats.totalTemplates.toLocaleString()}
           </div>
-          <span className="text-[11px] text-slate-400 mt-1 block">Created by active customers</span>
+          <span className="text-[11px] text-slate-500 mt-1 block">Created by active customers</span>
         </div>
 
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 shadow-lg">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Tenant Workspaces</span>
-          <div className="text-2xl font-black text-white mt-2 flex items-center gap-2">
-            <Building2 className="w-5 h-5 text-blue-400" />
+        <div className="rounded-2xl border border-white/5 bg-[#0d1424] p-5 shadow-xl">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Tenant Workspaces</span>
+          <div className="text-2xl font-black text-white mt-1.5 flex items-center gap-2 font-mono">
             {loading ? "..." : stats.totalWorkspaces.toLocaleString()}
           </div>
-          <span className="text-[11px] text-slate-400 mt-1 block">Active tenant organizations</span>
+          <span className="text-[11px] text-slate-500 mt-1 block">Active tenant organizations</span>
         </div>
 
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 shadow-lg">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Flagged Risk Templates</span>
-          <div className="text-2xl font-black text-amber-400 mt-2 flex items-center gap-2">
-            <ShieldAlert className="w-5 h-5 text-amber-400" />
+        <div className="rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-500/[0.08] to-transparent p-5 shadow-xl">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400">Flagged Risk Templates</span>
+          <div className="text-2xl font-black text-amber-400 mt-1.5 flex items-center gap-2 font-mono">
             {loading ? "..." : highRiskCount}
           </div>
-          <span className="text-[11px] text-slate-400 mt-1 block">Urgent / high penalty triggers</span>
+          <span className="text-[11px] text-slate-400 mt-1 block">High penalty spam triggers</span>
         </div>
 
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 shadow-lg">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Inspection Engine</span>
-          <div className="text-2xl font-black text-emerald-400 mt-2 flex items-center gap-2">
+        <div className="rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/[0.08] to-transparent p-5 shadow-xl">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">Inspection Engine</span>
+          <div className="text-2xl font-black text-emerald-400 mt-1.5 flex items-center gap-2">
             <CheckCircle2 className="w-5 h-5 text-emerald-400" />
             Sandboxed
           </div>
@@ -245,7 +246,7 @@ export default function AdminTemplatesPage() {
       </div>
 
       {/* Search & Filter Toolbar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 rounded-2xl border border-slate-800 bg-slate-900/40 p-3">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 rounded-2xl border border-white/5 bg-[#0d1424] p-3 shadow-xl">
         <form onSubmit={handleSearchSubmit} className="relative flex-1">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
           <input
@@ -253,7 +254,7 @@ export default function AdminTemplatesPage() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search template name, subject, workspace name, or creator email..."
-            className="w-full rounded-xl border border-slate-800 bg-slate-950/80 pl-10 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
+            className="w-full rounded-xl border border-white/10 bg-[#080d19] pl-10 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 transition-colors"
           />
         </form>
 
@@ -262,20 +263,20 @@ export default function AdminTemplatesPage() {
           <select
             value={filterRisk}
             onChange={(e) => setFilterRisk(e.target.value)}
-            className="rounded-xl border border-slate-800 bg-slate-950/80 px-3 py-2 text-xs font-semibold text-slate-200 focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-500/30"
+            className="rounded-xl border border-white/10 bg-[#080d19] px-3 py-2 text-xs font-semibold text-slate-200 focus:outline-none focus:border-amber-400"
           >
-            <option value="ALL" className="bg-slate-900 text-white">All Risk Levels</option>
-            <option value="LOW" className="bg-slate-900 text-emerald-400">Low Risk Only</option>
-            <option value="MEDIUM" className="bg-slate-900 text-amber-400">Medium Risk</option>
-            <option value="HIGH" className="bg-slate-900 text-rose-400">High Risk Alert</option>
+            <option value="ALL">All Risk Levels</option>
+            <option value="LOW">Low Risk Only</option>
+            <option value="MEDIUM">Medium Risk</option>
+            <option value="HIGH">High Risk Alert</option>
           </select>
 
           {/* View Mode Toggle */}
-          <div className="flex items-center border border-slate-800 rounded-xl bg-slate-950/80 p-0.5">
+          <div className="flex items-center border border-white/10 rounded-xl bg-[#080d19] p-0.5">
             <button
               onClick={() => setViewMode("grid")}
               className={`p-1.5 rounded-lg transition-colors ${
-                viewMode === "grid" ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white"
+                viewMode === "grid" ? "bg-amber-500 text-slate-950 font-bold" : "text-slate-400 hover:text-white"
               }`}
               title="Grid View"
             >
@@ -284,7 +285,7 @@ export default function AdminTemplatesPage() {
             <button
               onClick={() => setViewMode("table")}
               className={`p-1.5 rounded-lg transition-colors ${
-                viewMode === "table" ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white"
+                viewMode === "table" ? "bg-amber-500 text-slate-950 font-bold" : "text-slate-400 hover:text-white"
               }`}
               title="Table View"
             >
@@ -296,12 +297,12 @@ export default function AdminTemplatesPage() {
 
       {/* Content View */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center p-16 text-center rounded-2xl border border-slate-800 bg-slate-900/30">
-          <RefreshCw className="w-8 h-8 text-indigo-400 animate-spin mb-3" />
+        <div className="flex flex-col items-center justify-center p-16 text-center rounded-2xl border border-white/5 bg-[#0d1424]">
+          <RefreshCw className="w-8 h-8 text-amber-400 animate-spin mb-3" />
           <p className="text-xs font-bold text-slate-300">Loading user email templates...</p>
         </div>
       ) : displayedTemplates.length === 0 ? (
-        <div className="flex flex-col items-center justify-center p-16 text-center rounded-2xl border border-slate-800 bg-slate-900/30">
+        <div className="flex flex-col items-center justify-center p-16 text-center rounded-2xl border border-white/5 bg-[#0d1424]">
           <FileText className="w-10 h-10 text-slate-600 mb-3" />
           <h3 className="text-sm font-bold text-white">No user templates found</h3>
           <p className="text-xs text-slate-400 mt-1 max-w-sm">
@@ -313,7 +314,7 @@ export default function AdminTemplatesPage() {
           {displayedTemplates.map((template) => (
             <div
               key={template.id}
-              className="flex flex-col justify-between rounded-2xl border border-slate-800/80 bg-slate-900/60 p-5 hover:border-slate-700 transition-all group shadow-sm hover:shadow-indigo-950/20"
+              className="flex flex-col justify-between rounded-2xl border border-white/5 bg-[#0d1424] p-5 hover:border-white/15 transition-all group shadow-xl"
             >
               <div className="space-y-3">
                 {/* Workspace & Risk Badge */}
@@ -323,13 +324,13 @@ export default function AdminTemplatesPage() {
                     <span className="text-[11px] font-bold text-slate-300 truncate" title={template.workspace?.name}>
                       {template.workspace?.name || "Workspace"}
                     </span>
-                    <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.2 rounded bg-slate-800 text-slate-400">
+                    <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-white/5 text-slate-400 border border-white/10">
                       {template.workspace?.plan}
                     </span>
                   </div>
 
                   <span
-                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border shrink-0 ${
+                    className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border shrink-0 ${
                       template.safety.riskLevel === "HIGH"
                         ? "bg-rose-500/10 text-rose-400 border-rose-500/30"
                         : template.safety.riskLevel === "MEDIUM"
@@ -343,7 +344,7 @@ export default function AdminTemplatesPage() {
 
                 {/* Template Name & Subject */}
                 <div>
-                  <h3 className="text-sm font-bold text-white group-hover:text-indigo-300 transition-colors line-clamp-1">
+                  <h3 className="text-sm font-bold text-white group-hover:text-amber-400 transition-colors line-clamp-1">
                     {template.name}
                   </h3>
                   <p className="text-xs text-slate-400 mt-1 line-clamp-2">
@@ -352,7 +353,7 @@ export default function AdminTemplatesPage() {
                 </div>
 
                 {/* Creator & Folder */}
-                <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[11px] text-slate-400">
+                <div className="pt-2 border-t border-white/5 flex items-center justify-between text-[11px] text-slate-400">
                   <span className="truncate" title={template.workspace?.user?.email}>
                     {template.workspace?.user?.email || "Unknown user"}
                   </span>
@@ -363,15 +364,15 @@ export default function AdminTemplatesPage() {
               </div>
 
               {/* Actions Footer */}
-              <div className="pt-4 mt-4 border-t border-slate-800/60 flex items-center justify-between gap-2">
+              <div className="pt-4 mt-4 border-t border-white/5 flex items-center justify-between gap-2">
                 <button
                   onClick={() => {
                     setSelectedTemplate(template);
                     setPreviewTab("render");
                   }}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/30 text-indigo-300 hover:text-white text-xs font-bold transition-all"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 hover:text-white text-xs font-bold transition-all"
                 >
-                  <Eye className="w-3.5 h-3.5" />
+                  <Eye className="w-3.5 h-3.5 text-amber-400" />
                   Inspect HTML
                 </button>
 
@@ -389,11 +390,11 @@ export default function AdminTemplatesPage() {
         </div>
       ) : (
         /* Table View */
-        <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/60">
+        <div className="overflow-hidden rounded-2xl border border-white/5 bg-[#0d1424] shadow-2xl">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-slate-800 bg-slate-950/60 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                <tr className="border-b border-white/5 bg-[#080d19] text-[10px] font-bold uppercase tracking-wider text-slate-400">
                   <th className="p-4">Template & Subject</th>
                   <th className="p-4">Owner / Workspace</th>
                   <th className="p-4">Safety Score</th>
@@ -402,9 +403,9 @@ export default function AdminTemplatesPage() {
                   <th className="p-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60 text-xs">
+              <tbody className="divide-y divide-white/5 text-xs font-medium">
                 {displayedTemplates.map((template) => (
-                  <tr key={template.id} className="hover:bg-slate-800/30 transition-colors">
+                  <tr key={template.id} className="hover:bg-white/[0.02] transition-colors">
                     <td className="p-4">
                       <div className="font-bold text-white">{template.name}</div>
                       <div className="text-slate-400 text-[11px] truncate max-w-xs">{template.subject}</div>
@@ -415,7 +416,7 @@ export default function AdminTemplatesPage() {
                     </td>
                     <td className="p-4">
                       <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${
                           template.safety.riskLevel === "HIGH"
                             ? "bg-rose-500/10 text-rose-400 border-rose-500/30"
                             : template.safety.riskLevel === "MEDIUM"
@@ -430,7 +431,7 @@ export default function AdminTemplatesPage() {
                       {template.variables && template.variables.length > 0 ? (
                         <div className="flex flex-wrap gap-1 max-w-xs">
                           {template.variables.slice(0, 3).map((v) => (
-                            <span key={v} className="px-1.5 py-0.5 rounded bg-slate-800 text-[10px] font-mono text-indigo-300">
+                            <span key={v} className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[10px] font-mono text-amber-400">
                               {`{{${v}}}`}
                             </span>
                           ))}
@@ -452,7 +453,7 @@ export default function AdminTemplatesPage() {
                             setSelectedTemplate(template);
                             setPreviewTab("render");
                           }}
-                          className="px-2.5 py-1 rounded-lg bg-indigo-600/20 text-indigo-300 hover:bg-indigo-600/30 text-xs font-bold transition-colors"
+                          className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white text-xs font-bold transition-colors"
                         >
                           Preview
                         </button>
@@ -475,7 +476,7 @@ export default function AdminTemplatesPage() {
 
       {/* Pagination Controls */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between pt-4 border-t border-slate-800 text-xs text-slate-400">
+        <div className="flex items-center justify-between pt-4 border-t border-white/5 text-xs text-slate-400">
           <span>
             Page <strong className="text-white">{page}</strong> of <strong className="text-white">{totalPages}</strong>
           </span>
@@ -483,14 +484,14 @@ export default function AdminTemplatesPage() {
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page <= 1}
-              className="inline-flex items-center gap-1 rounded-xl border border-slate-800 bg-slate-900 px-3 py-1.5 font-bold hover:bg-slate-800 disabled:opacity-40"
+              className="inline-flex items-center gap-1 rounded-xl border border-white/10 bg-[#0d1424] px-3 py-1.5 font-bold hover:bg-white/5 disabled:opacity-40 transition-colors"
             >
               <ChevronLeft className="w-3.5 h-3.5" /> Previous
             </button>
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page >= totalPages}
-              className="inline-flex items-center gap-1 rounded-xl border border-slate-800 bg-slate-900 px-3 py-1.5 font-bold hover:bg-slate-800 disabled:opacity-40"
+              className="inline-flex items-center gap-1 rounded-xl border border-white/10 bg-[#0d1424] px-3 py-1.5 font-bold hover:bg-white/5 disabled:opacity-40 transition-colors"
             >
               Next <ChevronRight className="w-3.5 h-3.5" />
             </button>
@@ -500,12 +501,12 @@ export default function AdminTemplatesPage() {
 
       {/* FULL SCREEN / LARGE MODAL FOR LIVE SANDBOXED HTML EMAIL PREVIEW */}
       {selectedTemplate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-3 sm:p-6 backdrop-blur-md">
-          <div className="w-full max-w-5xl h-[90vh] flex flex-col rounded-3xl border border-slate-800 bg-slate-950 shadow-2xl overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-3 sm:p-6 backdrop-blur-md animate-in fade-in">
+          <div className="w-full max-w-5xl h-[90vh] flex flex-col rounded-3xl border border-white/10 bg-[#0d1424] shadow-2xl overflow-hidden">
             {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900/60">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-[#080d19]">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="p-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+                <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
                   <FileText className="w-5 h-5" />
                 </div>
                 <div className="min-w-0">
@@ -515,7 +516,7 @@ export default function AdminTemplatesPage() {
                       ({selectedTemplate.slug})
                     </span>
                   </h2>
-                  <p className="text-xs text-slate-400 truncate">
+                  <p className="text-xs text-slate-400 truncate mt-0.5">
                     Owner: <span className="text-slate-200 font-semibold">{selectedTemplate.workspace?.name}</span> •{" "}
                     {selectedTemplate.workspace?.user?.email}
                   </p>
@@ -525,21 +526,21 @@ export default function AdminTemplatesPage() {
               {/* Close Button */}
               <button
                 onClick={() => setSelectedTemplate(null)}
-                className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
               >
                 ✕
               </button>
             </div>
 
             {/* Modal Subheader: Tabs & Controls */}
-            <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-3 border-b border-slate-800/80 bg-slate-900/30">
+            <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-3 border-b border-white/5 bg-[#080d19]/60">
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setPreviewTab("render")}
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                     previewTab === "render"
-                      ? "bg-indigo-600 text-white shadow-sm"
-                      : "text-slate-400 hover:text-white hover:bg-slate-800/60"
+                      ? "bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 font-black shadow-sm"
+                      : "text-slate-400 hover:text-white hover:bg-white/5"
                   }`}
                 >
                   <Eye className="w-3.5 h-3.5" />
@@ -549,8 +550,8 @@ export default function AdminTemplatesPage() {
                   onClick={() => setPreviewTab("code")}
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                     previewTab === "code"
-                      ? "bg-indigo-600 text-white shadow-sm"
-                      : "text-slate-400 hover:text-white hover:bg-slate-800/60"
+                      ? "bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 font-black shadow-sm"
+                      : "text-slate-400 hover:text-white hover:bg-white/5"
                   }`}
                 >
                   <Code className="w-3.5 h-3.5" />
@@ -560,8 +561,8 @@ export default function AdminTemplatesPage() {
                   onClick={() => setPreviewTab("safety")}
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                     previewTab === "safety"
-                      ? "bg-indigo-600 text-white shadow-sm"
-                      : "text-slate-400 hover:text-white hover:bg-slate-800/60"
+                      ? "bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 font-black shadow-sm"
+                      : "text-slate-400 hover:text-white hover:bg-white/5"
                   }`}
                 >
                   <ShieldAlert className="w-3.5 h-3.5" />
@@ -571,11 +572,11 @@ export default function AdminTemplatesPage() {
 
               <div className="flex items-center gap-3">
                 {previewTab === "render" && (
-                  <div className="flex items-center border border-slate-800 rounded-xl bg-slate-900 p-0.5">
+                  <div className="flex items-center border border-white/10 rounded-xl bg-[#080d19] p-0.5">
                     <button
                       onClick={() => setPreviewDevice("desktop")}
                       className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
-                        previewDevice === "desktop" ? "bg-slate-800 text-white" : "text-slate-400 hover:text-white"
+                        previewDevice === "desktop" ? "bg-white/10 text-white" : "text-slate-400 hover:text-white"
                       }`}
                     >
                       <Monitor className="w-3.5 h-3.5" /> Desktop
@@ -583,7 +584,7 @@ export default function AdminTemplatesPage() {
                     <button
                       onClick={() => setPreviewDevice("mobile")}
                       className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
-                        previewDevice === "mobile" ? "bg-slate-800 text-white" : "text-slate-400 hover:text-white"
+                        previewDevice === "mobile" ? "bg-white/10 text-white" : "text-slate-400 hover:text-white"
                       }`}
                     >
                       <Smartphone className="w-3.5 h-3.5" /> Mobile
@@ -593,9 +594,9 @@ export default function AdminTemplatesPage() {
 
                 <button
                   onClick={() => handleCopyHtml(selectedTemplate.htmlContent)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-700 transition-all"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-200 text-xs font-bold border border-white/10 transition-all"
                 >
-                  <Copy className="w-3.5 h-3.5 text-indigo-400" />
+                  <Copy className="w-3.5 h-3.5 text-amber-400" />
                   {copied ? "Copied!" : "Copy HTML"}
                 </button>
 
@@ -610,20 +611,20 @@ export default function AdminTemplatesPage() {
             </div>
 
             {/* Subject Banner */}
-            <div className="px-6 py-2.5 bg-slate-900/50 border-b border-slate-800/60 flex items-center gap-2 text-xs">
+            <div className="px-6 py-2.5 bg-[#080d19]/80 border-b border-white/5 flex items-center gap-2 text-xs">
               <span className="font-bold text-slate-400">Subject:</span>
               <span className="font-semibold text-white truncate">{selectedTemplate.subject || "(No Subject Set)"}</span>
             </div>
 
             {/* Modal Body / Tab Content */}
-            <div className="flex-1 overflow-y-auto p-6 bg-slate-950 flex flex-col items-center justify-start">
+            <div className="flex-1 overflow-y-auto p-6 bg-[#0a0f1b] flex flex-col items-center justify-start">
               {previewTab === "render" ? (
                 <div
                   className={`w-full transition-all duration-300 h-full flex flex-col items-center ${
                     previewDevice === "mobile" ? "max-w-[390px]" : "max-w-4xl"
                   }`}
                 >
-                  <div className="w-full h-full bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-700">
+                  <div className="w-full h-full bg-white rounded-2xl shadow-2xl overflow-hidden border border-white/10">
                     <iframe
                       title="User Email Sandbox Preview"
                       srcDoc={selectedTemplate.htmlContent || "<p style='color:#666;font-family:sans-serif;padding:20px;'>Empty email template body</p>"}
@@ -634,24 +635,24 @@ export default function AdminTemplatesPage() {
                 </div>
               ) : previewTab === "code" ? (
                 <div className="w-full max-w-4xl h-full flex flex-col">
-                  <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-4 font-mono text-xs text-indigo-200 overflow-auto flex-1 leading-relaxed selection:bg-indigo-600">
+                  <div className="rounded-2xl border border-white/5 bg-[#080d19] p-4 font-mono text-xs text-amber-200 overflow-auto flex-1 leading-relaxed shadow-xl">
                     <pre className="whitespace-pre-wrap">{selectedTemplate.htmlContent}</pre>
                   </div>
                 </div>
               ) : (
                 /* Safety & Spam Audit Tab */
                 <div className="w-full max-w-3xl space-y-6">
-                  <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 space-y-4">
+                  <div className="rounded-2xl border border-white/5 bg-[#0d1424] p-6 space-y-4 shadow-xl">
                     <h3 className="text-sm font-bold text-white flex items-center gap-2">
                       <ShieldAlert className="w-4 h-4 text-amber-400" />
                       Content Safety & Anti-Spam Analysis
                     </h3>
 
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="p-4 rounded-xl bg-slate-950 border border-slate-800">
-                        <span className="text-[11px] text-slate-400 font-bold uppercase">Spam Risk Score</span>
+                      <div className="p-4 rounded-xl bg-[#080d19] border border-white/5">
+                        <span className="text-[10px] text-slate-400 font-bold uppercase">Spam Risk Score</span>
                         <div
-                          className={`text-2xl font-black mt-1 ${
+                          className={`text-2xl font-black mt-1 font-mono ${
                             selectedTemplate.safety.score >= 50
                               ? "text-rose-400"
                               : selectedTemplate.safety.score >= 25
@@ -666,8 +667,8 @@ export default function AdminTemplatesPage() {
                         </span>
                       </div>
 
-                      <div className="p-4 rounded-xl bg-slate-950 border border-slate-800">
-                        <span className="text-[11px] text-slate-400 font-bold uppercase">Unsubscribe Tag</span>
+                      <div className="p-4 rounded-xl bg-[#080d19] border border-white/5">
+                        <span className="text-[10px] text-slate-400 font-bold uppercase">Unsubscribe Tag</span>
                         <div className="text-lg font-black mt-1 flex items-center gap-2">
                           {selectedTemplate.safety.hasUnsubscribe ? (
                             <span className="text-emerald-400 flex items-center gap-1 text-sm font-bold">
@@ -706,7 +707,7 @@ export default function AdminTemplatesPage() {
                     )}
 
                     {/* Variables in Template */}
-                    <div className="pt-4 border-t border-slate-800">
+                    <div className="pt-4 border-t border-white/5">
                       <span className="text-xs font-bold text-slate-300 block mb-2">
                         Template Dynamic Variables ({selectedTemplate.variables.length}):
                       </span>
@@ -715,7 +716,7 @@ export default function AdminTemplatesPage() {
                           {selectedTemplate.variables.map((variable) => (
                             <span
                               key={variable}
-                              className="px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-xs font-mono text-indigo-300"
+                              className="px-2.5 py-1 rounded-lg bg-[#080d19] border border-white/10 text-xs font-mono text-amber-400 font-bold"
                             >
                               {`{{${variable}}}`}
                             </span>

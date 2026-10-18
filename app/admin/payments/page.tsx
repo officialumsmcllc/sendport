@@ -30,6 +30,10 @@ import {
   ZoomIn,
   ZoomOut,
   RotateCcw,
+  Sparkles,
+  Receipt,
+  Layers,
+  ArrowRight
 } from "lucide-react";
 
 interface PaymentMethod {
@@ -123,7 +127,7 @@ export default function AdminPaymentsPage() {
     fetchGateways();
     const timer = setInterval(() => {
       fetchTransactions(false);
-    }, 12000); // 12-second silent auto-refresh for payment queue
+    }, 12000);
     return () => clearInterval(timer);
   }, []);
 
@@ -229,7 +233,6 @@ export default function AdminPaymentsPage() {
       setSubmittingForm(true);
 
       if (editingGateway) {
-        // PATCH
         const res = await fetch("/api/admin/payment-methods", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -254,7 +257,6 @@ export default function AdminPaymentsPage() {
           setToast({ message: data.error || "Failed to update payment method.", type: "error" });
         }
       } else {
-        // POST
         const res = await fetch("/api/admin/payment-methods", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -332,14 +334,14 @@ export default function AdminPaymentsPage() {
         <div
           className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 text-xs font-bold border transition-all animate-in slide-in-from-bottom ${
             toast.type === "success"
-              ? "bg-emerald-950/90 text-emerald-200 border-emerald-800"
-              : "bg-rose-950/90 text-rose-200 border-rose-800"
-          }`}
+              ? "bg-emerald-950/90 text-emerald-200 border-emerald-500/30 shadow-emerald-950/50"
+              : "bg-rose-950/90 text-rose-200 border-rose-500/30 shadow-rose-950/50"
+          } backdrop-blur-xl`}
         >
           {toast.type === "success" ? (
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
           ) : (
-            <AlertCircle className="w-4 h-4 text-rose-400" />
+            <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
           )}
           <span>{toast.message}</span>
           <button onClick={() => setToast(null)} className="ml-2 hover:opacity-75">
@@ -348,67 +350,386 @@ export default function AdminPaymentsPage() {
         </div>
       )}
 
-      {/* RECEIPT IMAGE PREVIEW MODAL */}
-      {previewImage && (
-        <div
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in"
-          onClick={() => setPreviewImage(null)}
-        >
-          <div
-            className="relative max-w-2xl w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
+      {/* HEADER SECTION */}
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-black tracking-wider uppercase bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              Treasury & Settlements
+            </span>
+            <span className="text-xs text-slate-500">•</span>
+            <span className="text-xs text-slate-400 font-mono">Realtime Manual & Gateway Ledger</span>
+          </div>
+          <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-2.5 mt-1.5">
+            <CreditCard className="w-6 h-6 text-amber-400" />
+            Financial Management & Payment Controls
+          </h1>
+          <p className="text-xs text-slate-400 mt-1">
+            Audit manual customer transfer receipts, activate automated plan quotas, and manage bank/wallet deposit rails.
+          </p>
+        </div>
+
+        {/* TABS SWITCHER */}
+        <div className="flex items-center bg-[#0d1424] border border-white/10 p-1 rounded-xl text-xs font-bold shadow-lg">
+          <button
+            onClick={() => setActiveTab("SLIPS")}
+            className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all ${
+              activeTab === "SLIPS"
+                ? "bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 shadow-md shadow-amber-500/20 font-black"
+                : "text-slate-400 hover:text-white"
+            }`}
           >
-            <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950">
-              <span className="text-xs font-bold text-slate-300 flex items-center gap-2">
-                <ImageIcon className="w-4 h-4 text-emerald-400" /> Payment Slip / Proof of Transfer
+            <Receipt className="w-3.5 h-3.5" />
+            <span>Slip Approvals</span>
+            {pendingCount > 0 && (
+              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
+                activeTab === "SLIPS" ? "bg-slate-950 text-amber-400" : "bg-rose-500 text-white animate-pulse"
+              }`}>
+                {pendingCount}
               </span>
-              <button
-                onClick={() => setPreviewImage(null)}
-                className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white"
-              >
-                <X className="w-4 h-4" />
-              </button>
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab("GATEWAYS")}
+            className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all ${
+              activeTab === "GATEWAYS"
+                ? "bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 shadow-md shadow-amber-500/20 font-black"
+                : "text-slate-400 hover:text-white"
+            }`}
+          >
+            <Wallet className="w-3.5 h-3.5" />
+            <span>Manage Gateways ({gateways.length})</span>
+          </button>
+        </div>
+      </div>
+
+      {/* TAB 1: SLIPS APPROVAL VIEW */}
+      {activeTab === "SLIPS" && (
+        <div className="space-y-6">
+          {/* Top KPI Metrics Bar */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="p-4 rounded-2xl border border-white/5 bg-[#0d1424] flex items-center justify-between">
+              <div>
+                <p className="text-slate-400 text-[11px] font-semibold uppercase tracking-wider">Total Slips</p>
+                <p className="text-2xl font-black text-white mt-1 font-mono">{transactions.length}</p>
+                <p className="text-[10px] text-slate-500 mt-0.5">Historical submissions</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center text-slate-300">
+                <Receipt className="w-5 h-5 text-slate-400" />
+              </div>
             </div>
-            <div className="p-4 flex items-center justify-center bg-black/40 min-h-[300px] max-h-[70vh] overflow-auto">
-              <img
-                src={previewImage}
-                alt="Payment Receipt Slip"
-                className="max-h-[65vh] max-w-full object-contain rounded-lg border border-slate-800"
+
+            <div className="p-4 rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-500/[0.08] to-transparent flex items-center justify-between">
+              <div>
+                <p className="text-amber-300 text-[11px] font-semibold uppercase tracking-wider">Pending Audit</p>
+                <p className="text-2xl font-black text-amber-400 mt-1 font-mono">{pendingCount}</p>
+                <p className="text-[10px] text-amber-400/80 mt-0.5">Requires verification</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+                <Clock className="w-5 h-5" />
+              </div>
+            </div>
+
+            <div className="p-4 rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/[0.08] to-transparent flex items-center justify-between">
+              <div>
+                <p className="text-emerald-300 text-[11px] font-semibold uppercase tracking-wider">Approved & Quota Set</p>
+                <p className="text-2xl font-black text-emerald-400 mt-1 font-mono">{approvedCount}</p>
+                <p className="text-[10px] text-emerald-400/80 mt-0.5">Active subscribers</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+            </div>
+
+            <div className="p-4 rounded-2xl border border-white/5 bg-[#0d1424] flex items-center justify-between">
+              <div>
+                <p className="text-slate-400 text-[11px] font-semibold uppercase tracking-wider">Active Rails</p>
+                <p className="text-2xl font-black text-white mt-1 font-mono">{activeGatewaysCount}</p>
+                <p className="text-[10px] text-slate-500 mt-0.5">Ready for checkout</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center text-slate-300">
+                <Wallet className="w-5 h-5 text-slate-400" />
+              </div>
+            </div>
+          </div>
+
+          {/* Filtering & Action Bar */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 rounded-2xl border border-white/5 bg-[#0d1424]">
+            <div className="relative w-full sm:w-80">
+              <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+              <input
+                type="text"
+                placeholder="Search user, ref ID, or sender..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full bg-[#080d19] border border-white/10 rounded-xl pl-10 pr-3 py-2 text-xs text-white placeholder-slate-500 outline-none focus:border-amber-400 transition-colors"
               />
             </div>
-            <div className="p-3 bg-slate-950 border-t border-slate-800 flex justify-end gap-2">
-              <a
-                href={previewImage}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-colors"
+
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <select
+                value={filterStatus}
+                onChange={(e: any) => setFilterStatus(e.target.value)}
+                className="bg-[#080d19] border border-white/10 text-slate-200 text-xs rounded-xl px-3 py-2 outline-none font-semibold focus:border-amber-400"
               >
-                <span>Open Original in New Tab</span>
-                <ExternalLink className="w-3.5 h-3.5" />
-              </a>
+                <option value="ALL">All Statuses</option>
+                <option value="PENDING">Pending Only</option>
+                <option value="APPROVED">Approved</option>
+                <option value="REJECTED">Rejected</option>
+              </select>
+
               <button
-                onClick={() => setPreviewImage(null)}
-                className="px-4 py-1.5 text-xs font-semibold bg-emerald-500 hover:bg-emerald-400 text-white rounded-lg transition-colors"
+                onClick={() => fetchTransactions(true)}
+                className="p-2 rounded-xl bg-[#080d19] border border-white/10 hover:bg-white/5 text-slate-300 transition-colors"
+                title="Refresh Table"
               >
-                Close
+                <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin text-amber-400" : ""}`} />
               </button>
             </div>
           </div>
+
+          {/* Slips Table */}
+          <div className="rounded-2xl border border-white/5 bg-[#0d1424] overflow-hidden shadow-xl">
+            {loading ? (
+              <div className="p-16 text-center text-slate-400 text-xs flex flex-col items-center gap-3">
+                <div className="w-7 h-7 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                <span>Loading settlement ledger...</span>
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="p-16 text-center text-slate-500 text-xs flex flex-col items-center gap-2">
+                <Receipt className="w-8 h-8 text-slate-600" />
+                <span>No payment slips match your filters.</span>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs text-slate-300">
+                  <thead className="bg-[#080d19] text-[10px] uppercase tracking-wider text-slate-400 border-b border-white/5">
+                    <tr>
+                      <th className="py-3 px-4">Customer</th>
+                      <th className="py-3 px-4">Plan & Target Amount</th>
+                      <th className="py-3 px-4">Deposit Rail</th>
+                      <th className="py-3 px-4">Reference / TID</th>
+                      <th className="py-3 px-4">Proof Slip</th>
+                      <th className="py-3 px-4">Audit Status</th>
+                      <th className="py-3 px-4 text-right">Settlement Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5 font-medium">
+                    {filtered.map((tx) => (
+                      <tr key={tx.id} className="hover:bg-white/[0.02] transition-colors">
+                        <td className="py-3.5 px-4">
+                          <p className="font-bold text-white">{tx.user?.name || "Customer"}</p>
+                          <p className="text-[11px] text-slate-400 font-mono mt-0.5">{tx.user?.email}</p>
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <span className="font-bold text-amber-400">{tx.plan}</span>
+                          <p className="text-[11px] text-slate-400 font-mono mt-0.5">
+                            {tx.currency} {tx.amount}
+                          </p>
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-white/5 border border-white/10 text-slate-300">
+                            {tx.method}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4 font-mono text-[11px] text-white select-all">
+                          <div className="font-bold">{tx.referenceId || "—"}</div>
+                          {tx.senderName && <p className="text-[10px] text-slate-400 font-sans mt-0.5">By: {tx.senderName}</p>}
+                        </td>
+                        <td className="py-3.5 px-4">
+                          {tx.receiptUrl ? (
+                            <button
+                              onClick={() => {
+                                setPreviewSlip(tx);
+                                setSlipZoom(1);
+                              }}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-200 border border-white/10 transition-colors shadow-sm text-xs font-semibold"
+                            >
+                              <Eye className="w-3.5 h-3.5 text-emerald-400" />
+                              <span>View Slip</span>
+                            </button>
+                          ) : (
+                            <span className="text-slate-500 text-[11px] font-mono">TID Only</span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                              tx.status === "APPROVED"
+                                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
+                                : tx.status === "REJECTED"
+                                ? "bg-rose-500/10 text-rose-400 border border-rose-500/30"
+                                : "bg-amber-500/10 text-amber-400 border border-amber-500/30"
+                            }`}
+                          >
+                            {tx.status === "APPROVED" && <Check className="w-3 h-3" />}
+                            {tx.status === "REJECTED" && <X className="w-3 h-3" />}
+                            {tx.status === "PENDING" && <Clock className="w-3 h-3" />}
+                            {tx.status}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4 text-right">
+                          {tx.status === "PENDING" ? (
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                onClick={() => handleAction(tx.id, "APPROVE")}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-400 hover:from-emerald-400 hover:to-emerald-300 text-slate-950 font-black text-xs transition-all shadow-sm active:scale-95"
+                              >
+                                <Check className="w-3.5 h-3.5" />
+                                <span>Approve</span>
+                              </button>
+                              <button
+                                onClick={() => handleAction(tx.id, "REJECT")}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-rose-950/60 border border-white/10 text-slate-300 hover:text-rose-400 font-semibold text-xs transition-colors"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                                <span>Reject</span>
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="text-[11px] text-slate-500 font-medium">
+                              {tx.adminNotes || "Action completed"}
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* TAB 2: CONFIGURE PAYMENT GATEWAYS VIEW */}
+      {activeTab === "GATEWAYS" && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl border border-white/5 bg-[#0d1424]">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 uppercase tracking-wider">
+                  Payment Endpoints
+                </span>
+              </div>
+              <h2 className="text-base font-bold text-white flex items-center gap-2 mt-1.5">
+                <Wallet className="w-5 h-5 text-amber-400" />
+                Active Payment Gateways & Deposit Accounts
+              </h2>
+              <p className="text-xs text-slate-400 mt-1">
+                These accounts are rendered on the customer billing checkout modal. Update IBANs, wallet addresses, and instructions dynamically.
+              </p>
+            </div>
+            <button
+              onClick={openAddModal}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-xs transition-all shadow-md active:scale-95 shrink-0"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add New Payment Gateway</span>
+            </button>
+          </div>
+
+          {loadingGateways ? (
+            <div className="p-16 text-center text-slate-400 text-xs flex flex-col items-center gap-3">
+              <div className="w-7 h-7 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+              <span>Loading payment gateways...</span>
+            </div>
+          ) : gateways.length === 0 ? (
+            <div className="p-16 text-center text-slate-500 text-xs rounded-2xl border border-white/5 bg-[#0d1424]">
+              No payment gateways configured. Click "Add New Payment Gateway" to create one.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {gateways.map((g) => (
+                <div
+                  key={g.id}
+                  className={`rounded-2xl border p-5 flex flex-col justify-between transition-all ${
+                    g.isActive
+                      ? "border-white/10 bg-[#0d1424] hover:border-amber-500/30 shadow-lg"
+                      : "border-white/5 bg-[#0a0f1b]/60 opacity-60"
+                  }`}
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-white/5 text-slate-300 border border-white/10">
+                          {g.code}
+                        </span>
+                        <h3 className="text-base font-bold text-white mt-1.5">{g.name}</h3>
+                      </div>
+                      <button
+                        onClick={() => handleToggleGateway(g)}
+                        title={g.isActive ? "Click to Deactivate" : "Click to Activate"}
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 border transition-all ${
+                          g.isActive
+                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-rose-500/10 hover:text-rose-400 hover:border-rose-500/30"
+                            : "bg-white/5 text-slate-400 border-white/10 hover:bg-emerald-500/10 hover:text-emerald-400 hover:border-emerald-500/30"
+                        }`}
+                      >
+                        <Power className="w-3 h-3" />
+                        <span>{g.isActive ? "Active" : "Inactive"}</span>
+                      </button>
+                    </div>
+
+                    <div className="p-3.5 rounded-xl bg-[#080d19] border border-white/5 space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-400">Account Title:</span>
+                        <span className="text-white font-bold">{g.accountTitle}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-400">Account / No:</span>
+                        <span className="text-amber-400 font-mono font-bold text-right truncate max-w-[190px]">
+                          {g.accountNumber}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-400">Currency:</span>
+                        <span className="text-slate-300 font-mono font-bold">{g.currency}</span>
+                      </div>
+                    </div>
+
+                    {g.instructions && (
+                      <p className="text-[11px] text-slate-400 leading-relaxed italic bg-[#080d19]/60 p-2.5 rounded-xl border border-white/5">
+                        "{g.instructions}"
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="pt-4 mt-4 border-t border-white/5 flex items-center justify-end gap-2">
+                    <button
+                      onClick={() => openEditModal(g)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-200 text-xs font-semibold border border-white/10 transition-colors"
+                    >
+                      <Edit2 className="w-3 h-3 text-amber-400" />
+                      <span>Edit Details</span>
+                    </button>
+                    <button
+                      onClick={() => handleDeleteGateway(g.id, g.name)}
+                      className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-950/40 transition-colors"
+                      title="Delete Gateway"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
       {/* ADD / EDIT GATEWAY MODAL */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="relative max-w-lg w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
-            <div className="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950">
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="relative max-w-lg w-full bg-[#0d1424] border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
+            <div className="p-5 border-b border-white/5 flex items-center justify-between bg-[#080d19]">
               <div className="flex items-center gap-2 text-white font-bold text-sm">
                 <Settings className="w-4 h-4 text-amber-400" />
                 <span>{editingGateway ? "Edit Payment Method" : "Add New Payment Method"}</span>
               </div>
               <button
                 onClick={() => setShowAddModal(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -416,7 +737,7 @@ export default function AdminPaymentsPage() {
 
             <form onSubmit={handleSaveGateway} className="p-5 space-y-4 text-xs">
               {!editingGateway && (
-                <div className="bg-slate-950/80 p-3 rounded-xl border border-slate-800 space-y-2">
+                <div className="bg-[#080d19] p-3 rounded-xl border border-white/5 space-y-2">
                   <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Quick Presets (Click to autofill):</div>
                   <div className="flex flex-wrap gap-1.5">
                     {[
@@ -438,7 +759,7 @@ export default function AdminPaymentsPage() {
                           setFormCurrency(preset.currency);
                           setFormInstructions(preset.instructions);
                         }}
-                        className="px-2.5 py-1 rounded-lg text-[10px] font-medium bg-slate-800/80 text-slate-300 hover:bg-amber-400/20 hover:text-amber-300 transition-colors border border-slate-700/60"
+                        className="px-2.5 py-1 rounded-lg text-[10px] font-medium bg-white/5 text-slate-300 hover:bg-amber-400/20 hover:text-amber-300 transition-colors border border-white/5"
                       >
                         + {preset.name.split(" ")[0]}
                       </button>
@@ -456,7 +777,7 @@ export default function AdminPaymentsPage() {
                     placeholder="e.g. Easypaisa Account"
                     value={formName}
                     onChange={(e) => setFormName(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white outline-none focus:border-amber-400"
+                    className="w-full bg-[#080d19] border border-white/10 rounded-xl px-3 py-2 text-white outline-none focus:border-amber-400"
                   />
                 </div>
                 <div>
@@ -468,7 +789,7 @@ export default function AdminPaymentsPage() {
                     placeholder="e.g. EASYPAISA"
                     value={formCode}
                     onChange={(e) => setFormCode(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white outline-none focus:border-amber-400 disabled:opacity-50 uppercase"
+                    className="w-full bg-[#080d19] border border-white/10 rounded-xl px-3 py-2 text-white outline-none focus:border-amber-400 disabled:opacity-50 uppercase font-mono"
                   />
                 </div>
               </div>
@@ -481,7 +802,7 @@ export default function AdminPaymentsPage() {
                   placeholder="e.g. Muhammad Umar or Official UM1 LLC"
                   value={formAccountTitle}
                   onChange={(e) => setFormAccountTitle(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white outline-none focus:border-amber-400"
+                  className="w-full bg-[#080d19] border border-white/10 rounded-xl px-3 py-2 text-white outline-none focus:border-amber-400"
                 />
               </div>
 
@@ -493,7 +814,7 @@ export default function AdminPaymentsPage() {
                   placeholder="e.g. 0300-1234567 or PK00MEZN... or TXYZ..."
                   value={formAccountNumber}
                   onChange={(e) => setFormAccountNumber(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono outline-none focus:border-amber-400"
+                  className="w-full bg-[#080d19] border border-white/10 rounded-xl px-3 py-2 text-white font-mono outline-none focus:border-amber-400"
                 />
               </div>
 
@@ -503,7 +824,7 @@ export default function AdminPaymentsPage() {
                   <select
                     value={formCurrency}
                     onChange={(e) => setFormCurrency(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white outline-none focus:border-amber-400"
+                    className="w-full bg-[#080d19] border border-white/10 rounded-xl px-3 py-2 text-white outline-none focus:border-amber-400"
                   >
                     <option value="PKR">PKR (Pakistani Rupee)</option>
                     <option value="USD">USD (US Dollar / Crypto USDT)</option>
@@ -519,7 +840,7 @@ export default function AdminPaymentsPage() {
                     type="number"
                     value={formDisplayOrder}
                     onChange={(e) => setFormDisplayOrder(Number(e.target.value))}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white outline-none focus:border-amber-400"
+                    className="w-full bg-[#080d19] border border-white/10 rounded-xl px-3 py-2 text-white outline-none focus:border-amber-400"
                   />
                 </div>
               </div>
@@ -531,7 +852,7 @@ export default function AdminPaymentsPage() {
                   placeholder="e.g. Send exact PKR amount and paste the 12-digit TID below..."
                   value={formInstructions}
                   onChange={(e) => setFormInstructions(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white outline-none focus:border-amber-400 leading-relaxed"
+                  className="w-full bg-[#080d19] border border-white/10 rounded-xl px-3 py-2 text-white outline-none focus:border-amber-400 leading-relaxed"
                 />
               </div>
 
@@ -541,25 +862,25 @@ export default function AdminPaymentsPage() {
                   id="isActiveToggle"
                   checked={formIsActive}
                   onChange={(e) => setFormIsActive(e.target.checked)}
-                  className="w-4 h-4 rounded text-amber-500 bg-slate-950 border-slate-800"
+                  className="w-4 h-4 rounded text-amber-500 bg-[#080d19] border-white/10"
                 />
                 <label htmlFor="isActiveToggle" className="text-slate-300 font-semibold cursor-pointer">
                   Activate this method immediately for all customers
                 </label>
               </div>
 
-              <div className="pt-3 flex items-center justify-end gap-3 border-t border-slate-800">
+              <div className="pt-3 flex items-center justify-end gap-3 border-t border-white/5">
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700"
+                  className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submittingForm}
-                  className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold transition-all disabled:opacity-50"
+                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black transition-all disabled:opacity-50"
                 >
                   {submittingForm ? "Saving..." : editingGateway ? "Update Method" : "Create Method"}
                 </button>
@@ -569,362 +890,17 @@ export default function AdminPaymentsPage() {
         </div>
       )}
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-2.5">
-            <CreditCard className="w-6 h-6 text-amber-400" />
-            Financial Management & Payment Controls
-          </h1>
-          <p className="text-xs text-slate-400 mt-1">
-            Configure dynamic payment gateways (Easypaisa, JazzCash, USDT, Banks) and approve customer manual subscription slips.
-          </p>
-        </div>
-
-        {/* TABS SWITCHER */}
-        <div className="flex items-center bg-slate-900 border border-slate-800 p-1 rounded-xl text-xs font-bold">
-          <button
-            onClick={() => setActiveTab("SLIPS")}
-            className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all ${
-              activeTab === "SLIPS"
-                ? "bg-amber-500 text-black shadow-md"
-                : "text-slate-400 hover:text-white"
-            }`}
-          >
-            <Clock className="w-3.5 h-3.5" />
-            <span>Slip Approvals</span>
-            {pendingCount > 0 && (
-              <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-rose-500 text-white font-extrabold animate-pulse">
-                {pendingCount}
-              </span>
-            )}
-          </button>
-          <button
-            onClick={() => setActiveTab("GATEWAYS")}
-            className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all ${
-              activeTab === "GATEWAYS"
-                ? "bg-amber-500 text-black shadow-md"
-                : "text-slate-400 hover:text-white"
-            }`}
-          >
-            <Wallet className="w-3.5 h-3.5" />
-            <span>Manage Gateways ({gateways.length})</span>
-          </button>
-        </div>
-      </div>
-
-      {/* TAB 1: SLIPS APPROVAL VIEW */}
-      {activeTab === "SLIPS" && (
-        <>
-          {/* Quick Metrics Bar */}
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-            <div className="p-4 rounded-2xl border border-slate-800 bg-slate-900/60 flex items-center justify-between">
-              <div>
-                <p className="text-slate-400 text-[11px] font-semibold">Total Slips Submitted</p>
-                <p className="text-2xl font-black text-white mt-1">{transactions.length}</p>
-              </div>
-              <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400">
-                <Users className="w-5 h-5" />
-              </div>
-            </div>
-
-            <div className="p-4 rounded-2xl border border-amber-500/20 bg-amber-500/5 flex items-center justify-between">
-              <div>
-                <p className="text-amber-300 text-[11px] font-semibold">Pending Verification</p>
-                <p className="text-2xl font-black text-amber-400 mt-1">{pendingCount}</p>
-              </div>
-              <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-400">
-                <Clock className="w-5 h-5" />
-              </div>
-            </div>
-
-            <div className="p-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 flex items-center justify-between">
-              <div>
-                <p className="text-emerald-300 text-[11px] font-semibold">Approved & Activated</p>
-                <p className="text-2xl font-black text-emerald-400 mt-1">{approvedCount}</p>
-              </div>
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400">
-                <Check className="w-5 h-5" />
-              </div>
-            </div>
-
-            <div className="p-4 rounded-2xl border border-slate-800 bg-slate-900/60 flex items-center justify-between">
-              <div>
-                <p className="text-slate-400 text-[11px] font-semibold">Active Payment Gateways</p>
-                <p className="text-2xl font-black text-white mt-1">{activeGatewaysCount}</p>
-              </div>
-              <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400">
-                <Wallet className="w-5 h-5" />
-              </div>
-            </div>
-          </div>
-
-          {/* Filtering Bar */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 rounded-2xl border border-slate-800 bg-slate-900/40">
-            <div className="relative w-full sm:w-80">
-              <Search className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
-              <input
-                type="text"
-                placeholder="Search user, ref ID, or sender name..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 outline-none focus:border-amber-500"
-              />
-            </div>
-
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <select
-                value={filterStatus}
-                onChange={(e: any) => setFilterStatus(e.target.value)}
-                className="bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-3 py-2 outline-none font-semibold focus:border-amber-400 focus:ring-1 focus:ring-amber-500/30"
-              >
-                <option value="ALL" className="bg-slate-900 text-white">All Statuses</option>
-                <option value="PENDING" className="bg-slate-900 text-amber-300 font-bold">Pending Only</option>
-                <option value="APPROVED" className="bg-slate-900 text-emerald-400 font-bold">Approved</option>
-                <option value="REJECTED" className="bg-slate-900 text-rose-400 font-bold">Rejected</option>
-              </select>
-
-              <button
-                onClick={() => fetchTransactions(true)}
-                className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
-                title="Refresh Table"
-              >
-                <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin text-amber-400" : ""}`} />
-              </button>
-            </div>
-          </div>
-
-          {/* Slips Table */}
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/50 overflow-hidden shadow-xl">
-            {loading ? (
-              <div className="p-12 text-center text-slate-400 text-xs flex flex-col items-center gap-3">
-                <div className="w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
-                <span>Loading payment verification records...</span>
-              </div>
-            ) : filtered.length === 0 ? (
-              <div className="p-12 text-center text-slate-500 text-xs">
-                No payment slips match your filters.
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs text-slate-300">
-                  <thead className="bg-slate-950/80 text-[11px] uppercase tracking-wider text-slate-400 border-b border-slate-800">
-                    <tr>
-                      <th className="py-3 px-4">Customer</th>
-                      <th className="py-3 px-4">Plan & Amount</th>
-                      <th className="py-3 px-4">Gateway</th>
-                      <th className="py-3 px-4">Reference / TID</th>
-                      <th className="py-3 px-4">Proof Slip</th>
-                      <th className="py-3 px-4">Status</th>
-                      <th className="py-3 px-4 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800/60 font-medium">
-                    {filtered.map((tx) => (
-                      <tr key={tx.id} className="hover:bg-slate-800/30 transition-colors">
-                        <td className="py-3 px-4">
-                          <p className="font-bold text-white">{tx.user?.name || "Customer"}</p>
-                          <p className="text-[11px] text-slate-400 font-mono">{tx.user?.email}</p>
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className="font-bold text-amber-400">{tx.plan}</span>
-                          <p className="text-[11px] text-slate-400 font-mono">
-                            {tx.currency} {tx.amount}
-                          </p>
-                        </td>
-                        <td className="py-3 px-4 font-mono text-[11px] text-slate-300">{tx.method}</td>
-                        <td className="py-3 px-4 font-mono text-[11px] text-white select-all">
-                          {tx.referenceId || "—"}
-                          {tx.senderName && <p className="text-[10px] text-slate-400">By: {tx.senderName}</p>}
-                        </td>
-                        <td className="py-3 px-4">
-                          {tx.receiptUrl ? (
-                            <button
-                              onClick={() => {
-                                setPreviewSlip(tx);
-                                setSlipZoom(1);
-                              }}
-                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors shadow-sm"
-                            >
-                              <Eye className="w-3.5 h-3.5 text-emerald-400" />
-                              <span>View Slip</span>
-                            </button>
-                          ) : (
-                            <span className="text-slate-500 text-[11px]">TID Only</span>
-                          )}
-                        </td>
-                        <td className="py-3 px-4">
-                          <span
-                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold ${
-                              tx.status === "APPROVED"
-                                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
-                                : tx.status === "REJECTED"
-                                ? "bg-rose-500/10 text-rose-400 border border-rose-500/30"
-                                : "bg-amber-500/10 text-amber-400 border border-amber-500/30"
-                            }`}
-                          >
-                            {tx.status === "APPROVED" && <Check className="w-3 h-3" />}
-                            {tx.status === "REJECTED" && <X className="w-3 h-3" />}
-                            {tx.status === "PENDING" && <Clock className="w-3 h-3" />}
-                            {tx.status}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 text-right">
-                          {tx.status === "PENDING" ? (
-                            <div className="flex items-center justify-end gap-2">
-                              <button
-                                onClick={() => handleAction(tx.id, "APPROVE")}
-                                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold transition-all shadow-sm active:scale-95"
-                              >
-                                <Check className="w-3.5 h-3.5" />
-                                <span>Approve</span>
-                              </button>
-                              <button
-                                onClick={() => handleAction(tx.id, "REJECT")}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-rose-950/60 border border-slate-700 text-slate-300 hover:text-rose-400 font-semibold"
-                              >
-                                <X className="w-3.5 h-3.5" />
-                                <span>Reject</span>
-                              </button>
-                            </div>
-                          ) : (
-                            <span className="text-[11px] text-slate-500">
-                              {tx.adminNotes || "Action completed"}
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        </>
-      )}
-
-      {/* TAB 2: CONFIGURE PAYMENT GATEWAYS VIEW */}
-      {activeTab === "GATEWAYS" && (
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl border border-slate-800 bg-slate-900/60">
-            <div>
-              <h2 className="text-base font-bold text-white flex items-center gap-2">
-                <Wallet className="w-5 h-5 text-amber-400" />
-                Active Payment Gateways & Receiving Accounts
-              </h2>
-              <p className="text-xs text-slate-400 mt-1">
-                These are the accounts shown to users on their Billing page. You can edit numbers, change account titles, or add new gateways anytime.
-              </p>
-            </div>
-            <button
-              onClick={openAddModal}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs transition-all shadow-md active:scale-95 shrink-0"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Add New Payment Gateway</span>
-            </button>
-          </div>
-
-          {loadingGateways ? (
-            <div className="p-12 text-center text-slate-400 text-xs flex flex-col items-center gap-3">
-              <div className="w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
-              <span>Loading payment gateways...</span>
-            </div>
-          ) : gateways.length === 0 ? (
-            <div className="p-12 text-center text-slate-500 text-xs rounded-2xl border border-slate-800 bg-slate-900/40">
-              No payment gateways configured. Click "Add New Payment Gateway" to create one.
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {gateways.map((g) => (
-                <div
-                  key={g.id}
-                  className={`rounded-2xl border p-5 flex flex-col justify-between transition-all ${
-                    g.isActive
-                      ? "border-slate-800 bg-slate-900/70 hover:border-slate-700"
-                      : "border-slate-800/50 bg-slate-950/40 opacity-60"
-                  }`}
-                >
-                  <div className="space-y-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
-                          {g.code}
-                        </span>
-                        <h3 className="text-base font-bold text-white mt-1.5">{g.name}</h3>
-                      </div>
-                      <button
-                        onClick={() => handleToggleGateway(g)}
-                        title={g.isActive ? "Click to Deactivate" : "Click to Activate"}
-                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 border transition-all ${
-                          g.isActive
-                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-rose-500/10 hover:text-rose-400 hover:border-rose-500/30"
-                            : "bg-slate-800 text-slate-400 border-slate-700 hover:bg-emerald-500/10 hover:text-emerald-400 hover:border-emerald-500/30"
-                        }`}
-                      >
-                        <Power className="w-3 h-3" />
-                        <span>{g.isActive ? "Active" : "Inactive"}</span>
-                      </button>
-                    </div>
-
-                    <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800/80 space-y-1.5">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-slate-400">Title:</span>
-                        <span className="text-white font-bold">{g.accountTitle}</span>
-                      </div>
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-slate-400">Account / No:</span>
-                        <span className="text-amber-400 font-mono font-bold text-right truncate max-w-[180px]">
-                          {g.accountNumber}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-slate-400">Currency:</span>
-                        <span className="text-slate-300 font-bold">{g.currency}</span>
-                      </div>
-                    </div>
-
-                    {g.instructions && (
-                      <p className="text-[11px] text-slate-400 leading-relaxed italic bg-slate-950/40 p-2.5 rounded-lg border border-slate-800/50">
-                        "{g.instructions}"
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="pt-4 mt-4 border-t border-slate-800/60 flex items-center justify-end gap-2">
-                    <button
-                      onClick={() => openEditModal(g)}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-colors"
-                    >
-                      <Edit2 className="w-3 h-3 text-amber-400" />
-                      <span>Edit Details</span>
-                    </button>
-                    <button
-                      onClick={() => handleDeleteGateway(g.id, g.name)}
-                      className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-950/40 transition-colors"
-                      title="Delete Gateway"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
       {/* RECEIPT INSPECTION LIGHTBOX MODAL */}
       {previewSlip && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-150">
-          <div className="w-full max-w-4xl max-h-[92vh] bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+          <div className="w-full max-w-4xl max-h-[92vh] bg-[#0d1424] border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
             {/* Modal Header */}
-            <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-800 bg-slate-950/80">
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/5 bg-[#080d19]">
               <div className="flex items-center gap-2.5">
                 <CreditCard className="w-4 h-4 text-amber-400" />
                 <span className="text-sm font-bold text-white">Payment Receipt Audit</span>
                 <span
-                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                  className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider ${
                     previewSlip.status === "APPROVED"
                       ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
                       : previewSlip.status === "REJECTED"
@@ -937,23 +913,23 @@ export default function AdminPaymentsPage() {
               </div>
               <button
                 onClick={() => setPreviewSlip(null)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Modal Content */}
             <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-y-auto">
               {/* Image Inspection Left Pane */}
-              <div className="lg:col-span-8 p-4 bg-black/50 flex flex-col items-center justify-between border-b lg:border-b-0 lg:border-r border-slate-800">
+              <div className="lg:col-span-8 p-4 bg-black/40 flex flex-col items-center justify-between border-b lg:border-b-0 lg:border-r border-white/5">
                 {/* Zoom Controls */}
                 <div className="w-full flex items-center justify-between pb-3 text-xs text-slate-400">
                   <span className="text-[11px] font-mono">Proof Image Viewport</span>
-                  <div className="flex items-center gap-1 bg-slate-950 border border-slate-800 rounded-lg p-0.5">
+                  <div className="flex items-center gap-1 bg-[#080d19] border border-white/10 rounded-lg p-0.5">
                     <button
                       onClick={() => setSlipZoom((prev) => Math.max(0.75, prev - 0.25))}
-                      className="p-1.5 hover:text-white hover:bg-slate-800 rounded"
+                      className="p-1.5 hover:text-white hover:bg-white/10 rounded"
                       title="Zoom Out"
                     >
                       <ZoomOut className="w-3.5 h-3.5" />
@@ -963,14 +939,14 @@ export default function AdminPaymentsPage() {
                     </span>
                     <button
                       onClick={() => setSlipZoom((prev) => Math.min(2.5, prev + 0.25))}
-                      className="p-1.5 hover:text-white hover:bg-slate-800 rounded"
+                      className="p-1.5 hover:text-white hover:bg-white/10 rounded"
                       title="Zoom In"
                     >
                       <ZoomIn className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => setSlipZoom(1)}
-                      className="p-1.5 hover:text-white hover:bg-slate-800 rounded"
+                      className="p-1.5 hover:text-white hover:bg-white/10 rounded"
                       title="Reset Zoom"
                     >
                       <RotateCcw className="w-3.5 h-3.5" />
@@ -979,7 +955,7 @@ export default function AdminPaymentsPage() {
                 </div>
 
                 {/* Image Viewport */}
-                <div className="w-full flex-1 max-h-[500px] overflow-auto flex items-center justify-center p-2 rounded-xl bg-slate-950/60 border border-slate-800/80">
+                <div className="w-full flex-1 max-h-[500px] overflow-auto flex items-center justify-center p-2 rounded-xl bg-[#080d19]/60 border border-white/5">
                   <img
                     src={previewSlip.receiptUrl}
                     alt="Payment Slip Proof"
@@ -1004,7 +980,7 @@ export default function AdminPaymentsPage() {
               </div>
 
               {/* Transaction Metadata & Actions Right Pane */}
-              <div className="lg:col-span-4 p-5 flex flex-col justify-between space-y-5 bg-slate-900">
+              <div className="lg:col-span-4 p-5 flex flex-col justify-between space-y-5 bg-[#0d1424]">
                 <div className="space-y-4 text-xs">
                   <div>
                     <span className="text-[10px] font-mono uppercase tracking-wider text-slate-500">Customer</span>
@@ -1012,7 +988,7 @@ export default function AdminPaymentsPage() {
                     <p className="text-slate-400 font-mono text-xs">{previewSlip.user?.email}</p>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2">
+                  <div className="p-3.5 rounded-xl bg-[#080d19] border border-white/5 space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-slate-400">Target Plan:</span>
                       <span className="font-bold text-amber-400">{previewSlip.plan}</span>
@@ -1024,7 +1000,7 @@ export default function AdminPaymentsPage() {
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-slate-400">Gateway:</span>
+                      <span className="text-slate-400">Deposit Rail:</span>
                       <span className="text-slate-200 font-mono">{previewSlip.method}</span>
                     </div>
                   </div>
@@ -1048,7 +1024,7 @@ export default function AdminPaymentsPage() {
                         </button>
                       )}
                     </div>
-                    <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white font-mono font-bold select-all break-all text-xs">
+                    <div className="p-2.5 rounded-xl bg-[#080d19] border border-white/5 text-white font-mono font-bold select-all break-all text-xs">
                       {previewSlip.referenceId || "No Reference ID Provided"}
                     </div>
                     {previewSlip.senderName && (
@@ -1058,7 +1034,7 @@ export default function AdminPaymentsPage() {
                 </div>
 
                 {/* Modal Inline Action Triggers */}
-                <div className="pt-4 border-t border-slate-800 space-y-2">
+                <div className="pt-4 border-t border-white/5 space-y-2">
                   {previewSlip.status === "PENDING" ? (
                     <>
                       <button
@@ -1066,7 +1042,7 @@ export default function AdminPaymentsPage() {
                           await handleAction(previewSlip.id, "APPROVE");
                           setPreviewSlip((prev: any) => (prev ? { ...prev, status: "APPROVED" } : null));
                         }}
-                        className="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs transition-all shadow-md active:scale-95 flex items-center justify-center gap-1.5"
+                        className="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-400 hover:from-emerald-400 hover:to-emerald-300 text-slate-950 font-black text-xs transition-all shadow-md active:scale-95 flex items-center justify-center gap-1.5"
                       >
                         <Check className="w-4 h-4" />
                         <span>Approve & Upgrade Workspace</span>
@@ -1076,14 +1052,14 @@ export default function AdminPaymentsPage() {
                           await handleAction(previewSlip.id, "REJECT");
                           setPreviewSlip((prev: any) => (prev ? { ...prev, status: "REJECTED" } : null));
                         }}
-                        className="w-full py-2 rounded-xl bg-slate-800 hover:bg-rose-950/60 border border-slate-700 text-slate-300 hover:text-rose-400 font-bold text-xs transition-colors flex items-center justify-center gap-1.5"
+                        className="w-full py-2 rounded-xl bg-white/5 hover:bg-rose-950/60 border border-white/10 text-slate-300 hover:text-rose-400 font-bold text-xs transition-colors flex items-center justify-center gap-1.5"
                       >
                         <X className="w-4 h-4" />
                         <span>Reject Transaction</span>
                       </button>
                     </>
                   ) : (
-                    <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-center">
+                    <div className="p-3 rounded-xl bg-[#080d19] border border-white/5 text-center">
                       <p className="text-xs font-bold text-slate-300">Transaction Status: {previewSlip.status}</p>
                       <p className="text-[11px] text-slate-500 mt-0.5">
                         {previewSlip.adminNotes || "Action completed by superadmin."}

@@ -17,6 +17,11 @@ import {
   Sparkles,
   Copy,
   Check,
+  ShieldAlert,
+  ArrowRight,
+  Filter,
+  Download,
+  Zap,
 } from "lucide-react";
 
 export default function AdminUsersPage() {
@@ -24,6 +29,8 @@ export default function AdminUsersPage() {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [filterPlan, setFilterPlan] = useState<string>("ALL");
+  const [filterRole, setFilterRole] = useState<string>("ALL");
 
   // Edit Modal State
   const [selectedUser, setSelectedUser] = useState<any>(null);
@@ -77,7 +84,7 @@ export default function AdminUsersPage() {
   const generateRandomPassword = () => {
     const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%";
     let pwd = "";
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 12; i++) {
       pwd += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     setNewPassword(pwd);
@@ -179,16 +186,20 @@ export default function AdminUsersPage() {
     }
   };
 
-  const filtered = users.filter(
-    (u) =>
+  const filtered = users.filter((u) => {
+    const matchesSearch =
       u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (u.name && u.name.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+      (u.name && u.name.toLowerCase().includes(searchTerm.toLowerCase()));
+    const ws = u.workspaces?.[0]?.workspace;
+    const matchesPlan = filterPlan === "ALL" || (ws?.plan || "STARTER") === filterPlan;
+    const matchesRole = filterRole === "ALL" || u.role === filterRole;
+    return matchesSearch && matchesPlan && matchesRole;
+  });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in duration-150">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-white/5">
         <div>
           <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-2.5">
             <Users className="w-6 h-6 text-amber-400" />
@@ -198,114 +209,168 @@ export default function AdminUsersPage() {
             Global directory of all Sendport accounts, active roles, workspace daily quotas, and sending permissions.
           </p>
         </div>
-        <button
-          onClick={() => fetchUsers(true)}
-          disabled={loading}
-          className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800 px-3.5 py-2 text-xs font-bold text-white hover:bg-slate-700 shadow-sm transition-all"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 text-amber-400 ${loading ? "animate-spin" : ""}`} />
-          Refresh Users
-        </button>
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={() => fetchUsers(true)}
+            disabled={loading}
+            className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-[#0d1424] px-3.5 py-2 text-xs font-bold text-white hover:bg-white/5 shadow-sm transition-all cursor-pointer"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 text-amber-400 ${loading ? "animate-spin" : ""}`} />
+            <span>Refresh</span>
+          </button>
+        </div>
       </div>
 
       {toastMsg && (
-        <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 font-bold flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4" />
-          {toastMsg}
+        <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300 font-bold flex items-center gap-2 shadow-sm">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>{toastMsg}</span>
         </div>
       )}
 
       {/* KPI Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 shadow-lg">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Total Users</span>
+        <div className="rounded-2xl border border-white/5 bg-[#0d1424] p-5 shadow-xl hover:border-white/10 transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Total Users</span>
+            <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              <Users className="w-4 h-4" />
+            </div>
+          </div>
           {loading ? (
-            <div className="h-9 w-16 bg-slate-800 rounded animate-pulse my-1" />
+            <div className="h-9 w-20 bg-slate-800/60 rounded animate-pulse my-2" />
           ) : (
-            <p className="text-3xl font-black text-white mt-1">{stats?.totalUsers || 0}</p>
+            <p className="text-3xl font-black text-white mt-2">{stats?.totalUsers || 0}</p>
           )}
-          <p className="text-[11px] text-slate-500 mt-1">Accounts registered in platform</p>
+          <p className="text-[11px] text-slate-500 mt-1">Registered tenant accounts</p>
         </div>
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 shadow-lg">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Active Workspaces</span>
+
+        <div className="rounded-2xl border border-white/5 bg-[#0d1424] p-5 shadow-xl hover:border-white/10 transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Active Workspaces</span>
+            <div className="p-2 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              <Building2 className="w-4 h-4" />
+            </div>
+          </div>
           {loading ? (
-            <div className="h-9 w-16 bg-slate-800 rounded animate-pulse my-1" />
+            <div className="h-9 w-20 bg-slate-800/60 rounded animate-pulse my-2" />
           ) : (
-            <p className="text-3xl font-black text-amber-400 mt-1">{stats?.activeWorkspacesCount || 0}</p>
+            <p className="text-3xl font-black text-amber-400 mt-2">{stats?.activeWorkspacesCount || 0}</p>
           )}
-          <p className="text-[11px] text-slate-500 mt-1">Isolated customer environments</p>
+          <p className="text-[11px] text-slate-500 mt-1">Isolated client workspaces</p>
         </div>
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 shadow-lg">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Platform Admins</span>
+
+        <div className="rounded-2xl border border-white/5 bg-[#0d1424] p-5 shadow-xl hover:border-white/10 transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Platform Admins</span>
+            <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <ShieldAlert className="w-4 h-4" />
+            </div>
+          </div>
           {loading ? (
-            <div className="h-9 w-16 bg-slate-800 rounded animate-pulse my-1" />
+            <div className="h-9 w-20 bg-slate-800/60 rounded animate-pulse my-2" />
           ) : (
-            <p className="text-3xl font-black text-emerald-400 mt-1">{stats?.totalAdmins || 0}</p>
+            <p className="text-3xl font-black text-emerald-400 mt-2">{stats?.totalAdmins || 0}</p>
           )}
-          <p className="text-[11px] text-slate-500 mt-1">Users with ADMIN authority</p>
+          <p className="text-[11px] text-slate-500 mt-1">Root administrator accounts</p>
         </div>
       </div>
 
-      {/* Search */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4 shadow-lg">
-        <div className="relative w-full max-w-md">
+      {/* Filter & Search Bar */}
+      <div className="rounded-2xl border border-white/5 bg-[#0d1424] p-4 shadow-xl flex flex-col md:flex-row items-center justify-between gap-3">
+        <div className="relative w-full md:max-w-md">
           <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-500" />
           <input
             type="text"
-            placeholder="Search by email or name..."
+            placeholder="Search by email, name, or workspace ID..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full rounded-xl border border-slate-700 bg-slate-950 pl-10 pr-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-amber-400 focus:outline-none"
+            className="w-full rounded-xl border border-white/10 bg-[#080d19] pl-10 pr-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-amber-400 focus:outline-none"
           />
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+          <div className="flex items-center gap-1 bg-[#080d19] p-1 rounded-xl border border-white/5 text-xs">
+            {(["ALL", "STARTER", "GROWTH", "SCALE_PRO"] as const).map((p) => (
+              <button
+                key={p}
+                onClick={() => setFilterPlan(p)}
+                className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition-all cursor-pointer ${
+                  filterPlan === p
+                    ? "bg-amber-500 text-slate-950 shadow-sm"
+                    : "text-slate-400 hover:text-white"
+                }`}
+              >
+                {p === "ALL" ? "All Plans" : p}
+              </button>
+            ))}
+          </div>
+
+          <select
+            value={filterRole}
+            onChange={(e) => setFilterRole(e.target.value)}
+            className="rounded-xl border border-white/10 bg-[#080d19] px-3 py-1.5 text-xs text-slate-300 font-bold focus:border-amber-400 focus:outline-none cursor-pointer"
+          >
+            <option value="ALL">All Roles</option>
+            <option value="USER">Regular Users</option>
+            <option value="ADMIN">Admins Only</option>
+          </select>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/60 shadow-2xl overflow-hidden">
-        <div className="p-4 border-b border-slate-800 bg-slate-950/60 flex items-center justify-between">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-300">
-            Account List ({loading ? "Loading..." : filtered.length})
+      {/* Users Table */}
+      <div className="rounded-2xl border border-white/5 bg-[#0d1424] shadow-2xl overflow-hidden">
+        <div className="p-4 border-b border-white/5 bg-[#080d19] flex items-center justify-between">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+            <span>Accounts Directory</span>
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-white/5 border border-white/10 text-slate-400">
+              {filtered.length} found
+            </span>
           </h2>
-          <span className="text-[11px] font-mono text-slate-400">Direct Quota & Plan Overrides</span>
+          <span className="text-[11px] font-mono text-slate-400 hidden sm:inline">
+            Direct Quota & Plan Overrides Active
+          </span>
         </div>
 
         {loading ? (
           <div className="p-6 space-y-3">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-14 bg-slate-800/60 rounded-xl animate-pulse" />
+              <div key={i} className="h-14 bg-white/[0.02] rounded-xl animate-pulse" />
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="p-12 text-center text-slate-500 text-xs">No users found matching search.</div>
+          <div className="p-12 text-center text-slate-500 text-xs">
+            No users found matching current search and filter criteria.
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="border-b border-slate-800 bg-slate-950 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              <thead className="border-b border-white/5 bg-[#080d19] text-[10px] font-bold uppercase tracking-wider text-slate-400">
                 <tr>
                   <th className="p-4">User Details</th>
                   <th className="p-4">Role</th>
                   <th className="p-4">Workspace & Plan</th>
-                  <th className="p-4">Daily Quota</th>
+                  <th className="p-4">Daily Sending Limit</th>
                   <th className="p-4">Resources</th>
                   <th className="p-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
+              <tbody className="divide-y divide-white/5">
                 {filtered.map((user) => {
                   const ws = user.workspaces?.[0]?.workspace;
                   return (
-                    <tr key={user.id} className="hover:bg-slate-800/30 transition-colors">
+                    <tr key={user.id} className="hover:bg-white/[0.02] transition-colors">
                       <td className="p-4">
-                        <p className="font-bold text-white">{user.email}</p>
-                        <p className="text-[11px] text-slate-400">{user.name || "No display name"}</p>
-                        <p className="text-[10px] font-mono text-slate-500">{user.id}</p>
+                        <p className="font-bold text-white text-xs">{user.email}</p>
+                        <p className="text-[11px] text-slate-400 mt-0.5">{user.name || "No display name"}</p>
+                        <p className="text-[10px] font-mono text-slate-500 truncate max-w-[200px]">{user.id}</p>
                       </td>
                       <td className="p-4">
                         <span
-                          className={`inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase ${
                             user.role === "ADMIN"
-                              ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
-                              : "bg-slate-800 text-slate-300 border border-slate-700"
+                              ? "bg-amber-500/15 text-amber-300 border border-amber-500/30"
+                              : "bg-slate-800/80 text-slate-300 border border-white/5"
                           }`}
                         >
                           {user.role}
@@ -314,45 +379,45 @@ export default function AdminUsersPage() {
                       <td className="p-4">
                         <p className="font-semibold text-slate-200">{ws?.name || "Default Workspace"}</p>
                         <span
-                          className={`inline-block mt-0.5 text-[10px] font-mono uppercase px-2 py-0.5 rounded font-bold ${
+                          className={`inline-block mt-1 text-[10px] font-mono uppercase px-2 py-0.5 rounded font-bold ${
                             ws?.plan === "SCALE_PRO"
-                              ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                              ? "bg-amber-500/15 text-amber-300 border border-amber-500/30"
                               : ws?.plan === "GROWTH"
-                              ? "bg-blue-500/10 text-blue-400 border border-blue-500/20"
-                              : "bg-slate-800 text-slate-400"
+                              ? "bg-primary-500/15 text-primary-300 border border-primary-500/30"
+                              : "bg-slate-800 text-slate-400 border border-white/5"
                           }`}
                         >
                           {ws?.plan || "STARTER"}
                         </span>
                       </td>
                       <td className="p-4">
-                        <p className="font-bold text-amber-400">
-                          {ws?.dailyQuota ? ws.dailyQuota.toLocaleString() : "100"} emails/day
+                        <p className="font-bold font-mono text-amber-400">
+                          {ws?.dailyQuota ? ws.dailyQuota.toLocaleString() : "100"} <span className="font-sans text-[11px] text-slate-400 font-normal">emails/day</span>
                         </p>
-                        <p className="text-[10px] text-slate-500">Used today: {ws?.usedToday || 0}</p>
+                        <p className="text-[10px] font-mono text-slate-500 mt-0.5">Used today: {ws?.usedToday || 0}</p>
                       </td>
                       <td className="p-4">
                         <div className="text-[11px] text-slate-400 space-y-0.5">
-                          <p>{user._count?.domains || 0} Domains</p>
-                          <p>{user._count?.apiKeys || 0} API Keys</p>
-                          <p>{user._count?.payments || 0} Invoices</p>
+                          <p><span className="text-white font-bold">{user._count?.domains || 0}</span> Domains</p>
+                          <p><span className="text-white font-bold">{user._count?.apiKeys || 0}</span> API Keys</p>
+                          <p><span className="text-white font-bold">{user._count?.payments || 0}</span> Slips</p>
                         </div>
                       </td>
                       <td className="p-4 text-right space-x-1.5 whitespace-nowrap">
                         <button
                           onClick={() => handleResetQuota(user)}
-                          title="Reset today's used quota counter back to 0"
-                          className="p-1.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-amber-400 transition-colors inline-flex items-center gap-1 text-[11px]"
+                          title="Reset today's used quota back to 0"
+                          className="px-2.5 py-1.5 rounded-lg border border-white/10 bg-[#080d19] hover:bg-white/5 text-slate-300 hover:text-amber-400 transition-colors inline-flex items-center gap-1.5 text-[11px] font-bold cursor-pointer"
                         >
                           <RotateCcw className="w-3.5 h-3.5" />
-                          Reset Quota
+                          <span>Reset</span>
                         </button>
                         <button
                           onClick={() => openEditModal(user)}
-                          className="px-2.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold transition-colors inline-flex items-center gap-1.5 text-[11px]"
+                          className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black transition-all inline-flex items-center gap-1.5 text-[11px] shadow-sm cursor-pointer"
                         >
                           <Edit className="w-3.5 h-3.5" />
-                          Manage
+                          <span>Manage</span>
                         </button>
                       </td>
                     </tr>
@@ -366,206 +431,187 @@ export default function AdminUsersPage() {
 
       {/* Edit User & Quotas Modal */}
       {selectedUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md max-h-[92vh] overflow-y-auto rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-in fade-in duration-150">
+          <div className="w-full max-w-lg max-h-[92vh] overflow-y-auto rounded-2xl border border-white/10 bg-[#0d1424] p-6 shadow-2xl space-y-5 ring-1 ring-white/10">
+            <div className="flex items-center justify-between pb-3 border-b border-white/5">
               <h3 className="text-base font-bold text-white flex items-center gap-2">
                 <Sliders className="w-4 h-4 text-amber-400" />
-                Manage Account & Quotas
+                Manage User Account & Permissions
               </h3>
               <button
                 onClick={() => setSelectedUser(null)}
-                className="text-slate-400 hover:text-white text-xs font-bold"
+                className="text-slate-400 hover:text-white text-xs font-bold p-1 cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
-            <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800">
+            <div className="p-3.5 rounded-xl bg-[#080d19] border border-white/5 space-y-0.5">
               <p className="text-xs font-bold text-white">{selectedUser.email}</p>
-              <p className="text-[11px] text-slate-400 font-mono mt-0.5">ID: {selectedUser.id}</p>
+              <p className="text-[11px] text-slate-400 font-mono">User ID: {selectedUser.id}</p>
             </div>
 
             <form onSubmit={handleSaveUser} className="space-y-4 text-xs">
+              {/* Role Selection */}
               <div>
-                <label className="block text-slate-300 font-bold mb-1">User Role Authority</label>
-                <select
-                  value={editRole}
-                  onChange={(e) => setEditRole(e.target.value)}
-                  className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-white font-bold focus:border-amber-400 focus:ring-2 focus:ring-amber-500/30 focus:outline-none"
-                >
-                  <option value="USER" className="bg-slate-900 text-white">USER (Regular Customer)</option>
-                  <option value="ADMIN" className="bg-slate-900 text-amber-300 font-bold">ADMIN (Superadmin Root Authority)</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-slate-300 font-bold mb-1">Workspace Plan Tier</label>
-                <select
-                  value={editPlan}
-                  onChange={(e) => {
-                    const p = e.target.value;
-                    setEditPlan(p);
-                    if (p === "SCALE_PRO") setEditQuota(25000);
-                    else if (p === "GROWTH") setEditQuota(3000);
-                    else setEditQuota(100);
-                  }}
-                  className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-white font-bold focus:border-amber-400 focus:ring-2 focus:ring-amber-500/30 focus:outline-none"
-                >
-                  <option value="STARTER" className="bg-slate-900 text-white">STARTER (Free - 100 emails/day)</option>
-                  <option value="GROWTH" className="bg-slate-900 text-white">GROWTH ($20/mo - 3,000 emails/day)</option>
-                  <option value="SCALE_PRO" className="bg-slate-900 text-white">SCALE_PRO ($79/mo - 25,000 emails/day)</option>
-                </select>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-slate-300 font-bold">Custom Daily Sending Quota</label>
-                  <span className="text-[11px] font-mono text-amber-400 font-bold">
-                    {editQuota.toLocaleString()} emails/day
-                  </span>
-                </div>
-                <input
-                  type="number"
-                  min="100"
-                  step="100"
-                  value={editQuota}
-                  onChange={(e) => setEditQuota(Number(e.target.value))}
-                  className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-white font-mono font-bold focus:border-amber-400 focus:ring-2 focus:ring-amber-500/30 focus:outline-none"
-                />
-
-                {/* Quick Quota Preset Chips */}
-                <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-                  <span className="text-[10px] uppercase font-bold text-slate-500 mr-1">Presets:</span>
-                  {[
-                    { label: "1k", val: 1000 },
-                    { label: "5k", val: 5000 },
-                    { label: "10k", val: 10000 },
-                    { label: "25k", val: 25000 },
-                    { label: "50k", val: 50000 },
-                    { label: "100k", val: 100000 },
-                    { label: "1M", val: 1000000 },
-                  ].map((preset) => (
-                    <button
-                      key={preset.label}
-                      type="button"
-                      onClick={() => setEditQuota(preset.val)}
-                      className={`px-2 py-0.5 rounded-lg text-[10px] font-mono font-semibold border transition-all ${
-                        editQuota === preset.val
-                          ? "bg-amber-500/20 border-amber-500/50 text-amber-300"
-                          : "bg-slate-950/80 border-slate-700/80 text-slate-400 hover:text-white hover:border-slate-600"
-                      }`}
-                    >
-                      {preset.label}
-                    </button>
-                  ))}
+                <label className="block text-slate-300 font-bold mb-1.5">User Role Authority</label>
+                <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
-                    onClick={() => setEditQuota((prev) => prev + 5000)}
-                    className="px-2 py-0.5 rounded-lg text-[10px] font-mono font-semibold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 transition-all"
+                    onClick={() => setEditRole("USER")}
+                    className={`p-3 rounded-xl border text-left font-bold text-xs transition-all cursor-pointer ${
+                      editRole === "USER"
+                        ? "bg-white/10 border-white/30 text-white"
+                        : "bg-[#080d19] border-white/5 text-slate-400 hover:text-white"
+                    }`}
                   >
-                    +5k
+                    <div>USER</div>
+                    <div className="text-[10px] font-normal text-slate-500">Regular Tenant Customer</div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setEditRole("ADMIN")}
+                    className={`p-3 rounded-xl border text-left font-bold text-xs transition-all cursor-pointer ${
+                      editRole === "ADMIN"
+                        ? "bg-amber-500/20 border-amber-500/40 text-amber-300"
+                        : "bg-[#080d19] border-white/5 text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    <div className="text-amber-400 font-black">ADMIN</div>
+                    <div className="text-[10px] font-normal text-amber-500/80">Superadmin Root Access</div>
                   </button>
                 </div>
               </div>
 
-              {/* Security & Password Override Section */}
-              <div className="pt-3 border-t border-slate-800 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-300 font-bold flex items-center gap-1.5 text-xs">
-                    <KeyRound className="w-3.5 h-3.5 text-amber-400" />
-                    Security & Password Override
-                  </span>
-                  <span className="text-[10px] text-slate-500 font-mono">Instant DB Update</span>
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="text-slate-400 text-[11px]">Direct Password Override</label>
+              {/* Plan Tier Selection */}
+              <div>
+                <label className="block text-slate-300 font-bold mb-1.5">Assigned Subscription Plan</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(["STARTER", "GROWTH", "SCALE_PRO"] as const).map((tier) => (
                     <button
+                      key={tier}
                       type="button"
-                      onClick={generateRandomPassword}
-                      className="text-[10px] text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 transition-colors"
+                      onClick={() => {
+                        setEditPlan(tier);
+                        if (tier === "STARTER") setEditQuota(100);
+                        if (tier === "GROWTH") setEditQuota(3000);
+                        if (tier === "SCALE_PRO") setEditQuota(10000);
+                      }}
+                      className={`p-2.5 rounded-xl border text-center font-bold text-xs transition-all cursor-pointer ${
+                        editPlan === tier
+                          ? "bg-amber-500 text-slate-950 border-amber-400 shadow-sm"
+                          : "bg-[#080d19] border-white/5 text-slate-400 hover:text-white"
+                      }`}
                     >
-                      <Sparkles className="w-3 h-3" />
-                      Generate Strong
+                      {tier}
                     </button>
-                  </div>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Leave blank to keep current password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      className="w-full rounded-xl border border-slate-700 bg-slate-800/90 pl-3 pr-9 py-2 text-white font-mono text-xs placeholder-slate-500 focus:border-amber-400 focus:outline-none"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-2.5 top-2.5 text-slate-400 hover:text-white"
-                    >
-                      {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                    </button>
-                  </div>
-                  {newPassword && (
-                    <p className="text-[10px] text-amber-300/80 mt-1">
-                      ⚠️ Password will be updated in database immediately upon clicking "Update Account".
-                    </p>
-                  )}
-                </div>
-
-                {/* 1-Click Send Reset Verification Email */}
-                <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800 flex flex-col gap-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <div>
-                      <p className="text-[11px] font-bold text-slate-300">Self-Serve Recovery Email</p>
-                      <p className="text-[10px] text-slate-500">Send 6-digit verification code to user</p>
-                    </div>
-                    <button
-                      type="button"
-                      disabled={sendingReset}
-                      onClick={handleSendResetEmail}
-                      className="px-2.5 py-1.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-amber-400 text-[11px] font-bold transition-all flex items-center gap-1.5 disabled:opacity-50 whitespace-nowrap"
-                    >
-                      <Mail className="w-3 h-3 text-amber-400" />
-                      {sendingReset ? "Sending..." : "Send Reset Email"}
-                    </button>
-                  </div>
-
-                  {recoveryCodeInfo && (
-                    <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] flex items-center justify-between">
-                      <span>✓ Dispatched code: <strong className="font-mono text-white tracking-wider ml-1">{recoveryCodeInfo}</strong></span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          navigator.clipboard.writeText(recoveryCodeInfo);
-                          setCopiedCode(true);
-                          setTimeout(() => setCopiedCode(false), 2000);
-                        }}
-                        className="text-slate-400 hover:text-white flex items-center gap-1"
-                      >
-                        {copiedCode ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                        {copiedCode ? "Copied" : "Copy"}
-                      </button>
-                    </div>
-                  )}
+                  ))}
                 </div>
               </div>
 
-              <div className="pt-2 flex gap-2">
+              {/* Daily Quota */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-slate-300 font-bold">Daily Email Quota (Overridable)</label>
+                  <span className="font-mono text-amber-400 font-bold">{editQuota.toLocaleString()} emails/day</span>
+                </div>
+                <input
+                  type="number"
+                  min="1"
+                  max="1000000"
+                  value={editQuota}
+                  onChange={(e) => setEditQuota(parseInt(e.target.value, 10) || 100)}
+                  className="w-full rounded-xl border border-white/10 bg-[#080d19] px-3.5 py-2.5 font-mono text-xs text-white focus:border-amber-400 focus:outline-none"
+                />
+              </div>
+
+              {/* Password Override */}
+              <div className="p-3.5 rounded-xl bg-[#080d19] border border-white/5 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <label className="font-bold text-slate-300 flex items-center gap-1.5">
+                    <KeyRound className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Instant Password Reset (Optional)</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={generateRandomPassword}
+                    className="text-[11px] font-bold text-amber-400 hover:underline cursor-pointer"
+                  >
+                    Generate Random
+                  </button>
+                </div>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter new password (or leave blank to keep unchanged)"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="w-full rounded-xl border border-white/10 bg-[#0d1424] pl-3.5 pr-10 py-2.5 font-mono text-xs text-white placeholder-slate-600 focus:border-amber-400 focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-2.5 text-slate-400 hover:text-white"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Password Reset Email Trigger */}
+              <div className="p-3.5 rounded-xl bg-[#080d19] border border-white/5 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-bold text-slate-300">Dispatch Password Reset Email</p>
+                    <p className="text-[11px] text-slate-500">Sends standard security reset link directly to recipient</p>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={sendingReset}
+                    onClick={handleSendResetEmail}
+                    className="px-3 py-1.5 rounded-lg border border-white/10 bg-[#0d1424] hover:bg-white/10 text-xs font-bold text-slate-200 disabled:opacity-50 transition-all cursor-pointer"
+                  >
+                    {sendingReset ? "Sending..." : "Send Reset Email"}
+                  </button>
+                </div>
+
+                {recoveryCodeInfo && (
+                  <div className="mt-2 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] text-amber-400 font-bold uppercase block">Verification Code</span>
+                      <span className="font-mono font-black text-amber-300 text-sm">{recoveryCodeInfo}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(recoveryCodeInfo);
+                        setCopiedCode(true);
+                        setTimeout(() => setCopiedCode(false), 2000);
+                      }}
+                      className="px-2 py-1 rounded bg-amber-500/20 text-amber-300 font-bold text-[11px] flex items-center gap-1 cursor-pointer"
+                    >
+                      {copiedCode ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                      <span>{copiedCode ? "Copied" : "Copy"}</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-white/5">
                 <button
                   type="button"
                   onClick={() => setSelectedUser(null)}
-                  className="w-1/2 py-2.5 rounded-xl border border-slate-700 bg-slate-800 text-white font-bold hover:bg-slate-700 transition-colors"
+                  className="px-4 py-2 rounded-xl border border-white/5 bg-transparent text-xs font-semibold text-slate-400 hover:text-white cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={updating}
-                  className="w-1/2 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black transition-colors shadow-lg shadow-amber-500/20"
+                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-xs transition-all shadow-md disabled:opacity-50 cursor-pointer"
                 >
-                  {updating ? "Saving..." : "Update Account"}
+                  {updating ? "Saving Changes..." : "Save Account Settings"}
                 </button>
               </div>
             </form>
