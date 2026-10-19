@@ -133,10 +133,10 @@ export default function ResendAlternativePage() {
                 Start Sending Free <ArrowRight className="w-4 h-4" />
               </Link>
               <Link
-                href="/dashboard/playground"
+                href="/docs"
                 className="px-6 py-3 rounded-xl bg-slate-900 text-white font-bold text-xs hover:bg-slate-800 transition border border-slate-800"
               >
-                Explore API Playground
+                Explore API Docs
               </Link>
             </div>
           </div>

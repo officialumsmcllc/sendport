@@ -122,10 +122,10 @@ export default function PostmarkAlternativePage() {
                 Start Free with Sendport <ArrowRight className="w-4 h-4" />
               </Link>
               <Link
-                href="/dashboard/deliverability"
+                href="/features"
                 className="px-6 py-3 rounded-xl bg-slate-900 text-white font-bold text-xs hover:bg-slate-800 transition border border-slate-800"
               >
-                Test Deliverability Engine
+                View Deliverability Features
               </Link>
             </div>
           </div>

@@ -78,11 +78,11 @@ export function Footer({ dark = true }: { dark?: boolean }) {
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-200 mb-3">Product</h3>
             <ul className="space-y-2.5 text-xs text-slate-400">
               <li><Link href="/features" className="hover:text-white transition-colors">Features Overview</Link></li>
-              <li><Link href="/#pricing" className="hover:text-white transition-colors">Pricing & Plans</Link></li>
-
-              <li><Link href="/dashboard/audiences" className="hover:text-white transition-colors">Audiences & Contacts</Link></li>
-              <li><Link href="/dashboard/link-checker" className="hover:text-white transition-colors">Pre-Flight Link Checker</Link></li>
-              <li><Link href="/dashboard/templates" className="hover:text-white transition-colors">React Email Templates</Link></li>
+              <li><Link href="/pricing" className="hover:text-white transition-colors">Pricing & Plans</Link></li>
+              <li><Link href="/features#audiences" className="hover:text-white transition-colors">Audiences & Segments</Link></li>
+              <li><Link href="/features#link-checker" className="hover:text-white transition-colors">Pre-Flight Link Checker</Link></li>
+              <li><Link href="/startups" className="hover:text-white transition-colors">Startups Program ($1,000)</Link></li>
+              <li><Link href="/security" className="hover:text-white transition-colors">Security & 2048-bit DKIM</Link></li>
               <li><Link href="/status" className="hover:text-white transition-colors">Live Platform Status</Link></li>
             </ul>
           </div>
@@ -93,16 +93,14 @@ export function Footer({ dark = true }: { dark?: boolean }) {
             <ul className="space-y-2.5 text-xs text-slate-400">
               <li><Link href="/blog" className="hover:text-white transition-colors">Engineering & Guides Blog</Link></li>
               <li><Link href="/docs" className="hover:text-white transition-colors">REST API Reference</Link></li>
-              <li><Link href="/dashboard/smtp" className="hover:text-white transition-colors">SMTP Relay Credentials</Link></li>
-              <li><Link href="/integrations/wordpress" className="text-sky-400 hover:text-sky-300 font-semibold transition-colors flex items-center gap-1">WordPress SMTP Plugin <span className="text-[10px] bg-sky-500/20 px-1 rounded">New</span></Link></li>
               <li><Link href="/integrations/shopify" className="text-emerald-400 hover:text-emerald-300 font-semibold transition-colors flex items-center gap-1">Shopify Webhooks & Email <span className="text-[10px] bg-emerald-500/20 px-1 rounded">New</span></Link></li>
-              <li><Link href="/dashboard/playground" className="hover:text-white transition-colors">Interactive API Playground</Link></li>
-              <li><Link href="/vs/resend-alternative" className="hover:text-white transition-colors">Sendport vs Resend</Link></li>
-              <li><Link href="/vs/sendgrid-alternative" className="hover:text-white transition-colors">Sendport vs SendGrid</Link></li>
-              <li><Link href="/vs/postmark-alternative" className="hover:text-white transition-colors">Sendport vs Postmark</Link></li>
-              <li><Link href="/vs/mailgun-alternative" className="hover:text-white transition-colors">Sendport vs Mailgun</Link></li>
-              <li><Link href="/vs/aws-ses-alternative" className="hover:text-white transition-colors">Sendport vs AWS SES</Link></li>
-              <li><Link href="/vs/brevo-alternative" className="hover:text-white transition-colors">Sendport vs Brevo</Link></li>
+              <li><Link href="/integrations/wordpress" className="text-sky-400 hover:text-sky-300 font-semibold transition-colors flex items-center gap-1">WordPress SMTP Plugin <span className="text-[10px] bg-sky-500/20 px-1 rounded">New</span></Link></li>
+              <li><Link href="/vs/resend-alternative" className="hover:text-white transition-colors">GetSendport vs Resend</Link></li>
+              <li><Link href="/vs/sendgrid-alternative" className="hover:text-white transition-colors">GetSendport vs SendGrid</Link></li>
+              <li><Link href="/vs/postmark-alternative" className="hover:text-white transition-colors">GetSendport vs Postmark</Link></li>
+              <li><Link href="/vs/mailgun-alternative" className="hover:text-white transition-colors">GetSendport vs Mailgun</Link></li>
+              <li><Link href="/vs/aws-ses-alternative" className="hover:text-white transition-colors">GetSendport vs AWS SES</Link></li>
+              <li><Link href="/vs/brevo-alternative" className="hover:text-white transition-colors">GetSendport vs Brevo</Link></li>
             </ul>
           </div>
 

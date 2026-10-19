@@ -88,6 +88,9 @@ export function Navbar({
           <Link href="/features" className="hover:text-primary-400 transition-colors">
             Features
           </Link>
+          <Link href="/integrations/shopify" className="hover:text-primary-400 transition-colors">
+            Integrations
+          </Link>
           <Link href="/pricing" className="hover:text-primary-400 transition-colors">
             Pricing
           </Link>
@@ -97,12 +100,6 @@ export function Navbar({
           >
             <Terminal className="w-3.5 h-3.5 text-primary-400" />
             Docs
-          </Link>
-          <Link href="/features#audiences" className="hover:text-primary-400 transition-colors">
-            Audiences
-          </Link>
-          <Link href="/features#link-checker" className="hover:text-primary-400 transition-colors">
-            Link Checker
           </Link>
           <Link href="/blog" className="hover:text-primary-400 transition-colors">
             Blog
@@ -266,11 +263,8 @@ export function Navbar({
           <Link href="/docs" className="block text-sm py-1 font-medium hover:text-primary-400">
             API Documentation
           </Link>
-          <Link href="/features#audiences" onClick={() => setMobileMenuOpen(false)} className="block text-sm py-1 font-medium hover:text-primary-400">
-            Audiences & Contacts
-          </Link>
-          <Link href="/features#link-checker" onClick={() => setMobileMenuOpen(false)} className="block text-sm py-1 font-medium hover:text-primary-400">
-            Link Checker
+          <Link href="/integrations/shopify" onClick={() => setMobileMenuOpen(false)} className="block text-sm py-1 font-medium hover:text-primary-400">
+            Integrations (Shopify & WP)
           </Link>
           <Link href="/blog" className="block text-sm py-1 font-medium hover:text-primary-400">
             Blog & Guides
