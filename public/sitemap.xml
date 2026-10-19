@@ -19,6 +19,18 @@
     <priority>0.9</priority>
   </url>
   <url>
+    <loc>https://getsendport.com/integrations/shopify</loc>
+    <lastmod>2026-10-19</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://getsendport.com/integrations/wordpress</loc>
+    <lastmod>2026-10-19</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
     <loc>https://getsendport.com/vs/resend-alternative</loc>
     <lastmod>2026-10-06</lastmod>
     <changefreq>monthly</changefreq>

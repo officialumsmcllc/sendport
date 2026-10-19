@@ -17,6 +17,7 @@ export function GET() {
     { loc: "https://getsendport.com/features", priority: "0.9", changefreq: "weekly" },
     { loc: "https://getsendport.com/pricing", priority: "0.95", changefreq: "daily" },
     { loc: "https://getsendport.com/integrations/wordpress", priority: "0.95", changefreq: "weekly" },
+    { loc: "https://getsendport.com/integrations/shopify", priority: "0.95", changefreq: "weekly" },
     { loc: "https://getsendport.com/blog", priority: "0.9", changefreq: "daily" },
     { loc: "https://getsendport.com/docs", priority: "0.85", changefreq: "weekly" },
     { loc: "https://getsendport.com/startups", priority: "0.85", changefreq: "monthly" },
