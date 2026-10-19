@@ -177,15 +177,15 @@ export async function POST(req: NextRequest) {
 
       try {
         const sendResult = await sendEmailEngine({
-          workspace,
+          workspaceId: workspace.id,
           from: senderAddress,
           to: recipientEmail,
           subject,
           html: htmlContent,
           text: `Order ${orderNumber} confirmation for ${customerName}. Total: ${currency} ${totalPrice}.`,
         });
-        dispatched = sendResult.success;
-        messageId = sendResult.messageId;
+        dispatched = sendResult.status !== "failed";
+        messageId = sendResult.id;
       } catch (err: any) {
         console.error("[Shopify Webhook Dispatch Error]", err);
       }
