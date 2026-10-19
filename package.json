@@ -1,7 +1,7 @@
 {
   "name": "getsendport",
   "version": "1.0.0",
-  "description": "getsendport — The Developer-First Email Delivery & Transactional API Platform (getsendport.com)",
+  "description": "GetSendport — The Developer-First Email Delivery & Transactional API Platform (getsendport.com)",
   "private": true,
   "scripts": {
     "dev": "next dev",

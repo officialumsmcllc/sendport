@@ -1,10 +1,11 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "getsendport Features: Edge Email API, 2048-bit DKIM & Warmup Engine",
+  title: "GetSendport Features: Edge Email API, 2048-bit DKIM & Warmup Engine",
   description:
-    "Explore getsendport's transactional email features: sub-10ms edge dispatch, 2048-bit RSA DKIM key signing, automated 30-day warmup, live spam tester, and SMTP relay.",
+    "Explore GetSendport's transactional email features: sub-10ms edge dispatch, 2048-bit RSA DKIM key signing, automated 30-day warmup, live spam tester, and SMTP relay.",
   keywords: [
+    "GetSendport",
     "getsendport",
     "Email API Features",
     "DKIM 2048-bit generator",
@@ -18,15 +19,15 @@ export const metadata: Metadata = {
     canonical: "https://getsendport.com/features",
   },
   openGraph: {
-    title: "getsendport Email Infrastructure Features",
+    title: "GetSendport Email Infrastructure Features",
     description: "Sub-10ms latency, automated warmup, 2048-bit DKIM, and modern developer SDKs.",
     url: "https://getsendport.com/features",
-    siteName: "getsendport",
+    siteName: "GetSendport",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "getsendport Features & Architecture",
+    title: "GetSendport Features & Architecture",
     description: "Enterprise email infrastructure engineered for developer speed and high inbox deliverability.",
   },
 };

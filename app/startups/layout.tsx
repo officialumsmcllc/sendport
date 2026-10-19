@@ -1,13 +1,14 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "getsendport for Startups — $1,000 Email Credits & Accelerator Program",
+  title: "GetSendport for Startups — $1,000 Email Credits & Accelerator Program",
   description:
-    "Accelerate your early-stage venture with $1,000 in free getsendport email credits, automated domain warmup, 2048-bit RSA DKIM deliverability, dedicated IP pools, and zero contact list fees.",
+    "Accelerate your early-stage venture with $1,000 in free GetSendport email credits, automated domain warmup, 2048-bit RSA DKIM deliverability, dedicated IP pools, and zero contact list fees.",
   keywords: [
+    "GetSendport",
     "getsendport",
     "Startup Email Credits",
-    "getsendport Startup Program",
+    "GetSendport Startup Program",
     "Sendport Startup Program",
     "$1,000 Email Grant",
     "Resend Alternative for Startups",
@@ -20,24 +21,24 @@ export const metadata: Metadata = {
     canonical: "https://getsendport.com/startups",
   },
   openGraph: {
-    title: "getsendport for Startups — $1,000 Free Credits & Acceleration",
+    title: "GetSendport for Startups — $1,000 Free Credits & Acceleration",
     description:
       "Get $1,000 in email credits, sub-10ms API dispatch, and 99.98% Primary Inbox deliverability for your early-stage startup.",
     url: "https://getsendport.com/startups",
-    siteName: "getsendport",
+    siteName: "GetSendport",
     type: "website",
     images: [
       {
         url: "https://getsendport.com/og-image.png",
         width: 1200,
         height: 630,
-        alt: "getsendport $1,000 Startup Program",
+        alt: "GetSendport $1,000 Startup Program",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "getsendport for Startups — $1,000 Free Email Credits",
+    title: "GetSendport for Startups — $1,000 Free Email Credits",
     description:
       "Scale your startup without email bills. $1,000 credit grant, 25k emails/day, automated warmup, and 2048-bit DKIM.",
     images: ["https://getsendport.com/og-image.png"],

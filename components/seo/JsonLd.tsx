@@ -7,7 +7,7 @@ export function SendportJsonLd() {
     "@type": "Organization",
     "@id": `${siteConfig.url}/#organization`,
     name: siteConfig.name,
-    alternateName: ["getsendport.com", "Sendport", "Getsendport"],
+    alternateName: ["getsendport", "Sendport", "getsendport.com", "Getsendport"],
     legalName: siteConfig.legalName,
     url: siteConfig.url,
     logo: `${siteConfig.url}/icon.svg`,
@@ -42,7 +42,7 @@ export function SendportJsonLd() {
   const softwareAppSchema = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    name: "getsendport Email Delivery & Transactional API",
+    name: "GetSendport Email Delivery & Transactional API",
     alternateName: "Sendport",
     applicationCategory: "BusinessApplication",
     operatingSystem: "Cloud, Linux, Windows, macOS",
@@ -72,7 +72,7 @@ export function SendportJsonLd() {
     "@id": `${siteConfig.url}/#website`,
     url: siteConfig.url,
     name: siteConfig.name,
-    alternateName: ["getsendport.com", "Sendport", "Getsendport"],
+    alternateName: ["getsendport", "Sendport", "getsendport.com", "Getsendport"],
     description: siteConfig.description,
     potentialAction: {
       "@type": "SearchAction",

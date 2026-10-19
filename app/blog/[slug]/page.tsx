@@ -29,12 +29,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const post = BLOG_POSTS.find((p) => p.slug === slug);
   if (!post) {
     return {
-      title: "Article Not Found | getsendport Blog",
+      title: "Article Not Found | GetSendport Blog",
     };
   }
 
   return {
-    title: `${post.title} | getsendport Blog`,
+    title: `${post.title} | GetSendport Blog`,
     description: post.excerpt,
     keywords: post.tags,
     openGraph: {
@@ -44,7 +44,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       publishedTime: post.date,
       authors: [post.author.name],
       url: `https://getsendport.com/blog/${post.slug}`,
-      siteName: "getsendport",
+      siteName: "GetSendport",
     },
     twitter: {
       card: "summary_large_image",
