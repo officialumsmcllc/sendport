@@ -48,7 +48,7 @@ export default function StatusPage() {
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
               All Systems Fully Operational
             </div>
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-white">Sendport Platform Status</h1>
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-white">GetSendport Platform Status</h1>
             <p className="text-xs sm:text-sm text-slate-400">
               Live real-time monitoring across distributed edge regions and delivery queues.
             </p>

@@ -96,7 +96,7 @@ export default function PricingPage() {
 
   const faqs = [
     {
-      q: "Can I use Sendport completely free forever?",
+      q: "Can I use GetSendport completely free forever?",
       a: "Yes! Our Starter plan provides 100 transactional emails every single day (3,000 emails/month) with zero credit card required. It includes 2048-bit RSA DKIM signing, SMTP relay, and full REST API access.",
     },
     {
@@ -105,7 +105,7 @@ export default function PricingPage() {
     },
     {
       q: "Do you support WordPress, WooCommerce, and Shopify?",
-      a: "Yes! Sendport provides an official WordPress plugin and instant SMTP credentials (Port 587 / 465) that work drop-in with any WordPress SMTP plugin, WooCommerce store, or custom backend.",
+      a: "Yes! GetSendport provides an official WordPress plugin, 1-click Shopify webhook integration, and instant SMTP credentials (Port 587 / 465) that work drop-in with any store, framework, or custom backend.",
     },
     {
       q: "How does the 30-Day Domain Warmup work?",

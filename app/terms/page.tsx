@@ -20,12 +20,12 @@ export default function TermsPage() {
           <div className="prose prose-invert prose-sm text-slate-300 space-y-6 text-xs sm:text-sm leading-relaxed">
             <h2 className="text-base font-bold text-white">1. Acceptance of Terms</h2>
             <p>
-              By accessing or using Sendport APIs, dashboard, or SMTP relays, you agree to be bound by these Terms of Service. If you do not agree, do not use our services.
+              By accessing or using GetSendport APIs, dashboard, or SMTP relays, you agree to be bound by these Terms of Service. If you do not agree, do not use our services.
             </p>
 
             <h2 className="text-base font-bold text-white">2. Acceptable Use & Anti-Spam Policy</h2>
             <p>
-              Sendport maintains a strict zero-tolerance policy towards unsolicited commercial emails (spam), phishing, malware distribution, and purchased email lists. Senders exceeding a 0.08% complaint rate or high hard bounce rate may have sending privileges temporarily suspended.
+              GetSendport maintains a strict zero-tolerance policy towards unsolicited commercial emails (spam), phishing, malware distribution, and purchased email lists. Senders exceeding a 0.08% complaint rate or high hard bounce rate may have sending privileges temporarily suspended.
             </p>
 
             <h2 className="text-base font-bold text-white">3. API Service Level Agreement (SLA)</h2>

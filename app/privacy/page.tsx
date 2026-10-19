@@ -20,12 +20,12 @@ export default function PrivacyPage() {
 
           <div className="prose prose-invert prose-sm text-slate-300 space-y-6 text-xs sm:text-sm leading-relaxed">
             <p>
-              Sendport Technologies Inc. (&ldquo;Sendport&rdquo;, &ldquo;we&rdquo;, &ldquo;our&rdquo;) is committed to protecting your privacy and ensuring the security of transactional and marketing email data.
+              GetSendport Technologies Inc. (&ldquo;GetSendport&rdquo;, &ldquo;we&rdquo;, &ldquo;our&rdquo;) is committed to protecting your privacy and ensuring the security of transactional and marketing email data.
             </p>
 
             <h2 className="text-base font-bold text-white">1. Data We Process</h2>
             <p>
-              When you use Sendport APIs, we process email metadata (recipient addresses, sender domain, timestamp, delivery status, and bounce events) strictly to provide deliverability routing and telemetry.
+              When you use GetSendport APIs, we process email metadata (recipient addresses, sender domain, timestamp, delivery status, and bounce events) strictly to provide deliverability routing and telemetry.
             </p>
 
             <h2 className="text-base font-bold text-white">2. Data Retention & Zero-Data-Selling Guarantee</h2>
@@ -35,7 +35,7 @@ export default function PrivacyPage() {
 
             <h2 className="text-base font-bold text-white">3. GDPR & CAN-SPAM Compliance</h2>
             <p>
-              Sendport provides automated 1-click unsubscribe headers (<code className="text-primary-300 font-mono">List-Unsubscribe</code>), suppression list enforcement, and full data deletion APIs compliant with European Union GDPR articles.
+              GetSendport provides automated 1-click unsubscribe headers (<code className="text-primary-300 font-mono">List-Unsubscribe</code>), suppression list enforcement, and full data deletion APIs compliant with European Union GDPR articles.
             </p>
 
             <h2 className="text-base font-bold text-white">4. Encryption Standards</h2>

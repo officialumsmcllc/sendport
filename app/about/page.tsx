@@ -23,7 +23,7 @@ export default function AboutPage() {
               Reimagining email for the next generation of builders
             </h1>
             <p className="text-base sm:text-lg text-slate-400 leading-relaxed">
-              Email is the backbone of the internet, yet the tools developers used were built decades ago. We founded Sendport to build an uncompromisingly fast, developer-first email platform that pairs modern aesthetics with 99.99% deliverability.
+              Email is the backbone of the internet, yet the tools developers used were built decades ago. We founded GetSendport to build an uncompromisingly fast, developer-first email platform that pairs modern aesthetics with 99.99% deliverability.
             </p>
           </div>
 
@@ -66,10 +66,10 @@ export default function AboutPage() {
               <p className="text-xs text-slate-400 mt-1">Get started with 100 free sends every day. No credit card required.</p>
             </div>
             <Link
-              href="/dashboard"
+              href="/signup"
               className="rounded-xl bg-white px-6 py-2.5 text-xs font-semibold text-black hover:bg-slate-200 transition-all shrink-0"
             >
-              Launch Dashboard
+              Get Started Free →
             </Link>
           </div>
         </div>

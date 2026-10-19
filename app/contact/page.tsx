@@ -181,8 +181,8 @@ export default function ContactPage() {
                 <p className="text-xs text-slate-400">
                   Want to verify sending capabilities immediately? Use our in-browser playground.
                 </p>
-                <Link href="/dashboard/playground" className="text-xs font-semibold text-white hover:underline block pt-1">
-                  Launch Playground →
+                <Link href="/docs" className="text-xs font-semibold text-emerald-400 hover:underline block pt-1">
+                  Explore Documentation & Playground →
                 </Link>
               </div>
 

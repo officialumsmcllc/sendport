@@ -32,10 +32,10 @@ export default function FeaturesPage() {
       description: "Distributed edge email nodes worldwide. Push transactional emails with REST or SDKs in single-digit milliseconds.",
       icon: Zap,
       color: "from-amber-500 to-orange-500",
-      code: `// Resend-compatible SDK
-import { Sendport } from 'sendport';
+      code: `// Modern Developer SDK
+import { GetSendport } from 'getsendport';
 
-const sendport = new Sendport({ apiKey: 'sp_live_...' });
+const sendport = new GetSendport({ apiKey: 'sp_live_...' });
 
 await sendport.emails.send({
   from: 'Your App <onboarding@yourdomain.com>',
@@ -389,7 +389,7 @@ await sendport.contacts.create({
                   Pre-Flight Email Link Verification & Security Scanning
                 </h2>
                 <p className="text-sm text-slate-400 leading-relaxed">
-                  Never send an email with broken links or bad redirects again. Sendport automatically crawls and checks all URLs embedded inside your HTML and Markdown templates before dispatching.
+                  Never send an email with broken links or bad redirects again. GetSendport automatically crawls and checks all URLs embedded inside your HTML and Markdown templates before dispatching.
                 </p>
                 <div className="space-y-3 pt-2">
                   <div className="flex items-start gap-3">
