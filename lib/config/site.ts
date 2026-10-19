@@ -1,8 +1,9 @@
 export const siteConfig = {
-  name: "Sendport",
-  legalName: "Sendport Technologies Inc.",
+  name: "getsendport",
+  legalName: "getsendport Technologies Inc.",
+  brandName: "getsendport",
   tagline: "The Developer-First Email Delivery & Transactional API Platform",
-  description: "Sendport is the ultra-fast, high-deliverability email API built for modern developers. 2048-bit RSA DKIM, dynamic templates, live open/click tracking, and instant SMTP relay.",
+  description: "getsendport is the ultra-fast, high-deliverability email API built for modern developers. 2048-bit RSA DKIM, dynamic templates, live open/click tracking, and instant SMTP relay.",
   url: process.env.NEXT_PUBLIC_APP_URL || "https://getsendport.com",
   domain: "getsendport.com",
   founder: {

@@ -13,13 +13,19 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
+  applicationName: "getsendport",
   title: {
     default: `${siteConfig.name} — ${siteConfig.tagline}`,
     template: `%s | ${siteConfig.name}`,
   },
   description: siteConfig.description,
   keywords: [
+    "getsendport",
+    "getsendport.com",
+    "get sendport",
+    "getsendport email",
     "Sendport",
+    "Sendport Email Delivery",
     "Email Delivery API",
     "Resend alternative",
     "SendGrid alternative",

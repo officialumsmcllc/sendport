@@ -1,10 +1,12 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Developer Documentation & REST API Reference | Sendport",
+  title: "Developer Documentation & REST API Reference | getsendport",
   description:
-    "Complete technical reference for Sendport's REST API, Node.js SDK, React Email components, SMTP relay configuration, and webhook event payloads.",
+    "Complete technical reference for getsendport's REST API, Node.js SDK, React Email components, SMTP relay configuration, and webhook event payloads.",
   keywords: [
+    "getsendport",
+    "getsendport API Docs",
     "Sendport API Docs",
     "Email API Reference",
     "React Email Documentation",
@@ -15,10 +17,10 @@ export const metadata: Metadata = {
     canonical: "https://getsendport.com/docs",
   },
   openGraph: {
-    title: "Sendport Developer Documentation & API Reference",
+    title: "getsendport Developer Documentation & API Reference",
     description: "Build, test, and dispatch transactional emails with sub-10ms latency in minutes.",
     url: "https://getsendport.com/docs",
-    siteName: "Sendport",
+    siteName: "getsendport",
     type: "website",
   },
 };

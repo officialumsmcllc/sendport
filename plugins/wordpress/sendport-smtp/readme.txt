@@ -5,7 +5,7 @@ Tags: smtp, email, deliverability, transactional email, woocommerce smtp
 Requires at least: 5.6
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -25,6 +25,15 @@ Whether you are sending WooCommerce order confirmations, password reset links, c
 * **Real-Time Analytics:** Optional tracking for open rates and link clicks right inside your Sendport Dashboard.
 * **Free Tier Included:** 3,000 free transactional emails every month with non-expiring pay-as-you-go top-up options.
 
+== Third-Party Services ==
+
+This plugin relies on the Sendport cloud service to send transactional emails over a secure HTTPS REST API connection.
+
+* **Service:** Sendport (https://getsendport.com)
+* **What data is sent:** Email recipient addresses, sender address, email subject, email headers, and body content are transmitted via encrypted HTTPS directly to the Sendport API (https://getsendport.com/api/v1/emails/send) solely for processing and delivering your website's outgoing emails.
+* **Terms of Service:** https://getsendport.com/terms
+* **Privacy Policy:** https://getsendport.com/privacy
+
 == Installation ==
 
 ### Automatic Installation:
@@ -35,7 +44,7 @@ Whether you are sending WooCommerce order confirmations, password reset links, c
 5. Go to **Settings > Sendport SMTP** and enter your Sendport API Key.
 
 ### Manual Installation:
-1. Download the `sendport-smtp.zip` archive.
+1. Download the `sendport-smtp-email-deliverability.zip` archive.
 2. In your WordPress dashboard, go to **Plugins > Add New > Upload Plugin**.
 3. Select the `.zip` file and click **Install Now**.
 4. Click **Activate Plugin**.
@@ -65,6 +74,13 @@ Sendport includes a generous Starter plan offering 3,000 emails/month free. High
 2. Live Deliverability Test — Send an instant verified test email to confirm 2048-bit DKIM delivery.
 
 == Changelog ==
+
+= 1.0.1 =
+* Standardized plugin header formatting for Plugin Check compliance.
+* Added Third-Party Service disclosure section in readme.txt.
+* Added Reply-To header support for wp_mail compatibility.
+* Updated License header to GPLv2 or later.
+* Corrected Tested up to version.
 
 = 1.0.0 =
 * Initial official release for WordPress.org directory.

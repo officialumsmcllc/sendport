@@ -49,7 +49,7 @@ export function SendportLogo({
 
       {showText && (
         <span className={`text-xl font-extrabold tracking-tight ${dark ? "text-white" : "text-slate-900"}`}>
-          Send<span className="text-primary-600 font-black">port</span>
+          get<span className="text-primary-500 font-black">sendport</span>
         </span>
       )}
     </div>

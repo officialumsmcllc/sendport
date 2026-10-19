@@ -1,16 +1,16 @@
 <?php
 /**
- * Plugin Name:       Sendport SMTP & Email Deliverability
- * Plugin URI:        https://getsendport.com/integrations/wordpress
- * Description:       Ultra-fast, 99.9% inbox deliverability for WordPress & WooCommerce powered by Sendport REST API and 2048-bit RSA DKIM.
- * Version:           1.0.0
+ * Plugin Name: Sendport SMTP & Email Deliverability
+ * Plugin URI: https://getsendport.com/integrations/wordpress
+ * Description: Ultra-fast, 99.9% inbox deliverability for WordPress & WooCommerce powered by Sendport REST API and 2048-bit RSA DKIM.
+ * Version: 1.0.1
  * Requires at least: 5.6
- * Requires PHP:      7.4
- * Author:            Sendport Technologies Inc.
- * Author URI:        https://getsendport.com
- * License:           GPL-2.0-or-later
- * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain:       sendport-smtp-email-deliverability
+ * Requires PHP: 7.4
+ * Author: Sendport Technologies Inc.
+ * Author URI: https://getsendport.com
+ * License: GPLv2 or later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
+ * Text Domain: sendport-smtp-email-deliverability
  */
 
 // Exit if accessed directly
@@ -22,7 +22,7 @@ if (!class_exists('Sendport_SMTP_Plugin')) {
 
     class Sendport_SMTP_Plugin {
 
-        const VERSION      = '1.0.0';
+        const VERSION      = '1.0.1';
         const API_ENDPOINT = 'https://getsendport.com/api/v1/emails/send';
 
         public function __construct() {
@@ -38,7 +38,7 @@ if (!class_exists('Sendport_SMTP_Plugin')) {
         public function add_action_links($links) {
             $settings_link = sprintf(
                 '<a href="%s">%s</a>',
-                esc_url(admin_url('options-general.php?page=sendport-smtp')),
+                esc_url(admin_url('options-general.php?page=sendport-smtp-email-deliverability')),
                 esc_html__('Settings', 'sendport-smtp-email-deliverability')
             );
             array_unshift($links, $settings_link);
@@ -152,6 +152,22 @@ if (!class_exists('Sendport_SMTP_Plugin')) {
                 $payload['html'] = nl2br(esc_html($message));
             }
 
+            // Parse custom headers (Reply-To, etc.)
+            $headers = isset($atts['headers']) ? $atts['headers'] : array();
+            if (!is_array($headers)) {
+                $headers = explode("\n", str_replace("\r\n", "\n", $headers));
+            }
+
+            foreach ($headers as $header) {
+                if (is_string($header) && stripos(trim($header), 'reply-to:') === 0) {
+                    $reply_to = trim(substr(trim($header), 9));
+                    if (!empty($reply_to)) {
+                        $payload['reply_to'] = $reply_to;
+                    }
+                    break;
+                }
+            }
+
             $response = wp_remote_post(self::API_ENDPOINT, array(
                 'method'      => 'POST',
                 'timeout'     => 15,
@@ -161,14 +177,14 @@ if (!class_exists('Sendport_SMTP_Plugin')) {
                 'headers'     => array(
                     'Authorization' => 'Bearer ' . trim($api_key),
                     'Content-Type'  => 'application/json; charset=utf-8',
-                    'User-Agent'    => 'Sendport-WordPress/' . self::VERSION . '; ' . esc_url(home_url()),
+                    'User-Agent'    => 'Sendport-WordPress/' . self::VERSION,
                 ),
                 'body'        => wp_json_encode($payload),
             ));
 
             if (is_wp_error($response)) {
-                // Log transport error for site administrator debugging
-                error_log('[Sendport SMTP Error] ' . $response->get_error_message());
+                // Fire WordPress standard mail failure action for debugging
+                do_action('wp_mail_failed', new WP_Error('sendport_smtp_error', $response->get_error_message()));
                 return false;
             }
 
@@ -178,7 +194,7 @@ if (!class_exists('Sendport_SMTP_Plugin')) {
             }
 
             $body = wp_remote_retrieve_body($response);
-            error_log('[Sendport SMTP HTTP ' . $code . '] ' . $body);
+            do_action('wp_mail_failed', new WP_Error('sendport_smtp_http_error', 'Sendport API HTTP ' . $code . ': ' . $body));
             return false;
         }
 
@@ -257,9 +273,11 @@ if (!class_exists('Sendport_SMTP_Plugin')) {
 
                 <!-- Test Feedback Alert -->
                 <?php if ($test_result): ?>
-                    <div style="padding: 14px 18px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; <?php echo $test_result['success'] ? 'background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0;' : 'background: #fef2f2; color: #991b1b; border: 1px solid #fecaca;'; ?>">
-                        <strong><?php echo $test_result['success'] ? esc_html__('✓ Success:', 'sendport-smtp-email-deliverability') : esc_html__('✕ Error:', 'sendport-smtp-email-deliverability'); ?></strong>
-                        <?php echo esc_html($test_result['message']); ?>
+                    <div class="notice <?php echo $test_result['success'] ? 'notice-success' : 'notice-error'; ?> is-dismissible" style="padding: 12px 16px; margin: 16px 0;">
+                        <p>
+                            <strong><?php echo $test_result['success'] ? esc_html__('Success:', 'sendport-smtp-email-deliverability') : esc_html__('Error:', 'sendport-smtp-email-deliverability'); ?></strong>
+                            <?php echo esc_html($test_result['message']); ?>
+                        </p>
                     </div>
                 <?php endif; ?>
 

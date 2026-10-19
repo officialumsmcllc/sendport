@@ -1,10 +1,11 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Security & Compliance: 2048-bit RSA DKIM, DMARC & TLS 1.3 | Sendport",
+  title: "Security & Compliance: 2048-bit RSA DKIM, DMARC & TLS 1.3 | getsendport",
   description:
     "Enterprise-grade email security: 2048-bit RSA DKIM cryptographic signatures, SPF alignment, DMARC enforcement, 2FA protection, and TLS 1.3 encryption in transit.",
   keywords: [
+    "getsendport",
     "Email Security",
     "2048-bit RSA DKIM",
     "SPF and DMARC Enforcement",
@@ -16,10 +17,10 @@ export const metadata: Metadata = {
     canonical: "https://getsendport.com/security",
   },
   openGraph: {
-    title: "Sendport Security & Compliance Architecture",
+    title: "getsendport Security & Compliance Architecture",
     description: "Cryptographically verified email delivery, zero data leakage, and automated anti-spoofing.",
     url: "https://getsendport.com/security",
-    siteName: "Sendport",
+    siteName: "getsendport",
     type: "website",
   },
 };
