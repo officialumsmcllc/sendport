@@ -67,21 +67,21 @@ export default function DashboardLayout({
         usedToday: number;
       };
     }[];
-  } | null>(null);
+  } | null>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const cached = localStorage.getItem("sendport_user");
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed?.email) return parsed;
+        }
+      } catch (_) {}
+    }
+    return null;
+  });
 
   React.useEffect(() => {
-    // 1. Instant optimistic load from localStorage
-    try {
-      const cached = localStorage.getItem("sendport_user");
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (parsed?.email) {
-          setUser(parsed);
-        }
-      }
-    } catch (_) {}
-
-    // 2. Background fresh telemetry fetch
+    // Background fresh telemetry fetch
     const fetchUser = () => {
       fetch("/api/auth/me")
         .then((res) => {
@@ -144,7 +144,7 @@ export default function DashboardLayout({
           </div>
 
           {/* Workspace Pill */}
-          <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 shadow-sm">
+          <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 shadow-sm" suppressHydrationWarning>
             <div className="flex items-center justify-between text-xs text-slate-500 font-medium mb-1.5">
               <span>Workspace</span>
               <span className="rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-800 uppercase">
@@ -192,7 +192,7 @@ export default function DashboardLayout({
         </div>
 
         {/* Footer info in sidebar */}
-        <div className="border-t border-slate-100 pt-3 text-xs text-slate-500 space-y-2.5 px-2">
+        <div className="border-t border-slate-100 pt-3 text-xs text-slate-500 space-y-2.5 px-2" suppressHydrationWarning>
           {isSuperAdminUser(user?.email, user?.role) && (
             <Link
               href="/admin"
@@ -251,7 +251,7 @@ export default function DashboardLayout({
                 );
               })}
             </nav>
-            <div className="mt-auto pt-4 border-t border-slate-200 space-y-2">
+            <div className="mt-auto pt-4 border-t border-slate-200 space-y-2" suppressHydrationWarning>
               {isSuperAdminUser(user?.email, user?.role) && (
                 <Link
                   href="/admin"

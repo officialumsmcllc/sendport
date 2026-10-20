@@ -19,19 +19,19 @@ export function Navbar({
 }) {
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [user, setUser] = useState<{ id?: string; email: string; name?: string; role: string } | null>(null);
+  const [user, setUser] = useState<{ id?: string; email: string; name?: string; role: string } | null>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const cached = localStorage.getItem("sendport_user");
+        if (cached) return JSON.parse(cached);
+      } catch (_) {}
+    }
+    return null;
+  });
   const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
-    // 1. Check local storage first to eliminate layout shift or button flash
-    try {
-      const cached = localStorage.getItem("sendport_user");
-      if (cached) {
-        setUser(JSON.parse(cached));
-      }
-    } catch (e) {}
-
-    // 2. Verify with server session
+    // Verify with server session in background silently
     fetch("/api/auth/me")
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
@@ -116,7 +116,7 @@ export function Navbar({
         </nav>
 
         {/* Action Controls & Dynamic CTA */}
-        <div className="hidden md:flex items-center gap-3">
+        <div className="hidden md:flex items-center gap-3" suppressHydrationWarning>
           {/* Currency Switcher */}
           {onCurrencyChange && (
             <div
@@ -207,7 +207,7 @@ export function Navbar({
         </div>
 
         {/* Mobile Menu Toggle */}
-        <div className="flex md:hidden items-center gap-2">
+        <div className="flex md:hidden items-center gap-2" suppressHydrationWarning>
           {user ? (
             <Link
               href="/dashboard"

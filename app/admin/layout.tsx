@@ -39,7 +39,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const router = useRouter();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const [adminUser, setAdminUser] = useState<{ id: string; email: string; name?: string; role: string } | null>(null);
+  const [adminUser, setAdminUser] = useState<{ id: string; email: string; name?: string; role: string } | null>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const cached = localStorage.getItem("sendport_user");
+        if (cached) {
+          const u = JSON.parse(cached);
+          if (u && isSuperAdminUser(u.email, u.role)) return u;
+        }
+      } catch (_) {}
+    }
+    return null;
+  });
   const [pendingSlipsCount, setPendingSlipsCount] = useState<number>(0);
   const [newTicketsCount, setNewTicketsCount] = useState<number>(0);
 
