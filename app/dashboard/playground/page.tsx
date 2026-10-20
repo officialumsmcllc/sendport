@@ -236,18 +236,23 @@ export default function PlaygroundPage() {
 
   const generateNodeCode = () => {
     const key = getEffectiveApiKey() || "sk_live_your_api_key_here";
-    return `import { Sendport } from "sendport";
-
-const sendport = new Sendport("${key}");
-
+    return `// Native fetch (Node.js 18+ / Zero dependencies)
 async function main() {
-  const data = await sendport.emails.send({
-    from: "${from}",
-    to: ["${to}"],
-    subject: "${subject}",
-    html: "${html.replace(/\n/g, "\\n").replace(/"/g, '\\"')}",
+  const res = await fetch("https://api.getsendport.com/v1/emails/send", {
+    method: "POST",
+    headers: {
+      "Authorization": "Bearer ${key}",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: "${from}",
+      to: ["${to}"],
+      subject: "${subject}",
+      html: "${html.replace(/\n/g, "\\n").replace(/"/g, '\\"')}",
+    }),
   });
 
+  const data = await res.json();
   console.log("Dispatched:", data);
 }
 
@@ -315,13 +320,13 @@ print(response.status_code, response.json())`;
                 🔑 {k.name} ({k.keyPrefix})
               </option>
             ))}
-            <option value="custom">✏️ Enter Custom sk_live_... key</option>
+            <option value="custom">✏️ Enter Custom API Key</option>
           </select>
 
           {selectedKey === "custom" && (
             <input
               type="password"
-              placeholder="sk_live_..."
+              placeholder="sk_live_your_api_key_here"
               value={customKeyInput}
               onChange={(e) => setCustomKeyInput(e.target.value)}
               className="bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-xs font-mono text-slate-800 outline-none w-36"

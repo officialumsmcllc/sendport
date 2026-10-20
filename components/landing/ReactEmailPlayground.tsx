@@ -239,7 +239,7 @@ export const WeeklyDigest = ({ week = 'Week 40' }) => (
                   </div>
                   <h3 className="text-xl font-bold">Welcome to Acme, Steve!</h3>
                   <p className={`text-xs leading-relaxed ${themeMode === "dark" ? "text-slate-400" : "text-slate-600"}`}>
-                    We are thrilled to have you onboard. Sendport empowers your team to send high-volume transactional emails with sub-10ms latency.
+                    We are thrilled to have you onboard. Sendport empowers your team to send high-volume transactional emails with sub-10ms API dispatch times.
                   </p>
                   <div className="pt-2">
                     <button className={`w-full py-2.5 rounded-xl font-semibold text-xs shadow-md transition-all ${
@@ -249,7 +249,7 @@ export const WeeklyDigest = ({ week = 'Week 40' }) => (
                     </button>
                   </div>
                   <div className={`text-[11px] pt-4 border-t ${themeMode === "dark" ? "border-slate-800 text-slate-500" : "border-slate-100 text-slate-400"}`}>
-                    Sent with 2048-bit DKIM encryption from Sendport HQ.
+                    Signed with 2048-bit RSA DKIM cryptographic signature from Sendport HQ.
                   </div>
                 </div>
               )}
@@ -291,9 +291,12 @@ export const WeeklyDigest = ({ week = 'Week 40' }) => (
 
               {activeTemplate === "digest" && (
                 <div className="space-y-3">
-                  <h3 className="text-base font-bold">Weekly Performance 📊</h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-base font-bold">Weekly Performance 📊</h3>
+                    <span className="text-[10px] text-slate-500 font-medium">Example report</span>
+                  </div>
                   <p className={`text-xs ${themeMode === "dark" ? "text-slate-400" : "text-slate-600"}`}>
-                    Your domains achieved a 99.9% primary inbox placement rate this week.
+                    Your domains achieved high deliverability with zero blocklist flags this week.
                   </p>
                   <div className="grid grid-cols-2 gap-2 text-center pt-2">
                     <div className={`p-2.5 rounded-xl border ${themeMode === "dark" ? "bg-slate-900 border-slate-800" : "bg-slate-50 border-slate-200"}`}>

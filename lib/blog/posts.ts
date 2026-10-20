@@ -77,16 +77,19 @@ Deliverability in 2026 requires strict compliance with Google and Yahoo's 2024+ 
 Sendport provides an interactive **Deliverability & Warmup Engine** that monitors your sender score, calculates real bounce rates, and guides new domains through an automated 30-day warmup ramp. Every custom domain configured on Sendport automatically generates **RSA-2048 bit DKIM keys** and full DMARC alignments out of the box.
 
 \`\`\`typescript
-// Sending via Sendport in Next.js 15
-import { Sendport } from "sendport";
-
-const sendport = new Sendport(process.env.SENDPORT_API_KEY);
-
-await sendport.emails.send({
-  from: "notifications@yourdomain.com",
-  to: "user@example.com",
-  subject: "Welcome to our platform",
-  html: "<h1>Your account is ready</h1>",
+// Sending via Sendport REST API in Next.js 15
+const res = await fetch("https://api.getsendport.com/v1/emails/send", {
+  method: "POST",
+  headers: {
+    Authorization: "Bearer " + process.env.SENDPORT_API_KEY,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    from: "notifications@yourdomain.com",
+    to: "user@example.com",
+    subject: "Welcome to our platform",
+    html: "<h1>Your account is ready</h1>",
+  }),
 });
 \`\`\`
 
@@ -204,14 +207,9 @@ Next.js 15 brings powerful Server Actions and streaming primitives. In this guid
 
 ---
 
-## Step 1: Install the Sendport SDK or Use Native Fetch
+## Step 1: Configure Your Environment
 
-Sendport provides a lightweight HTTP API compatible with any Node.js, Bun, Edge, or Cloudflare Worker runtime.
-
-\`\`\`bash
-npm install sendport
-# or use native fetch in Next.js
-\`\`\`
+Sendport provides a high-speed HTTP REST API compatible with any Node.js, Bun, Edge, or Cloudflare Worker runtime without external dependencies.
 
 Add your API key to \`.env.local\`:
 

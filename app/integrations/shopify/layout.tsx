@@ -3,7 +3,7 @@ import { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Shopify Email Delivery & Transactional API Integration | GetSendport",
   description:
-    "Guarantee 99.9% Primary Inbox delivery for Shopify order confirmations, shipping updates, and abandoned carts. 2048-bit RSA DKIM signing, instant webhooks, and sub-10ms delivery.",
+    "Built for high primary inbox delivery for Shopify order confirmations, shipping updates, and abandoned carts. 2048-bit RSA DKIM signing, instant webhooks, and sub-10ms API dispatch.",
   keywords: [
     "Shopify email delivery",
     "Shopify SMTP",

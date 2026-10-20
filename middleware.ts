@@ -55,21 +55,52 @@ export async function middleware(req: NextRequest) {
     if (!session) {
       const loginUrl = new URL("/login", req.url);
       loginUrl.searchParams.set("redirect", pathname + search);
-      return NextResponse.redirect(loginUrl);
+      const res = NextResponse.redirect(loginUrl);
+      if (token) {
+        res.cookies.delete(SESSION_COOKIE_NAME);
+      }
+      return res;
     }
 
     return NextResponse.next();
   }
 
-  // 5. Auth pages (/login, /signup, /register)
-  // If no explicit redirect query param, route logged-in users to their dedicated portal
-  if (pathname === "/login" || pathname === "/signup" || pathname === "/register") {
+  // 5. Login page (/login)
+  // Never redirect /login away to avoid any potential redirect loops.
+  // If a corrupted or expired cookie exists, clean it up on the response.
+  if (pathname === "/login") {
+    if (token && !session) {
+      const res = NextResponse.next();
+      res.cookies.delete(SESSION_COOKIE_NAME);
+      return res;
+    }
+    return NextResponse.next();
+  }
+
+  // 6. Registration pages (/signup, /register)
+  // Only redirect if the session is cryptographically valid and unexpired.
+  if (pathname === "/signup" || pathname === "/register") {
     const redirectParam = req.nextUrl.searchParams.get("redirect");
-    if (!redirectParam && session) {
+    const planParam = req.nextUrl.searchParams.get("plan");
+    if (session) {
+      if (redirectParam && redirectParam.startsWith("/") && !redirectParam.startsWith("//")) {
+        return NextResponse.redirect(new URL(redirectParam, req.url));
+      }
+      if (planParam && planParam !== "starter") {
+        return NextResponse.redirect(
+          new URL(`/dashboard/billing?plan=${encodeURIComponent(planParam)}`, req.url)
+        );
+      }
       if (isSuperAdminUser(session.email, session.role)) {
         return NextResponse.redirect(new URL("/admin", req.url));
       }
       return NextResponse.redirect(new URL("/dashboard", req.url));
+    }
+
+    if (token && !session) {
+      const res = NextResponse.next();
+      res.cookies.delete(SESSION_COOKIE_NAME);
+      return res;
     }
     return NextResponse.next();
   }

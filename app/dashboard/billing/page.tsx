@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   CreditCard,
   CheckCircle2,
@@ -27,7 +28,7 @@ interface PaymentGateway {
   currency: string;
 }
 
-export default function BillingPage() {
+function BillingContent() {
   const [mounted, setMounted] = useState(false);
   const [loadingStats, setLoadingStats] = useState(true);
   const [currency, setCurrency] = useState<SupportedCurrency>("USD");
@@ -89,6 +90,22 @@ export default function BillingPage() {
   const [submittingManual, setSubmittingManual] = useState(false);
   const [manualError, setManualError] = useState("");
 
+  const searchParams = useSearchParams();
+  const planQuery = searchParams.get("plan");
+
+  useEffect(() => {
+    if (planQuery) {
+      const normalized = planQuery.toLowerCase();
+      if (normalized === "growth") {
+        setSelectedUpgradePlan("GROWTH");
+        setPurchaseMode("PLAN");
+      } else if (normalized === "scale_pro" || normalized === "scale-pro" || normalized === "scalepro") {
+        setSelectedUpgradePlan("SCALE_PRO");
+        setPurchaseMode("PLAN");
+      }
+    }
+  }, [planQuery]);
+
   useEffect(() => {
     setMounted(true);
 
@@ -105,13 +122,15 @@ export default function BillingPage() {
             credits: data.stats.credits || 0,
           });
 
-          // Set sensible upgrade recommendation based on current active plan
-          if (userPlan === "STARTER") {
-            setSelectedUpgradePlan("GROWTH");
-          } else if (userPlan === "GROWTH") {
-            setSelectedUpgradePlan("SCALE_PRO");
-          } else {
-            setSelectedUpgradePlan(null);
+          // Set sensible upgrade recommendation based on current active plan if not explicitly passed
+          if (!planQuery) {
+            if (userPlan === "STARTER") {
+              setSelectedUpgradePlan("GROWTH");
+            } else if (userPlan === "GROWTH") {
+              setSelectedUpgradePlan("SCALE_PRO");
+            } else {
+              setSelectedUpgradePlan(null);
+            }
           }
         }
       })
@@ -748,5 +767,13 @@ export default function BillingPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function BillingPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-xs text-slate-500">Loading billing interface...</div>}>
+      <BillingContent />
+    </Suspense>
   );
 }

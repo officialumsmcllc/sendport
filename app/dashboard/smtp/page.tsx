@@ -11,7 +11,7 @@ export default function SmtpPage() {
     { label: "Port (TLS / STARTTLS)", value: "587", key: "port587" },
     { label: "Port (SSL)", value: "465", key: "port465" },
     { label: "Username", value: "api", key: "user" },
-    { label: "Password", value: "Your active API Key (sk_live_...)", key: "pass" },
+    { label: "Password", value: "Your active API Key (sk_live_your_api_key_here)", key: "pass" },
     { label: "Authentication", value: "PLAIN or LOGIN", key: "auth" },
   ];
 

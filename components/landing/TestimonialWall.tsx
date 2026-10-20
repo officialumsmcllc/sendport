@@ -21,7 +21,7 @@ export function TestimonialWall() {
     {
       icon: ShieldCheck,
       badge: "Cryptographic Trust",
-      title: "2048-bit RSA DKIM & DMARC",
+      title: "2048-bit RSA DKIM signing, SPF and DMARC",
       desc: "Every domain configured on Sendport is automatically provisioned with 2048-bit RSA keys and strict SPF alignment to protect inbox reputation.",
     },
     {
@@ -53,7 +53,7 @@ export function TestimonialWall() {
           <span>The Sendport Commitment</span>
         </div>
         <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
-          Built for builders. <br />
+          Built for builders.<br className="hidden sm:inline" />{" "}
           <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">
             No compromises, no hidden gotchas.
           </span>

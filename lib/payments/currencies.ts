@@ -20,5 +20,8 @@ export function formatPrice(amountInUSD: number, currency: SupportedCurrency = "
   const curr = CURRENCIES[currency] || CURRENCIES.USD;
   const converted = Math.round(amountInUSD * curr.rateAgainstUSD);
   if (converted === 0) return "Free";
-  return `${curr.symbol} ${converted.toLocaleString()}`;
+  const isAlphaSymbol = /^[A-Za-z]/.test(curr.symbol);
+  return isAlphaSymbol
+    ? `${curr.symbol} ${converted.toLocaleString()}`
+    : `${curr.symbol}${converted.toLocaleString()}`;
 }

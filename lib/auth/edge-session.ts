@@ -1,19 +1,22 @@
 export const SESSION_COOKIE_NAME = "sendport_session";
 
-function getSessionSecret(): string {
+function getSessionSecret(): string | null {
   const secret = process.env.SESSION_SECRET;
-  if (
-    process.env.NODE_ENV === "production" &&
-    (!secret || secret === "sendport_super_secure_session_secret_key_2026")
-  ) {
-    console.warn(
-      "[SECURITY ALERT] SESSION_SECRET is not set or using the default key in production! Set a high-entropy SESSION_SECRET in your environment variables immediately."
-    );
+  if (!secret || secret.length < 32) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "FATAL: SESSION_SECRET is missing or shorter than 32 characters in production. Failing closed."
+      );
+    }
+    return null;
   }
-  return secret || "sendport_super_secure_session_secret_key_2026";
+  return secret;
 }
 
-const SECRET = getSessionSecret();
+// Module-level startup check in production
+if (process.env.NODE_ENV === "production") {
+  getSessionSecret();
+}
 
 export interface SessionPayload {
   userId: string;
@@ -26,6 +29,7 @@ export interface SessionPayload {
 /**
  * Edge-compatible session verifier using Web Crypto API.
  * Works natively in Next.js Middleware, Edge functions, and Node runtime.
+ * Strict fail-closed security: rejects all sessions if SESSION_SECRET is invalid or missing.
  */
 export async function verifySessionEdge(token: string): Promise<SessionPayload | null> {
   if (!token || !token.includes(".")) return null;
@@ -34,40 +38,32 @@ export async function verifySessionEdge(token: string): Promise<SessionPayload |
   const [data, signature] = parts;
   if (!data || !signature) return null;
 
+  const secret = getSessionSecret();
+  if (!secret) return null; // Fail closed
+
   try {
     const encoder = new TextEncoder();
-    const secretsToTry = [
-      getSessionSecret(),
-      "sendport_super_secure_session_secret_key_2026",
-    ];
-
-    let valid = false;
-    for (const sec of secretsToTry) {
-      const key = await crypto.subtle.importKey(
-        "raw",
-        encoder.encode(sec),
-        { name: "HMAC", hash: "SHA-256" },
-        false,
-        ["sign"]
-      );
-      const signatureBuffer = await crypto.subtle.sign("HMAC", key, encoder.encode(data));
-      const bytes = new Uint8Array(signatureBuffer);
-      let binary = "";
-      for (let i = 0; i < bytes.byteLength; i++) {
-        binary += String.fromCharCode(bytes[i]);
-      }
-      const expectedSig = btoa(binary)
-        .replace(/\+/g, "-")
-        .replace(/\//g, "_")
-        .replace(/=+$/, "");
-
-      if (signature === expectedSig) {
-        valid = true;
-        break;
-      }
+    const key = await crypto.subtle.importKey(
+      "raw",
+      encoder.encode(secret),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign"]
+    );
+    const signatureBuffer = await crypto.subtle.sign("HMAC", key, encoder.encode(data));
+    const bytes = new Uint8Array(signatureBuffer);
+    let binary = "";
+    for (let i = 0; i < bytes.byteLength; i++) {
+      binary += String.fromCharCode(bytes[i]);
     }
+    const expectedSig = btoa(binary)
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/, "");
 
-    if (!valid) return null;
+    if (signature !== expectedSig) {
+      return null;
+    }
 
     // Decode base64url data
     let base64 = data.replace(/-/g, "+").replace(/_/g, "/");

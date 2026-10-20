@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "GetSendport Email Infrastructure Features",
-    description: "Sub-10ms latency, automated warmup, 2048-bit DKIM, and modern developer SDKs.",
+    description: "Sub-10ms latency, automated warmup, 2048-bit DKIM, and high-speed REST API.",
     url: "https://getsendport.com/features",
     siteName: "GetSendport",
     type: "website",

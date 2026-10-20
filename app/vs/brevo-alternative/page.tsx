@@ -10,22 +10,22 @@ export default function BrevoAlternativePage() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   const comparison = [
-    { feature: "API Dispatch Latency", sendport: "Sub-50ms Global Edge Speed", brevo: "400ms – 1,500ms (Marketing tool latency)", note: "Ultra-fast transactional delivery" },
-    { feature: "Starting Tier Volume ($20)", sendport: "90,000 emails/mo (3,000/day)", brevo: "20,000 emails/mo ($25/mo Starter)", note: "4.5x more volume for less money" },
+    { feature: "API Dispatch Latency", sendport: "Sub-10ms API response time", brevo: "Standard marketing queue latency", note: "Ultra-fast transactional delivery" },
+    { feature: "Starting Tier Volume ($20)", sendport: "90,000 emails/mo (3,000/day)", brevo: "20,000 emails/mo ($25/mo Starter)*", note: "4.5x more volume for less money" },
     { feature: "Account Freezes & False Flags", sendport: "Zero automated freeze traps", brevo: "Frequent automated account suspensions", note: "Reliable developer uptime" },
-    { feature: "Automated 30-Day Domain Warmup", sendport: "Included on all accounts", brevo: "Not available on basic tiers", note: "Guaranteed primary inbox placement" },
+    { feature: "Automated 30-Day Domain Warmup", sendport: "Included on all accounts", brevo: "Not available on basic tiers", note: "Built for high inbox placement" },
     { feature: "Pre-Flight Spam & 404 Diagnostics", sendport: "Included AI Content & Link Scanner", brevo: "Not Available", note: "Detect spam filters before sending" },
     { feature: "Multi-Currency Regional Billing", sendport: "USD, PKR, EUR, GBP, USDT, Easypaisa, Raast", brevo: "EUR & USD Card Only", note: "Frictionless global payment rails" },
     { feature: "React Email & Next.js 15 Support", sendport: "Native (@react-email/components)", brevo: "Legacy HTML copy-paste only", note: "Modern developer DX" },
     { feature: "Custom Verified Domains", sendport: "Up to 5 on Growth ($20)", brevo: "Domain add-on limitations", note: "Manage multiple projects easily" },
     { feature: "Audience Marketing Contact Fees", sendport: "$0 Extra (Included in plan)", brevo: "Separate contact tiered pricing", note: "Zero contact storage tax" },
-    { feature: "2048-bit RSA DKIM & DMARC", sendport: "Automatic 2048-bit RSA Keys & Instant Verification", brevo: "Supported", note: "Cryptographic email authentication" },
+    { feature: "2048-bit RSA DKIM signing, SPF and DMARC", sendport: "Automatic 2048-bit RSA Keys & Instant Verification", brevo: "Supported", note: "Cryptographic email authentication" },
   ];
 
   const faqs = [
     {
       q: "Why are developers choosing Sendport over Brevo in 2026?",
-      a: "Brevo was designed primarily for marketing newsletters, making its transactional email API slow and prone to sudden account suspensions. Sendport is built for developers from the ground up: sub-50ms dispatch latency, 90,000 emails for $20 (compared to 20,000 on Brevo for $25), native React Email support, and automated 30-day warmup.",
+      a: "Brevo was designed primarily for marketing newsletters, making its transactional email API slow and prone to sudden account suspensions. Sendport is built for developers from the ground up: Sub-10ms API response time, 90,000 emails for $20 (compared to 20,000 on Brevo for $25*), native React Email support, and automated 30-day warmup.",
     },
     {
       q: "Can I replace Brevo transactional email SMTP with Sendport?",
@@ -36,8 +36,8 @@ export default function BrevoAlternativePage() {
       a: "No! Sendport does not charge a contact tax. All audience lists, lead management, and marketing contact storage are included in your flat monthly subscription.",
     },
     {
-      q: "How does Sendport guarantee better inbox placement than Brevo?",
-      a: "Sendport uses an automated 30-day domain reputation warmup schedule, 2048-bit RSA DKIM, pre-send spam scoring, and proactive broken link checks to protect your domain from landing in Gmail spam or promotions tabs.",
+      q: "How does Sendport help achieve high inbox placement compared to Brevo?",
+      a: "Sendport uses an automated 30-day domain reputation warmup schedule, 2048-bit RSA DKIM signing, pre-send spam scoring, and proactive broken link checks to protect your domain and help prevent emails from landing in spam folders.",
     },
   ];
 
@@ -48,7 +48,7 @@ export default function BrevoAlternativePage() {
       {
         "@type": "Product",
         name: "Sendport Email API - Best Brevo Alternative",
-        description: "High-speed developer email API with sub-50ms latency, automated warmup, and 90,000 emails for $20/mo. Best alternative to Brevo.",
+        description: "High-speed developer email API with Sub-10ms API response time, automated warmup, and 90,000 emails for $20/mo. Best alternative to Brevo.",
         brand: { "@type": "Brand", name: "Sendport" },
         offers: [
           {
@@ -124,12 +124,12 @@ export default function BrevoAlternativePage() {
           <h1 className="text-4xl sm:text-6xl font-black text-white tracking-tight leading-tight">
             Fast Transactional Emails Without Brevo’s Lag. <br />
             <span className="bg-gradient-to-r from-amber-400 via-orange-400 to-amber-200 bg-clip-text text-transparent">
-              4.5x More Volume. Sub-50ms Edge API.
+              4.5x More Volume. Sub-10ms API Response Time.
             </span>
           </h1>
 
           <p className="mt-6 text-base sm:text-lg text-slate-400 max-w-3xl mx-auto leading-relaxed">
-            Brevo charges $25/mo for just 20,000 emails with slow API latency and sudden account verification locks. Sendport delivers 90,000 emails for $20 with native React Email support, sub-50ms dispatch, and automated 30-day domain warmup.
+            Brevo charges $25/mo for just 20,000 emails with slow API latency and sudden account verification locks. Sendport delivers 90,000 emails for $20 with native React Email support, Sub-10ms API response time, and automated 30-day domain warmup.
           </p>
 
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -152,7 +152,7 @@ export default function BrevoAlternativePage() {
           <div className="mt-12 flex flex-wrap items-center justify-center gap-6 text-xs text-slate-400 font-medium">
             <div className="flex items-center gap-1.5">
               <Zap className="w-4 h-4 text-amber-400" />
-              <span>Sub-50ms Global Edge Latency</span>
+              <span>Sub-10ms API Response Time</span>
             </div>
             <div className="flex items-center gap-1.5">
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
@@ -201,6 +201,7 @@ export default function BrevoAlternativePage() {
                 </tbody>
               </table>
             </div>
+            <p className="text-[11px] text-slate-500 text-center mt-3">Competitor information may change. Check their official sites.</p>
           </div>
         </div>
       </section>
@@ -246,7 +247,7 @@ export default function BrevoAlternativePage() {
                 Switch to Sendport Today & Supercharge Your Deliverability.
               </h3>
               <p className="mt-2 text-xs sm:text-sm text-slate-300 max-w-xl mx-auto">
-                Enjoy 90,000 monthly emails for $20 with zero contact storage fees and sub-50ms dispatch speed.
+                Enjoy 90,000 monthly emails for $20 with zero contact storage fees and Sub-10ms API response time.
               </p>
               <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
                 <Link

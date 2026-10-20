@@ -9,7 +9,7 @@ Stable tag: 1.0.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Ultra-fast, 99.9% inbox deliverability for WordPress & WooCommerce powered by Sendport REST API and 2048-bit RSA DKIM.
+Ultra-fast, high inbox deliverability for WordPress & WooCommerce powered by Sendport REST API and 2048-bit RSA DKIM.
 
 == Description ==
 
@@ -18,7 +18,7 @@ Ultra-fast, 99.9% inbox deliverability for WordPress & WooCommerce powered by Se
 Whether you are sending WooCommerce order confirmations, password reset links, contact form notifications (Contact Form 7, WPForms, Gravity Forms, Elementor Forms, Ninja Forms), or user activation emails, Sendport routes your emails through our developer-first, high-throughput delivery cluster with automated 2048-bit RSA DKIM cryptographic signatures and verified SPF.
 
 ### Why Website Owners & Agencies Switch to Sendport:
-* **99.9% Inbox Placement:** Bypasses unreliable shared web hosting mail daemons (`mail()`) that get blacklisted on Gmail, Yahoo, and Outlook.
+* **High Inbox Placement:** Bypasses unreliable shared web hosting mail daemons (`mail()`) that get blacklisted on Gmail, Yahoo, and Outlook.
 * **Ultra-Fast REST API Engine:** Sends emails over secure HTTPS REST API (Port 443) rather than legacy SMTP ports (25, 465, 587) which are often blocked by shared hosts like Bluehost, GoDaddy, SiteGround, and Namecheap.
 * **WooCommerce Native Support:** Guarantees critical purchase receipts and order updates arrive in customer inboxes instantly.
 * **Form Plugin Compatible:** Works seamlessly with WPForms, Contact Form 7, Fluent Forms, Formidable Forms, Gravity Forms, and Elementor.

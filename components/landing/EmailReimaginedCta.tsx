@@ -14,7 +14,7 @@ export function EmailReimaginedCta() {
 
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
         <h2 className="text-4xl sm:text-6xl font-extrabold text-white tracking-tight leading-[1.1]">
-          Email reimagined. <br />
+          Email reimagined.<br className="hidden sm:inline" />{" "}
           <span className="bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
             Available today.
           </span>

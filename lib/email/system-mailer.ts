@@ -30,7 +30,7 @@ export async function sendSystemEmail(options: SystemEmailOptions): Promise<bool
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-Sendport-Key": process.env.SENDPORT_SECRET || "sendport_enterprise_jwt_secret_key_2026",
+        "X-Sendport-Key": process.env.SENDPORT_SECRET || "",
       },
       body: JSON.stringify({
         from_address: fromAddress,
@@ -143,7 +143,7 @@ ${emailHeader}
       <li><strong>100 Free Emails / Day</strong> (3,000 / month)</li>
       <li>Custom Domain Authentication (DKIM + SPF + DMARC)</li>
       <li>Instant SMTP Relay (Ports 587 &amp; 465)</li>
-      <li>REST API with TypeScript, Python &amp; cURL SDKs</li>
+      <li>High-speed REST API with Node.js, Python &amp; cURL examples</li>
       <li>Real-time Open &amp; Click Telemetry</li>
     </ul>
   </div>

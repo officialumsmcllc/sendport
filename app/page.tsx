@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { siteConfig } from "@/lib/config/site";
 import { CURRENCIES, SupportedCurrency, formatPrice } from "@/lib/payments/currencies";
+import { HOMEPAGE_FAQS } from "@/lib/content/faqs";
 import { CodePlayground } from "@/components/landing/CodePlayground";
 import { ReactEmailPlayground } from "@/components/landing/ReactEmailPlayground";
 import { WebhookSimulator } from "@/components/landing/WebhookSimulator";
@@ -25,30 +26,6 @@ import {
 
 export default function HomePage() {
   const [currency, setCurrency] = useState<SupportedCurrency>("USD");
-  const [openFaq, setOpenFaq] = useState<number | null>(0);
-
-  const faqs = [
-    {
-      q: "How does Sendport ensure 99.99% Primary Inbox delivery?",
-      a: "Sendport automatically enforces 2048-bit RSA DKIM cryptographic signatures, SPF alignment, DMARC validation, and PTR reverse DNS records on clean static IPs with sub-10ms delivery queues.",
-    },
-    {
-      q: "Can I use Sendport with WordPress, WooCommerce, and Laravel?",
-      a: "Yes! In addition to REST API and SDKs, Sendport provides instant SMTP relay credentials (Host: smtp.getsendport.com, Port: 587/465) that connect with any WordPress SMTP plugin or backend framework.",
-    },
-    {
-      q: "Can I write email templates using React and Tailwind?",
-      a: "Absolutely. Sendport provides first-class support for React Email (@react-email/components). You can build type-safe, reusable email components and preview them live in your browser.",
-    },
-    {
-      q: "What payment methods are supported for international and regional clients?",
-      a: "We support global Credit/Debit Cards via Stripe, PayPal, Wise, Payoneer, direct Bank Wire (IBAN/SWIFT), regional mobile wallets (Easypaisa, JazzCash, Raast), and Crypto USDT (TRC-20 / BEP-20) with instant receipt verification.",
-    },
-    {
-      q: "Is there a free tier for developers?",
-      a: "Yes! Our Starter plan is 100% Free Forever, giving you 100 emails/day (3,000/month), 1 verified custom domain, 2048-bit DKIM signing, live open/click tracking, and full REST API access.",
-    },
-  ];
 
   return (
     <div className="flex min-h-screen flex-col bg-black text-slate-100 selection:bg-white/20 selection:text-white">
@@ -87,7 +64,7 @@ export default function HomePage() {
             </div>
             <div className="text-[9px] text-slate-500 font-mono flex items-center justify-between">
               <span>Queue: 0 ms</span>
-              <span className="text-emerald-400 font-bold">100% Primary</span>
+              <span className="text-emerald-400 font-bold">High Inbox Placement</span>
             </div>
           </div>
 
@@ -104,7 +81,7 @@ export default function HomePage() {
 
               {/* Main Heading (Resend Editorial Style) */}
               <h1 className="text-5xl font-extrabold tracking-tight text-white sm:text-7xl sm:leading-[1.05] drop-shadow-sm">
-                Email for <br />
+                Email for<br className="hidden sm:inline" />{" "}
                 <span className="bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
                   developers
                 </span>
@@ -112,7 +89,7 @@ export default function HomePage() {
 
               {/* Subtitle */}
               <p className="text-base sm:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
-                The best way to reach humans instead of spam folders. Deliver transactional and marketing emails at scale with 2048-bit RSA DKIM and sub-10ms latency.
+                The best way to reach humans instead of spam folders. Deliver transactional and marketing emails at scale with 2048-bit RSA DKIM signing, SPF and DMARC, and sub-10ms API response time.
               </p>
 
               {/* CTA Buttons (Resend Glass Aesthetic with Shimmer) */}
@@ -142,7 +119,7 @@ export default function HomePage() {
                   <ShieldCheck className="w-4 h-4 text-emerald-400" /> 1 Free Custom Domain
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <Zap className="w-4 h-4 text-emerald-400" /> 99.9% Primary Inbox Placement
+                  <Zap className="w-4 h-4 text-emerald-400" /> Built for High Inbox Placement
                 </span>
               </div>
             </div>
@@ -155,7 +132,7 @@ export default function HomePage() {
             <div className="grid grid-cols-2 gap-6 sm:grid-cols-4 text-center">
               <div>
                 <p className="text-3xl sm:text-4xl font-black text-white">{siteConfig.stats.avgLatency}</p>
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mt-1">Average Dispatch Latency</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mt-1">Average API Response Time</p>
               </div>
               <div>
                 <p className="text-3xl sm:text-4xl font-black text-emerald-400">{siteConfig.stats.dkimStandard}</p>
@@ -201,7 +178,7 @@ export default function HomePage() {
               Why Teams Are Leaving Resend & SendGrid
             </h2>
             <p className="text-sm sm:text-base text-slate-400 mt-3 leading-relaxed">
-              Compare Sendport side-by-side with industry legacy providers and see why developers switch for 3x higher volume, built-in 30-day warmup, and global payment rails.
+              Compare Sendport side-by-side with industry legacy providers and see why developers switch for significantly higher volume, built-in 30-day warmup, and global payment rails.
             </p>
           </div>
 
@@ -211,11 +188,11 @@ export default function HomePage() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-mono font-bold text-slate-400 uppercase">Sendport vs Resend</span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">3x More Volume</span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">1.8x More Volume</span>
                 </div>
                 <h3 className="text-xl font-bold text-white">Looking for a Resend Alternative?</h3>
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  Resend gives you 30k emails for $20. Sendport gives you 90k emails/month, automated 30-day warmup, zero contact fees, and local/crypto payment rails.
+                  Resend Pro starts at $20/mo for 50,000 emails (checked on October 20, 2026). Sendport gives you 90k emails/month for $20 with automated 30-day warmup and multi-currency billing.*
                 </p>
               </div>
               <div className="pt-6">
@@ -237,7 +214,7 @@ export default function HomePage() {
                 </div>
                 <h3 className="text-xl font-bold text-white">Looking for a SendGrid Alternative?</h3>
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  Escape legacy 400ms queue latency, abrupt account review suspensions, and cluttered Twilio consoles. Sendport offers instant API keys and modern React Email.
+                  Escape slow queue latencies, abrupt account review suspensions, and cluttered Twilio consoles. Sendport offers instant API keys and modern React Email.
                 </p>
               </div>
               <div className="pt-6">
@@ -255,11 +232,11 @@ export default function HomePage() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-mono font-bold text-slate-400 uppercase">Sendport vs Postmark</span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">Zero Newsletter Bans</span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">Unified Engine</span>
                 </div>
                 <h3 className="text-xl font-bold text-white">Looking for a Postmark Alternative?</h3>
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  Postmark bans marketing broadcasts and charges $15 for just 10k emails. Sendport gives 90k sends for $20 and allows transactional + marketing under one unified roof.
+                  Postmark charges $15 for 10k emails. Sendport gives you 90k sends for $20 with unified transactional and marketing capabilities under one roof.*
                 </p>
               </div>
               <div className="pt-6">
@@ -272,6 +249,7 @@ export default function HomePage() {
               </div>
             </div>
           </div>
+          <p className="text-[11px] text-slate-500 text-center mt-6">Competitor information may change. Check their official sites.</p>
         </section>
 
         {/* PRICING SECTION */}
@@ -295,8 +273,8 @@ export default function HomePage() {
                 <h3 className="text-xl font-bold text-white">Starter</h3>
                 <p className="text-xs text-slate-400 mt-1">Perfect for side projects & indie developers.</p>
                 <div className="mt-6 flex items-baseline gap-1">
-                  <span className="text-4xl font-black text-white">{formatPrice(0, currency)}</span>
-                  <span className="text-xs text-slate-500">/ month</span>
+                  <span className="text-4xl font-black text-white">Free</span>
+                  <span className="text-xs text-slate-500">forever</span>
                 </div>
                 <ul className="mt-6 space-y-3 text-xs text-slate-300">
                   <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> 100 emails / day (3,000/mo)</li>
@@ -306,7 +284,10 @@ export default function HomePage() {
                   <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> Realtime Webhooks & 3 Days Logs</li>
                 </ul>
               </div>
-              <Link href="/dashboard" className="mt-8 block w-full py-3.5 rounded-xl border border-slate-800 bg-slate-900 text-center text-xs font-semibold text-white hover:bg-slate-800 transition-all">
+              <Link
+                href="/signup"
+                className="mt-8 block w-full py-3.5 rounded-xl border border-slate-800 bg-slate-900 text-center text-xs font-semibold text-white hover:bg-slate-800 transition-all"
+              >
                 Get Started Free
               </Link>
             </div>
@@ -321,7 +302,7 @@ export default function HomePage() {
                 <p className="text-xs text-slate-400 mt-1">For growing SaaS apps and production businesses.</p>
                 <div className="mt-6 flex items-baseline gap-1">
                   <span className="text-4xl font-black text-white">{formatPrice(20, currency)}</span>
-                  <span className="text-xs text-slate-500">/ month</span>
+                  <span className="text-xs text-slate-500">/mo</span>
                 </div>
                 <ul className="mt-6 space-y-3 text-xs text-slate-300">
                   <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> 3,000 emails / day (90,000/mo)</li>
@@ -332,7 +313,10 @@ export default function HomePage() {
                   <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> Priority 24/7 Developer Support</li>
                 </ul>
               </div>
-              <Link href="/dashboard" className="mt-8 block w-full py-3.5 rounded-xl bg-white text-center text-xs font-semibold text-black hover:bg-slate-200 transition-all shadow-md">
+              <Link
+                href="/signup?plan=growth"
+                className="mt-8 block w-full py-3.5 rounded-xl bg-white text-center text-xs font-semibold text-black hover:bg-slate-200 transition-all shadow-md"
+              >
                 Start Growth Plan
               </Link>
             </div>
@@ -344,7 +328,7 @@ export default function HomePage() {
                 <p className="text-xs text-slate-400 mt-1">For high-volume platforms & agencies.</p>
                 <div className="mt-6 flex items-baseline gap-1">
                   <span className="text-4xl font-black text-white">{formatPrice(79, currency)}</span>
-                  <span className="text-xs text-slate-500">/ month</span>
+                  <span className="text-xs text-slate-500">/mo</span>
                 </div>
                 <ul className="mt-6 space-y-3 text-xs text-slate-300">
                   <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> 25,000 emails / day (750,000/mo)</li>
@@ -354,7 +338,10 @@ export default function HomePage() {
                   <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> 99.99% SLA Guarantee</li>
                 </ul>
               </div>
-              <Link href="/dashboard" className="mt-8 block w-full py-3.5 rounded-xl border border-slate-800 bg-slate-900 text-center text-xs font-semibold text-white hover:bg-slate-800 transition-all">
+              <Link
+                href="/signup?plan=scale_pro"
+                className="mt-8 block w-full py-3.5 rounded-xl border border-slate-800 bg-slate-900 text-center text-xs font-semibold text-white hover:bg-slate-800 transition-all"
+              >
                 Upgrade to Scale Pro
               </Link>
             </div>
@@ -372,21 +359,20 @@ export default function HomePage() {
           </div>
 
           <div className="space-y-3">
-            {faqs.map((faq, i) => (
-              <div key={i} className="rounded-xl border border-slate-800 bg-slate-950/60 overflow-hidden">
-                <button
-                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  className="w-full p-4 text-left font-semibold text-sm text-white flex items-center justify-between hover:text-primary-400 transition-colors"
-                >
+            {HOMEPAGE_FAQS.map((faq, i) => (
+              <details
+                key={i}
+                className="group rounded-xl border border-slate-800 bg-slate-950/60 overflow-hidden"
+                open={i === 0}
+              >
+                <summary className="w-full p-4 text-left font-semibold text-sm text-white flex items-center justify-between hover:text-primary-400 transition-colors cursor-pointer list-none select-none">
                   <span>{faq.q}</span>
-                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${openFaq === i ? "rotate-180" : ""}`} />
-                </button>
-                {openFaq === i && (
-                  <div className="p-4 pt-0 text-xs text-slate-400 leading-relaxed border-t border-slate-900 bg-slate-950">
-                    {faq.a}
-                  </div>
-                )}
-              </div>
+                  <ChevronDown className="w-4 h-4 text-slate-400 transition-transform duration-200 group-open:rotate-180" />
+                </summary>
+                <div className="p-4 pt-0 text-xs text-slate-400 leading-relaxed border-t border-slate-900 bg-slate-950">
+                  {faq.a}
+                </div>
+              </details>
             ))}
           </div>
         </section>

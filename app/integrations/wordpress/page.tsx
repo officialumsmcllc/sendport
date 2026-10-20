@@ -158,8 +158,8 @@ define('SENDPORT_API_KEY', 'sk_live_your_api_key_here');`);
 
             <pre className="p-4 rounded-2xl bg-black border border-slate-850 text-xs font-mono text-sky-300 overflow-x-auto">
               <code>{`// In your wp-config.php file:
-define('SENDPORT_API_KEY', 'sk_live_9f81a7b...');
-define('SENDPORT_FROM_EMAIL', 'hello@yourstore.com');`}</code>
+define('SENDPORT_API_KEY', 'sk_live_your_api_key_here');
+define('SENDPORT_FROM_EMAIL', 'hello@example.com');`}</code>
             </pre>
           </div>
 

@@ -25,7 +25,7 @@ export type Framework =
   | "Astro";
 
 export function CodePlayground() {
-  const [activeLang, setActiveLang] = useState<Language>("node");
+  const [activeLang, setActiveLang] = useState<Language>("curl");
   const [activeFramework, setActiveFramework] = useState<Framework>("Next.js");
   const [copied, setCopied] = useState(false);
 
@@ -41,183 +41,205 @@ export function CodePlayground() {
   ];
 
   const languages: { id: Language; label: string; icon: string }[] = [
-    { id: "node", label: "Node.js", icon: "JS" },
+    { id: "curl", label: "cURL", icon: ">_" },
+    { id: "node", label: "Node.js (Fetch)", icon: "JS" },
     { id: "next", label: "Next.js", icon: "▲" },
     { id: "python", label: "Python", icon: "Py" },
     { id: "go", label: "Go", icon: "Go" },
-    { id: "rust", label: "Rust", icon: "Rs" },
     { id: "php", label: "PHP", icon: "PHP" },
     { id: "ruby", label: "Ruby", icon: "Rb" },
-    { id: "curl", label: "cURL", icon: ">_" },
-    { id: "smtp", label: "SMTP", icon: "✉" },
+    { id: "smtp", label: "SMTP Relay", icon: "✉" },
   ];
 
   const getCodeSnippet = (): string => {
     switch (activeLang) {
-      case "next":
-        return `// app/api/send/route.ts (Next.js App Router)
-import { Sendport } from 'sendport';
-import { WelcomeEmail } from '@/emails/WelcomeEmail';
-import { NextResponse } from 'next/server';
-
-const sendport = new Sendport(process.env.SENDPORT_API_KEY!);
-
-export async function POST() {
-  try {
-    const data = await sendport.emails.send({
-      from: 'Muhammad Umar <hello@getsendport.com>',
-      to: ['client@targetdomain.com'],
-      subject: 'Welcome to our platform 🚀',
-      react: WelcomeEmail({ firstName: 'Steve' }),
-      track_opens: true,
-      track_clicks: true,
-    });
-
-    return NextResponse.json(data);
-  } catch (error) {
-    return NextResponse.json({ error }, { status: 500 });
-  }
-}`;
-
-      case "node":
-        return `import { Sendport } from 'sendport';
-
-const sendport = new Sendport('sk_live_8f9a2b4c6e7d8f9a');
-
-async function main() {
-  const { data, error } = await sendport.emails.send({
-    from: 'Sendport <onboarding@getsendport.com>',
-    to: ['alex@company.com'],
-    subject: 'Your 2FA Security Code: 849-204',
-    html: '<strong>Your verification code is 849-204</strong> (expires in 10 mins)',
-    headers: {
-      'X-Entity-Ref-ID': 'auth_user_9921',
-    },
-  });
-
-  if (error) {
-    return console.error({ error });
-  }
-
-  console.log('Delivered successfully:', data.id);
-}
-
-main();`;
-
-      case "python":
-        return `import sendport
-
-client = sendport.Client(api_key="sk_live_8f9a2b4c6e7d8f9a")
-
-response = client.emails.send(
-    params={
-        "from": "Billing <invoices@getsendport.com>",
-        "to": ["finance@enterprise.com"],
-        "subject": "Invoice #1049 for Cloud Services",
-        "html": "<h1>Invoice Paid</h1><p>Amount: $249.00 USD</p>",
-        "tags": [
-            {"name": "category", "value": "invoices"}
-        ]
-    }
-)
-
-print("Email dispatched with Message ID:", response["id"])`;
-
-      case "go":
-        return `package main
-
-import (
-	"context"
-	"fmt"
-	"github.com/sendport/sendport-go"
-)
-
-func main() {
-	client := sendport.NewClient("sk_live_8f9a2b4c6e7d8f9a")
-
-	params := &sendport.SendEmailRequest{
-		From:    "Umar <support@getsendport.com>",
-		To:      []string{"user@domain.com"},
-		Subject: "Account Password Reset",
-		Html:    "<p>Click here to reset your password securely.</p>",
-	}
-
-	sent, err := client.Emails.SendWithContext(context.Background(), params)
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Printf("Message ID: %s (Latency: 8.2ms)\n", sent.Id)
-}`;
-
-      case "rust":
-        return `use sendport::{Sendport, CreateEmailOptions};
-
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let sendport = Sendport::new("sk_live_8f9a2b4c6e7d8f9a");
-
-    let email = CreateEmailOptions::new(
-        "alerts@getsendport.com",
-        vec!["devops@acme.corp"],
-        "Production Alert: CPU Spike > 90%",
-    ).with_html("<strong>Cluster node-east-1 load is 94%</strong>");
-
-    let response = sendport.emails.send(email).await?;
-    println!("Dispatched: {}", response.id);
-    Ok(())
-}`;
-
-      case "php":
-        return `<?php
-require_once __DIR__ . '/vendor/autoload.php';
-
-$sendport = new Sendport\\Client('sk_live_8f9a2b4c6e7d8f9a');
-
-$result = $sendport->emails->send([
-    'from' => 'Muhammad Umar <hello@getsendport.com>',
-    'to' => ['client@targetdomain.com'],
-    'subject' => 'Order #9821 Confirmed',
-    'html' => '<p>Thank you for your order! Your tracking number is SP-9842.</p>',
-    'track_opens' => true,
-]);
-
-echo "Dispatched with ID: " . $result->id;
-?>`;
-
-      case "ruby":
-        return `require "sendport"
-
-sendport = Sendport::Client.new(api_key: "sk_live_8f9a2b4c6e7d8f9a")
-
-response = sendport.emails.send(
-  from: "Acme Team <team@getsendport.com>",
-  to: ["founder@startup.io"],
-  subject: "Welcome to Sendport Ruby Gem",
-  html: "<p>Lightning-fast delivery with 2048-bit DKIM.</p>"
-)
-
-puts "Delivered: #{response.id}"`;
-
       case "curl":
         return `curl -X POST https://api.getsendport.com/v1/emails/send \\
-  -H "Authorization: Bearer sk_live_8f9a2b4c6e7d8f9a" \\
+  -H "Authorization: Bearer \${SENDPORT_API_KEY:-sk_live_your_api_key_here}" \\
   -H "Content-Type: application/json" \\
   -d '{
     "from": "Muhammad Umar <hello@getsendport.com>",
-    "to": ["recipient@targetdomain.com"],
+    "to": ["recipient@example.com"],
     "subject": "Sub-10ms Transactional Email",
     "html": "<h1>Hello from Sendport REST API</h1><p>High deliverability at scale.</p>",
     "track_opens": true,
     "track_clicks": true
   }'`;
 
+      case "node":
+        return `// Native fetch (Node.js 18+ / Zero dependencies)
+const response = await fetch("https://api.getsendport.com/v1/emails/send", {
+  method: "POST",
+  headers: {
+    "Authorization": \`Bearer \${process.env.SENDPORT_API_KEY || 'sk_live_your_api_key_here'}\`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    from: "Sendport <onboarding@getsendport.com>",
+    to: ["alex@example.com"],
+    subject: "Your 2FA Security Code: 849-204",
+    html: "<strong>Your verification code is 849-204</strong> (expires in 10 mins)",
+    track_opens: true,
+  }),
+});
+
+const data = await response.json();
+console.log("Delivered successfully:", data.id);`;
+
+      case "next":
+        return `// app/api/send/route.ts (Next.js 15 App Router)
+import { NextResponse } from 'next/server';
+
+export async function POST() {
+  try {
+    const res = await fetch('https://api.getsendport.com/v1/emails/send', {
+      method: 'POST',
+      headers: {
+        'Authorization': \`Bearer \${process.env.SENDPORT_API_KEY || 'sk_live_your_api_key_here'}\`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'Muhammad Umar <hello@getsendport.com>',
+        to: ['client@example.com'],
+        subject: 'Welcome to our platform 🚀',
+        html: '<p>Welcome! High deliverability and sub-10ms dispatch.</p>',
+        track_opens: true,
+        track_clicks: true,
+      }),
+    });
+
+    const data = await res.json();
+    return NextResponse.json(data);
+  } catch (error) {
+    return NextResponse.json({ error: "Failed to dispatch email" }, { status: 500 });
+  }
+}`;
+
+      case "python":
+        return `import os
+import requests
+
+response = requests.post(
+    "https://api.getsendport.com/v1/emails/send",
+    headers={
+        "Authorization": f"Bearer {os.environ.get('SENDPORT_API_KEY', 'sk_live_your_api_key_here')}",
+        "Content-Type": "application/json",
+    },
+    json={
+        "from": "Billing <invoices@getsendport.com>",
+        "to": ["finance@example.com"],
+        "subject": "Invoice #1049 for Cloud Services",
+        "html": "<h1>Invoice Paid</h1><p>Amount: $249.00 USD</p>",
+        "track_opens": True,
+    },
+)
+
+print("Dispatched:", response.json())`;
+
+      case "go":
+        return `package main
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"os"
+)
+
+func main() {
+	apiKey := os.Getenv("SENDPORT_API_KEY")
+	if apiKey == "" {
+		apiKey = "sk_live_your_api_key_here"
+	}
+
+	payload, _ := json.Marshal(map[string]interface{}{
+		"from":    "Umar <support@getsendport.com>",
+		"to":      []string{"user@example.com"},
+		"subject": "Account Password Reset",
+		"html":    "<p>Click here to reset your password securely.</p>",
+	})
+
+	req, _ := http.NewRequest("POST", "https://api.getsendport.com/v1/emails/send", bytes.NewBuffer(payload))
+	req.Header.Set("Authorization", "Bearer "+apiKey)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
+	fmt.Printf("Status: %s\\n", resp.Status)
+}`;
+
+      case "rust":
+        return `// HTTP POST using standard reqwest
+let client = reqwest::Client::new();
+let res = client.post("https://api.getsendport.com/v1/emails/send")
+    .bearer_auth(std::env::var("SENDPORT_API_KEY").unwrap_or("sk_live_your_api_key_here".into()))
+    .json(&serde_json::json!({
+        "from": "alerts@getsendport.com",
+        "to": ["devops@example.com"],
+        "subject": "Production Alert: High Traffic",
+        "html": "<strong>Cluster status: Healthy</strong>"
+    }))
+    .send()
+    .await?;`;
+
+      case "php":
+        return `<?php
+$apiKey = getenv('SENDPORT_API_KEY') ?: 'sk_live_your_api_key_here';
+
+$ch = curl_init('https://api.getsendport.com/v1/emails/send');
+curl_setopt_array($ch, [
+    CURLOPT_POST => true,
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_HTTPHEADER => [
+        'Authorization: Bearer ' . $apiKey,
+        'Content-Type: application/json'
+    ],
+    CURLOPT_POSTFIELDS => json_encode([
+        'from' => 'Muhammad Umar <hello@getsendport.com>',
+        'to' => ['client@example.com'],
+        'subject' => 'Order #9821 Confirmed',
+        'html' => '<p>Thank you for your order! Your tracking number is SP-9842.</p>',
+        'track_opens' => true
+    ])
+]);
+
+$response = curl_exec($ch);
+curl_close($ch);
+echo "Response: " . $response;
+?>`;
+
+      case "ruby":
+        return `require 'net/http'
+require 'uri'
+require 'json'
+
+uri = URI.parse('https://api.getsendport.com/v1/emails/send')
+req = Net::HTTP::Post.new(uri)
+req['Authorization'] = "Bearer #{ENV['SENDPORT_API_KEY'] || 'sk_live_your_api_key_here'}"
+req['Content-Type'] = 'application/json'
+req.body = {
+  from: 'Acme Team <team@getsendport.com>',
+  to: ['founder@example.com'],
+  subject: 'Welcome to Sendport',
+  html: '<p>Lightning-fast delivery with 2048-bit DKIM.</p>'
+}.to_json
+
+res = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |http|
+  http.request(req)
+end
+
+puts res.body`;
+
       case "smtp":
         return `# Standard SMTP Relay Configuration (WordPress / Laravel / Shopify)
 Host:     smtp.getsendport.com
 Port:     587 (TLS / STARTTLS) or 465 (SSL)
 Username: api
-Password: sk_live_8f9a2b4c6e7d8f9a
+Password: sk_live_your_api_key_here
 Auth:     PLAIN / LOGIN
 
 # Example PHPMailer / Laravel .env:
@@ -225,7 +247,7 @@ MAIL_MAILER=smtp
 MAIL_HOST=smtp.getsendport.com
 MAIL_PORT=587
 MAIL_USERNAME=api
-MAIL_PASSWORD=sk_live_8f9a2b4c6e7d8f9a
+MAIL_PASSWORD=sk_live_your_api_key_here
 MAIL_ENCRYPTION=tls
 MAIL_FROM_ADDRESS="hello@getsendport.com"
 MAIL_FROM_NAME="Sendport"`;
@@ -249,7 +271,7 @@ MAIL_FROM_NAME="Sendport"`;
           Integrate <span className="bg-gradient-to-r from-amber-400 via-orange-400 to-rose-400 bg-clip-text text-transparent">this morning</span>
         </h2>
         <p className="mt-3 text-base text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
-          A simple, elegant interface so you can start sending emails in minutes. It fits right into your code with SDKs for your favourite programming languages.
+          A simple, high-speed REST API and SMTP relay so you can start sending emails in minutes. Fits directly into your stack using standard HTTP requests in any language.
         </p>
       </div>
 
@@ -333,7 +355,7 @@ MAIL_FROM_NAME="Sendport"`;
         <div className="border-t border-slate-800/60 bg-slate-950/90 px-4 py-2.5 flex flex-wrap items-center justify-between text-xs font-mono text-slate-400">
           <span className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            HTTP 200 OK • Latency: 7.8ms • 2048-bit RSA DKIM Signed
+            HTTP 200 OK • Example response (API response time: ~8ms) • 2048-bit RSA DKIM Signed
           </span>
           <span className="text-slate-500">api.getsendport.com/v1/emails/send</span>
         </div>

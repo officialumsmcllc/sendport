@@ -29,19 +29,22 @@ export default function FeaturesPage() {
     {
       title: "Sub-10ms API Dispatch",
       badge: "Performance",
-      description: "Distributed edge email nodes worldwide. Push transactional emails with REST or SDKs in single-digit milliseconds.",
+      description: "Distributed edge email nodes worldwide. Push transactional emails with REST API in single-digit milliseconds.",
       icon: Zap,
       color: "from-amber-500 to-orange-500",
-      code: `// Modern Developer SDK
-import { GetSendport } from 'getsendport';
-
-const sendport = new GetSendport({ apiKey: 'sp_live_...' });
-
-await sendport.emails.send({
-  from: 'Your App <onboarding@yourdomain.com>',
-  to: ['user@example.com'],
-  subject: 'Welcome to our platform',
-  react: <WelcomeEmail name="Sarah" />
+      code: `// Fast REST API Dispatch (Node.js / Next.js)
+const res = await fetch('https://api.getsendport.com/v1/emails/send', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer sk_live_your_api_key_here',
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    from: 'Your App <onboarding@yourdomain.com>',
+    to: ['user@example.com'],
+    subject: 'Welcome to our platform',
+    html: '<h1>Welcome Sarah</h1><p>Your account is ready.</p>',
+  }),
 });`,
     },
     {
@@ -184,7 +187,7 @@ await sendport.contacts.create({
                     </span>
                   </div>
                   <span className="text-[11px] font-mono text-emerald-400 flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" /> Live SDK
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" /> REST API
                   </span>
                 </div>
                 <pre className="p-6 text-xs sm:text-sm font-mono text-slate-300 overflow-x-auto leading-relaxed bg-[#06080e]">

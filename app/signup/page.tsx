@@ -10,6 +10,7 @@ function SignupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialEmail = searchParams.get("email") || "";
+  const planParam = searchParams.get("plan");
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState(initialEmail);
@@ -17,6 +18,57 @@ function SignupForm() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    const handleRedirect = () => {
+      if (planParam && planParam !== "starter") {
+        window.location.href = `/dashboard/billing?plan=${encodeURIComponent(planParam)}`;
+      } else {
+        window.location.href = "/dashboard";
+      }
+    };
+
+    try {
+      const cached = localStorage.getItem("sendport_user");
+      if (cached) {
+        handleRedirect();
+        return;
+      }
+    } catch (_) {}
+
+    fetch("/api/auth/me")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.authenticated && data?.user) {
+          handleRedirect();
+        }
+      })
+      .catch(() => {});
+  }, [planParam]);
+
+  const getPlanDetails = () => {
+    if (planParam === "growth") {
+      return {
+        label: "Growth Plan (90,000 sends/mo · 5 Domains)",
+        badgeClass: "bg-primary-500/10 border-primary-500/30 text-primary-400",
+        btnText: "Create Account & Continue to Growth",
+      };
+    }
+    if (planParam === "scale_pro" || planParam === "scale-pro") {
+      return {
+        label: "Scale Pro Plan (750,000 sends/mo · Dedicated IP)",
+        badgeClass: "bg-sky-500/10 border-sky-500/30 text-sky-400",
+        btnText: "Create Account & Continue to Scale Pro",
+      };
+    }
+    return {
+      label: "Starter Free Tier (100/day · 1 Domain · Free Forever)",
+      badgeClass: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400",
+      btnText: "Create Free Account",
+    };
+  };
+
+  const planInfo = getPlanDetails();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,14 +101,18 @@ function SignupForm() {
         return;
       }
 
-      // Registration successful -> cache session and go to dashboard
+      // Registration successful -> cache session and go to billing or dashboard
       try {
         if (data.user) {
           localStorage.setItem("sendport_user", JSON.stringify(data.user));
         }
       } catch (e) {}
 
-      window.location.href = "/dashboard";
+      if (planParam && planParam !== "starter") {
+        window.location.href = `/dashboard/billing?plan=${encodeURIComponent(planParam)}`;
+      } else {
+        window.location.href = "/dashboard";
+      }
     } catch (err: any) {
       setError("An unexpected network error occurred. Please try again.");
     } finally {
@@ -70,8 +126,8 @@ function SignupForm() {
         <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-emerald-400 via-primary-500 to-sky-400" />
 
         <div className="space-y-2 mb-6">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-400 mb-1">
-            <Sparkles className="w-3 h-3" /> Starter Free Tier (100/day, 1 domain)
+          <div className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold mb-1 ${planInfo.badgeClass}`}>
+            <Sparkles className="w-3 h-3" /> {planInfo.label}
           </div>
           <h1 className="text-2xl font-extrabold text-white tracking-tight">Create your account</h1>
           <p className="text-xs text-slate-400">
@@ -157,7 +213,7 @@ function SignupForm() {
               <span>Creating your workspace...</span>
             ) : (
               <>
-                <span>Create Free Account</span>
+                <span>{planInfo.btnText}</span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}

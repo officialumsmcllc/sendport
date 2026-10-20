@@ -286,7 +286,7 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-MTA-Key": process.env.MTA_SECRET_KEY || "sendport_mta_master_secret_key_2026",
+          "X-MTA-Key": process.env.MTA_SECRET_KEY || "",
         },
         body: JSON.stringify({
           from_address: options.from,
@@ -326,7 +326,7 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-Sendport-Key": process.env.SENDPORT_SECRET || "sendport_enterprise_jwt_secret_key_2026",
+          "X-Sendport-Key": process.env.SENDPORT_SECRET || "",
         },
         body: JSON.stringify({
           from_address: options.from,
@@ -369,7 +369,7 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-Sendport-Key": process.env.SENDPORT_SECRET || "sendport_enterprise_jwt_secret_key_2026",
+          "X-Sendport-Key": process.env.SENDPORT_SECRET || "",
         },
         body: JSON.stringify({
           from_address: options.from,

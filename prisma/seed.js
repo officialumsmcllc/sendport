@@ -10,12 +10,13 @@ function hashPassword(password) {
 }
 
 async function main() {
-  const adminEmail = "admin@getsendport.com";
-  const defaultPassword = "AdminPassword2026!";
+  const adminEmail = process.env.ADMIN_INITIAL_EMAIL || "admin@getsendport.com";
+  const defaultPassword = process.env.ADMIN_INITIAL_PASSWORD;
 
-  const existing = await prisma.user.findUnique({
-    where: { email: adminEmail },
-  });
+  if (!defaultPassword) {
+    console.error("SEED ERROR: ADMIN_INITIAL_PASSWORD environment variable is required to seed an admin user.");
+    process.exit(1);
+  }
 
   if (!existing) {
     const passwordHash = hashPassword(defaultPassword);

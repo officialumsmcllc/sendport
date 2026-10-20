@@ -10,8 +10,8 @@ export default function PostmarkAlternativePage() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   const comparison = [
-    { feature: "Starting Volume ($15-$20)", sendport: "90,000 emails/mo ($20)", postmark: "10,000 emails/mo ($15)", note: "9x more volume for similar price" },
-    { feature: "Marketing & Newsletter Broadcasts", sendport: "Full Support (Integrated)", postmark: "STRICTLY FORBIDDEN (Account Ban)", note: "No dual-vendor requirement" },
+    { feature: "Starting Volume ($15-$20)", sendport: "90,000 emails/mo ($20)", postmark: "10,000 emails/mo ($15)*", note: "9x more volume for similar price" },
+    { feature: "Marketing & Newsletter Broadcasts", sendport: "Full Support (Integrated)", postmark: "Separate Stream / Strict Policies", note: "No dual-vendor requirement" },
     { feature: "Audience Contact Storage", sendport: "Unlimited Audiences ($0 fee)", postmark: "Not Supported", note: "Integrated list manager" },
     { feature: "Automated 30-Day Domain Warmup", sendport: "Built-in Schedule", postmark: "Manual configuration", note: "Step-by-step deliverability" },
     { feature: "Live Spam Score & Content Tester", sendport: "1-Click Diagnostic (Included)", postmark: "Basic SpamCop/DMARC tools", note: "Live 0-100 deliverability scorecard" },
@@ -23,15 +23,15 @@ export default function PostmarkAlternativePage() {
   const faqs = [
     {
       q: "Can I send marketing newsletters and transactional emails from Sendport?",
-      a: "Yes! Unlike Postmark—which strictly bans broadcast marketing emails, newsletters, and promotional announcements—Sendport lets you send both transactional alerts and audience broadcasts under one unified API and dashboard.",
+      a: "Yes! While Postmark historically isolates broadcast marketing emails onto separate streams with strict restrictions, Sendport lets you send both transactional alerts and audience broadcasts under one unified API and dashboard.",
     },
     {
       q: "How does Sendport pricing compare with Postmark?",
-      a: "Postmark is notoriously expensive: 10k emails cost $15, 50k emails cost $55, and 300k emails cost $245. On Sendport, our Growth plan gives you 90,000 emails/month for just $20, saving up to 70% while providing superior deliverability tools.",
+      a: "Postmark starts at $15 for 10k emails, $55 for 50k emails, and $245 for 300k emails. On Sendport, our Growth plan gives you 90,000 emails/month for just $20, providing generous volume and automated deliverability tools.*",
     },
     {
-      q: "Does Sendport match Postmark's 99.9% inbox placement?",
-      a: "Yes! Sendport automatically generates and signs 2048-bit RSA DKIM keys, verifies SPF and DMARC alignment, and guides your sending through our automated 30-day warmup engine with sub-10ms delivery speeds.",
+      q: "How does Sendport deliverability compare with Postmark?",
+      a: "Sendport automatically generates and signs 2048-bit RSA DKIM keys, verifies SPF and DMARC alignment, and guides your sending through our automated 30-day warmup engine with sub-10ms API dispatch times.",
     },
     {
       q: "Can I use Sendport with WordPress and SMTP plugins?",
@@ -157,6 +157,7 @@ export default function PostmarkAlternativePage() {
               ))}
             </div>
           </div>
+          <p className="text-[11px] text-slate-500 text-center mt-2">Competitor information may change. Check their official sites.</p>
 
           <div className="space-y-6 pt-6 border-t border-slate-800">
             <div className="text-center space-y-2">

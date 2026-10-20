@@ -41,58 +41,78 @@ export default function DocsPage() {
     "trackClicks": true
   }'`;
 
-  const nodeExample = `import { Sendport } from 'sendport';
-
-const sendport = new Sendport({ apiKey: process.env.SENDPORT_API_KEY });
-
-const { data, error } = await sendport.emails.send({
-  from: 'Acme <hello@yourdomain.com>',
-  to: ['alex@example.com'],
-  subject: 'Welcome to Acme SaaS',
-  html: '<strong>Your account has been activated!</strong>',
-  tags: [
-    { name: 'category', value: 'onboarding' }
-  ]
+  const nodeExample = `// Native fetch (Node.js 18+ / Zero dependencies)
+const res = await fetch("https://api.getsendport.com/v1/emails/send", {
+  method: "POST",
+  headers: {
+    "Authorization": \`Bearer \${process.env.SENDPORT_API_KEY || 'sk_live_your_api_key_here'}\`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    from: "Acme <hello@yourdomain.com>",
+    to: ["alex@example.com"],
+    subject: "Welcome to Acme SaaS",
+    html: "<strong>Your account has been activated!</strong>",
+    trackOpens: true,
+    trackClicks: true,
+  }),
 });
 
-console.log('Dispatched Message ID:', data.id);`;
+const data = await res.json();
+console.log("Dispatched Message ID:", data.id);`;
 
-  const pythonExample = `import sendport
+  const pythonExample = `import os
+import requests
 
-client = sendport.Client(api_key="sp_live_your_api_key")
+response = requests.post(
+    "https://api.getsendport.com/v1/emails/send",
+    headers={
+        "Authorization": f"Bearer {os.environ.get('SENDPORT_API_KEY', 'sk_live_your_api_key_here')}",
+        "Content-Type": "application/json",
+    },
+    json={
+        "from": "Acme <hello@yourdomain.com>",
+        "to": ["alex@example.com"],
+        "subject": "Welcome to Acme SaaS",
+        "html": "<strong>Your account has been activated!</strong>",
+    },
+)
 
-response = client.emails.send({
-    "from": "Acme <hello@yourdomain.com>",
-    "to": ["alex@example.com"],
-    "subject": "Welcome to Acme SaaS",
-    "html": "<strong>Your account has been activated!</strong>"
-})
-
-print("Message status:", response["status"])`;
+print("Response:", response.json())`;
 
   const goExample = `package main
 
 import (
-  "context"
-  "fmt"
-  "github.com/sendport/sendport-go"
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"os"
 )
 
 func main() {
-  client := sendport.NewClient("sp_live_your_api_key")
-  
-  params := &sendport.SendEmailRequest{
-    From:    "Acme <hello@yourdomain.com>",
-    To:      []string{"alex@example.com"},
-    Subject: "Welcome to Acme SaaS",
-    Html:    "<strong>Your account has been activated!</strong>",
-  }
-  
-  res, err := client.Emails.Send(context.Background(), params)
-  if err != nil {
-    panic(err)
-  }
-  fmt.Println("Message ID:", res.Id)
+	apiKey := os.Getenv("SENDPORT_API_KEY")
+	if apiKey == "" {
+		apiKey = "sk_live_your_api_key_here"
+	}
+
+	payload, _ := json.Marshal(map[string]interface{}{
+		"from":    "Acme <hello@yourdomain.com>",
+		"to":      []string{"alex@example.com"},
+		"subject": "Welcome to Acme SaaS",
+		"html":    "<strong>Your account has been activated!</strong>",
+	})
+
+	req, _ := http.NewRequest("POST", "https://api.getsendport.com/v1/emails/send", bytes.NewBuffer(payload))
+	req.Header.Set("Authorization", "Bearer "+apiKey)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
+	fmt.Printf("Status: %s\\n", resp.Status)
 }`;
 
   return (
@@ -139,12 +159,12 @@ func main() {
                   </ul>
                 </div>
                 <div>
-                  <h4 className="font-bold text-slate-200 uppercase tracking-wider mb-2">Integration SDKs</h4>
+                  <h4 className="font-bold text-slate-200 uppercase tracking-wider mb-2">HTTP & REST Integrations</h4>
                   <ul className="space-y-1.5 text-slate-400">
-                    <li><span className="text-emerald-400">Node.js / TypeScript</span></li>
-                    <li><span className="text-emerald-400">Python 3.8+</span></li>
-                    <li><span className="text-emerald-400">Go 1.18+</span></li>
-                    <li><span className="text-emerald-400">PHP / Laravel</span></li>
+                    <li><span className="text-emerald-400">Node.js (Fetch)</span></li>
+                    <li><span className="text-emerald-400">Python (Requests)</span></li>
+                    <li><span className="text-emerald-400">Go (net/http)</span></li>
+                    <li><span className="text-emerald-400">cURL / REST</span></li>
                   </ul>
                 </div>
               </div>
@@ -158,7 +178,7 @@ func main() {
                   <Terminal className="w-5 h-5 text-primary-400" /> Quickstart: Dispatch Your First Email
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
-                  Send your first email in under 30 seconds using standard cURL or your favorite language SDK.
+                  Send your first email in under 30 seconds using standard cURL or native HTTP fetch in your backend language.
                 </p>
 
                 {/* Code tabs */}

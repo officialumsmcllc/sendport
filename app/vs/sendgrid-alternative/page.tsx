@@ -10,7 +10,7 @@ export default function SendgridAlternativePage() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   const comparison = [
-    { feature: "API Speed & Latency", sendport: "< 10ms Global Edge", sendgrid: "150ms - 400ms Legacy Queue" },
+    { feature: "API Speed & Latency", sendport: "< 10ms API dispatch time", sendgrid: "Variable queue latency (legacy infrastructure)*" },
     { feature: "Modern React Email", sendport: "Native First-Class Support", sendgrid: "Legacy Handlebars / Raw HTML" },
     { feature: "Free Domain DKIM Verification", sendport: "Instant 1-Click DNS Lookup", sendgrid: "Complex Multi-Step CNAME setup" },
     { feature: "Account Setup Time", sendport: "< 60 seconds (Instant API Keys)", sendgrid: "24-48h manual account review & locks" },
@@ -18,13 +18,13 @@ export default function SendgridAlternativePage() {
     { feature: "Live Spam Score & Content Tester", sendport: "Built-in Pre-Flight Tester", sendgrid: "Paid 3rd party add-on" },
     { feature: "Regional Payment Rails", sendport: "Cards, Easypaisa, Raast, Crypto USDT", sendgrid: "US Credit Card Only" },
     { feature: "Developer UI / UX", sendport: "Clean Dark Resend Aesthetic", sendgrid: "Cluttered Legacy Twilio Console" },
-    { feature: "Permanent Free Tier", sendport: "100 emails/day Free Forever", sendgrid: "60-day trial only" },
+    { feature: "Permanent Free Tier", sendport: "100 emails/day Free Forever", sendgrid: "Trial tier with daily limits" },
   ];
 
   const faqs = [
     {
       q: "Why are developers migrating from SendGrid to Sendport?",
-      a: "Developers leave SendGrid because of frequent account reviews/locks, slow legacy API response times, lack of React Email support, and confusing Twilio console UI. Sendport offers sub-10ms delivery, instant key generation, modern React components, and transparent pricing.",
+      a: "Developers leave SendGrid because of frequent account reviews/locks, slow legacy API response times, lack of React Email support, and confusing Twilio console UI. Sendport offers sub-10ms API response time, instant key generation, modern React components, and transparent pricing.",
     },
     {
       q: "Can I replace SendGrid SMTP relay with Sendport in WordPress or Laravel?",
@@ -36,7 +36,7 @@ export default function SendgridAlternativePage() {
     },
     {
       q: "How fast is Sendport compared to SendGrid?",
-      a: "Sendport runs on globally distributed edge nodes with direct MX routing and optimized relay pipelines, delivering sub-10ms API dispatch compared to SendGrid's 150ms-400ms legacy message queues.",
+      a: "Sendport runs on globally distributed edge nodes with direct MX routing and optimized relay pipelines, delivering sub-10ms API dispatch times compared to legacy queuing layers.",
     },
   ];
 
@@ -163,6 +163,7 @@ export default function SendgridAlternativePage() {
               ))}
             </div>
           </div>
+          <p className="text-[11px] text-slate-500 text-center mt-2">Competitor information may change. Check their official sites.</p>
 
           {/* FAQ Accordion Section for On-Page SEO Depth */}
           <div className="space-y-6 pt-6 border-t border-slate-800">

@@ -10,22 +10,22 @@ export default function ResendAlternativePage() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   const comparison = [
-    { feature: "Growth Plan Volume ($20/mo)", sendport: "90,000 emails/mo (3,000/day)", resend: "30,000 emails/mo (1,000/day)", note: "3x more volume for $20" },
+    { feature: "Starting Paid Volume ($20/mo)", sendport: "90,000 emails/mo (3,000/day)", resend: "50,000 emails/mo on Pro tier*", note: "Substantially more volume on Sendport" },
     { feature: "Verified Sending Domains ($20)", sendport: "Up to 5 Custom Domains", resend: "Domain add-on fees", note: "Multi-project flexibility" },
     { feature: "Automated 30-Day Domain Warmup", sendport: "Built-in (Automated Curve)", resend: "Manual / Enterprise only", note: "Protects new domain reputation" },
     { feature: "Live Spam Score & Content Tester", sendport: "1-Click Diagnostic (Included)", resend: "Not Available", note: "Tests 40+ filters before sending" },
     { feature: "Pre-Flight Link 404 Checker", sendport: "Built-in Automated Scanner", resend: "Not Available", note: "Stops broken links" },
     { feature: "Multi-Currency & Regional Rails", sendport: "USD, PKR, EUR, GBP, USDT, Easypaisa, Raast", resend: "USD Only (Stripe Card)", note: "Frictionless global billing" },
     { feature: "Audience Marketing Contact Fees", sendport: "$0 Extra (Included in plan)", resend: "Billed separately per 1k contacts", note: "No surprise contact bills" },
-    { feature: "2048-bit RSA DKIM & DMARC", sendport: "Automatic 1-Click DNS", resend: "Supported", note: "Equal cryptographic strength" },
+    { feature: "2048-bit RSA DKIM signing, SPF and DMARC", sendport: "Automatic 1-Click DNS", resend: "Supported", note: "Equal cryptographic strength" },
     { feature: "React Email & Tailwind Support", sendport: "Full Support (@react-email)", resend: "Full Support", note: "Drop-in code compatibility" },
     { feature: "Inbound Email Webhook Parsing", sendport: "Included Free", resend: "Supported", note: "Receive replies as JSON" },
   ];
 
   const faqs = [
     {
-      q: "Why are developers switching from Resend to Sendport in 2026?",
-      a: "Developers switch to Sendport for three main reasons: (1) 3x higher monthly sending limits on the $20 tier (90,000 emails/mo vs 30,000 on Resend), (2) zero extra fees for audience marketing contacts, and (3) integrated deliverability tools including automated 30-day warmup and a real-time spam score tester.",
+      q: "Why are developers choosing Sendport in 2026?",
+      a: "Developers switch to Sendport for three main reasons: (1) higher monthly sending limits on the $20 tier (90,000 emails/mo on Sendport vs 50,000 on Resend Pro, checked on October 20, 2026), (2) zero extra fees for audience marketing contacts, and (3) integrated deliverability tools including automated 30-day warmup and a real-time spam score tester.",
     },
     {
       q: "Can I migrate my existing React Email templates from Resend to Sendport?",
@@ -33,11 +33,11 @@ export default function ResendAlternativePage() {
     },
     {
       q: "How does Sendport compare with Resend for international payments?",
-      a: "Resend requires a US-compatible credit card via Stripe in USD. Sendport supports global cards alongside local bank wires, regional mobile wallets (Easypaisa, JazzCash, Raast), and Crypto USDT with instant activation.",
+      a: "Resend requires a credit card via Stripe in USD. Sendport supports global cards alongside local bank wires, regional mobile wallets (Easypaisa, JazzCash, Raast), and Crypto USDT with instant activation.",
     },
     {
-      q: "Does Sendport include automated domain warmup like Resend Enterprise?",
-      a: "Yes! Every Sendport account includes our automated 30-day domain warmup progression schedule that gradually ramps your sending volume from Day 1 to Day 30 to guarantee maximum inbox placement on Gmail and Outlook.",
+      q: "Does Sendport include automated domain warmup?",
+      a: "Yes! Every Sendport account includes our automated 30-day domain warmup progression schedule that gradually ramps your sending volume from Day 1 to Day 30 to help achieve high inbox placement on Gmail and Outlook.",
     },
   ];
 
@@ -123,7 +123,7 @@ export default function ResendAlternativePage() {
               Looking for a Resend Alternative?
             </h1>
             <p className="text-sm sm:text-base text-slate-400 leading-relaxed">
-              Why engineering teams and fast-growing startups choose Sendport over Resend for 3x higher volume, built-in 30-day warmup, and global payment options.
+              Why engineering teams and fast-growing startups choose Sendport over Resend for 1.8x higher volume (90,000 vs 50,000 sends), built-in 30-day warmup, and global payment options.
             </p>
             <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
               <Link
@@ -169,6 +169,7 @@ export default function ResendAlternativePage() {
               ))}
             </div>
           </div>
+          <p className="text-[11px] text-slate-500 text-center mt-2">Competitor information may change. Check their official sites.</p>
 
           {/* High-Impact Value Props */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -176,9 +177,9 @@ export default function ResendAlternativePage() {
               <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 w-fit">
                 <Zap className="w-5 h-5" />
               </div>
-              <h3 className="text-base font-bold text-white">3x More Volume for $20</h3>
+              <h3 className="text-base font-bold text-white">1.8x More Volume for $20 (90k vs 50k)</h3>
               <p className="text-xs text-slate-400 leading-relaxed">
-                Resend gives you 30,000 emails/month on their $20 plan. Sendport delivers 90,000 emails/month (3,000/day) with up to 5 verified domains.
+                Resend gives you 50,000 emails/month on their $20 plan (checked on October 20, 2026). Sendport delivers 90,000 emails/month (3,000/day) with up to 5 verified domains.
               </p>
             </div>
 

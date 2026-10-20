@@ -1,6 +1,17 @@
 import crypto from "crypto";
 
-const RESET_SECRET = process.env.SESSION_SECRET || "sendport_reset_secret_key_2026";
+function getResetSecret(): string {
+  const secret = process.env.SESSION_SECRET;
+  if (!secret || secret.length < 32) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "FATAL: SESSION_SECRET is missing or shorter than 32 characters in production. Failing closed."
+      );
+    }
+    return "";
+  }
+  return secret;
+}
 
 export interface PasswordResetPayload {
   email: string;
@@ -13,6 +24,11 @@ export interface PasswordResetPayload {
  * Valid for 15 minutes.
  */
 export function createPasswordResetToken(email: string, code: string): string {
+  const secret = getResetSecret();
+  if (!secret) {
+    throw new Error("Cannot create reset token: SESSION_SECRET is missing or invalid.");
+  }
+
   const payload: PasswordResetPayload = {
     email: email.toLowerCase().trim(),
     code: code.trim(),
@@ -21,7 +37,7 @@ export function createPasswordResetToken(email: string, code: string): string {
 
   const data = Buffer.from(JSON.stringify(payload)).toString("base64url");
   const signature = crypto
-    .createHmac("sha256", RESET_SECRET)
+    .createHmac("sha256", secret)
     .update(data)
     .digest("base64url");
 
@@ -41,8 +57,11 @@ export function verifyPasswordResetToken(
   const [data, signature] = token.split(".");
   if (!data || !signature) return false;
 
+  const secret = getResetSecret();
+  if (!secret) return false; // Fail closed
+
   const expectedSig = crypto
-    .createHmac("sha256", RESET_SECRET)
+    .createHmac("sha256", secret)
     .update(data)
     .digest("base64url");
 
@@ -58,7 +77,7 @@ export function verifyPasswordResetToken(
     // Verify email alignment
     if (payload.email !== email.toLowerCase().trim()) return false;
 
-    // Verify recovery code if provided
+    // If code is provided for verification, ensure match
     if (code && payload.code !== code.trim()) return false;
 
     return true;

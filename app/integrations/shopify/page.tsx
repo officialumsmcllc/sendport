@@ -78,7 +78,7 @@ export async function sendOrderConfirmation({ order, customer }) {
   const faqs = [
     {
       q: "Why do Shopify store order emails land in customer spam folders?",
-      a: "When you send emails from a custom domain (e.g., support@mystore.com) without strict 2048-bit RSA DKIM cryptographic signatures and SPF alignment, Gmail and Yahoo flag the emails as unauthenticated spoofing. GetSendport automatically signs every outgoing message with 2048-bit DKIM to guarantee 99.9% Primary Inbox delivery.",
+      a: "When you send emails from a custom domain (e.g., support@mystore.com) without strict 2048-bit RSA DKIM cryptographic signatures and SPF alignment, Gmail and Yahoo flag the emails as unauthenticated spoofing. GetSendport automatically signs every outgoing message with 2048-bit DKIM to optimize for high primary inbox delivery.",
     },
     {
       q: "How does the Shopify Webhook integration work?",
@@ -90,7 +90,7 @@ export async function sendOrderConfirmation({ order, customer }) {
     },
     {
       q: "Does this work with Headless Shopify and Hydrogen?",
-      a: "Yes! GetSendport offers a modern sub-10ms REST API and Node.js SDK with native React Email support (@react-email/components). You can build dynamic, high-converting checkout and order templates in pure React.",
+      a: "Yes! GetSendport offers a modern sub-10ms REST API with native React Email support (@react-email/components). You can build dynamic, high-converting checkout and order templates in pure React.",
     },
     {
       q: "What DNS records do I need to add for my Shopify store domain?",
@@ -143,7 +143,7 @@ export async function sendOrderConfirmation({ order, customer }) {
               <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
                 <ShieldCheck className="w-5 h-5" />
               </div>
-              <h3 className="text-base font-bold text-white">99.9% Primary Inbox</h3>
+              <h3 className="text-base font-bold text-white">Built for Primary Inbox</h3>
               <p className="text-xs text-slate-400 leading-relaxed">
                 Google and Yahoo enforce strict DKIM authentication for e-commerce. GetSendport signs every Shopify notification with 2048-bit RSA keys.
               </p>
@@ -219,7 +219,7 @@ export async function sendOrderConfirmation({ order, customer }) {
                       type="text"
                       value={apiKey}
                       onChange={(e) => setApiKey(e.target.value)}
-                      placeholder="sk_live_..."
+                      placeholder="sk_live_your_api_key_here"
                       className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2.5 text-xs text-white font-mono outline-none focus:border-emerald-500 transition-colors"
                     />
                   </div>
@@ -421,7 +421,7 @@ export async function sendOrderConfirmation({ order, customer }) {
           {/* BOTTOM CTA */}
           <div className="rounded-3xl border border-emerald-500/30 bg-gradient-to-b from-emerald-950/20 to-black p-8 sm:p-12 text-center space-y-5">
             <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
-              Ready to guarantee 100% Primary Inbox for your store?
+              Ready to optimize primary inbox delivery for your store?
             </h2>
             <p className="text-xs sm:text-sm text-slate-400 max-w-xl mx-auto">
               Join thousands of e-commerce brands who trust GetSendport for cryptographically verified transactional email delivery.

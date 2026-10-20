@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "GetSendport for Startups — $1,000 Free Credits & Acceleration",
     description:
-      "Get $1,000 in email credits, sub-10ms API dispatch, and 99.98% Primary Inbox deliverability for your early-stage startup.",
+      "Get $1,000 in email credits, sub-10ms API dispatch, and high deliverability built for Primary Inbox placement for your early-stage startup.",
     url: "https://getsendport.com/startups",
     siteName: "GetSendport",
     type: "website",

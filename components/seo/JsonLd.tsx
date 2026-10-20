@@ -1,6 +1,8 @@
 import React from "react";
 import { siteConfig } from "@/lib/config/site";
 
+import { HOMEPAGE_FAQS } from "@/lib/content/faqs";
+
 export function SendportJsonLd() {
   const organizationSchema = {
     "@context": "https://schema.org",
@@ -84,40 +86,14 @@ export function SendportJsonLd() {
   const faqSchema = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
-    mainEntity: [
-      {
-        "@type": "Question",
-        name: "How is Sendport different from Resend and SendGrid?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "Sendport offers 2048-bit RSA DKIM signing, sub-10ms latency REST APIs, instant SMTP relay credentials for WordPress/Shopify, and localized multi-currency payments including direct bank transfers and crypto USDT.",
-        },
+    mainEntity: HOMEPAGE_FAQS.map((faq) => ({
+      "@type": "Question",
+      name: faq.q,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: faq.a,
       },
-      {
-        "@type": "Question",
-        name: "Do I need to verify my domain to send emails on Sendport?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "Yes, to ensure 100% inbox delivery and zero spam warnings, Sendport requires automated DNS verification for DKIM (2048-bit RSA) and SPF records before live sending.",
-        },
-      },
-      {
-        "@type": "Question",
-        name: "Can I use Sendport with WordPress, WooCommerce, and Laravel?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "Yes, Sendport provides instant SMTP credentials (Host: smtp.getsendport.com, Port: 587/465) that connect directly with WordPress SMTP plugins, Laravel, Ghost, and custom apps without writing code.",
-        },
-      },
-      {
-        "@type": "Question",
-        name: "What payment methods are supported on Sendport?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "Sendport supports global Credit/Debit Cards via Stripe, PayPal, Wise, Payoneer, direct Bank Wire (IBAN/SWIFT), regional mobile wallets (Easypaisa, JazzCash, Raast), and Crypto USDT (TRC-20 / BEP-20).",
-        },
-      },
-    ],
+    })),
   };
 
   return (

@@ -12,12 +12,12 @@ export default function MailgunAlternativePage() {
   const comparison = [
     { feature: "Starting Tier Monthly Volume", sendport: "90,000 emails for $20/mo", mailgun: "$35/mo minimum (expensive overages)", note: "Save over 55% monthly" },
     { feature: "Overhead & Hidden Fees", sendport: "$0 (Predictable fixed price)", mailgun: "Steep overage charge per 1,000 emails", note: "No billing shock" },
-    { feature: "Automated 30-Day Domain Warmup", sendport: "Included on all accounts", mailgun: "Manual / Enterprise only ($1,000+/mo)", note: "Guaranteed primary inbox placement" },
+    { feature: "Automated 30-Day Domain Warmup", sendport: "Included on all accounts", mailgun: "Manual / Enterprise only ($1,000+/mo)", note: "Built for high inbox placement" },
     { feature: "Pre-Flight Spam & 404 Diagnostics", sendport: "1-Click Live AI Spam Score", mailgun: "Paid Add-on only", note: "Test emails before sending" },
     { feature: "Custom Verified Domains", sendport: "Up to 5 on Growth ($20)", mailgun: "Restricted on base tiers", note: "Multi-tenant project isolation" },
-    { feature: "Modern Edge REST API & SDKs", sendport: "Sub-50ms latency (Next.js 15 native)", mailgun: "Legacy XML/JSON endpoints", note: "Instant delivery speed" },
+    { feature: "Modern Edge REST API", sendport: "Sub-10ms API response time (Next.js 15 native)", mailgun: "Legacy XML/JSON endpoints", note: "Instant delivery speed" },
     { feature: "Global & Regional Payment Rails", sendport: "USD, PKR, EUR, GBP, USDT, Easypaisa, Raast", mailgun: "USD Credit Card Only", note: "Frictionless global billing" },
-    { feature: "2048-bit RSA DKIM & DMARC", sendport: "Automatic 1-Click DNS sync", mailgun: "Supported", note: "Airtight cryptographic authentication" },
+    { feature: "2048-bit RSA DKIM signing, SPF and DMARC", sendport: "Automatic 1-Click DNS sync", mailgun: "Supported", note: "Airtight cryptographic authentication" },
     { feature: "Audience Marketing Contact Fees", sendport: "$0 Extra (Included in plan)", mailgun: "Separate contact fees", note: "Zero subscriber tax" },
     { feature: "Inbound Email Webhook Parsing", sendport: "Included Free", mailgun: "Supported", note: "Receive replies as structured JSON" },
   ];
@@ -25,7 +25,7 @@ export default function MailgunAlternativePage() {
   const faqs = [
     {
       q: "Why are developers and SaaS founders switching from Mailgun to Sendport in 2026?",
-      a: "Mailgun has repeatedly raised prices, introducing steep minimums ($35/mo) and punitive overage fees. Sendport offers 90,000 emails/mo for just $20, includes automated 30-day domain warmup, live pre-send spam scoring, and modern SDKs with sub-50ms dispatch latency.",
+      a: "Mailgun has repeatedly raised prices, introducing steep minimums ($35/mo) and punitive overage fees. Sendport offers 90,000 emails/mo for just $20, includes automated 30-day domain warmup, live pre-send spam scoring, and a high-speed REST API with Sub-10ms API response time.",
     },
     {
       q: "How easy is it to migrate from Mailgun SMTP or REST API to Sendport?",
@@ -129,7 +129,7 @@ export default function MailgunAlternativePage() {
           </h1>
 
           <p className="mt-6 text-base sm:text-lg text-slate-400 max-w-3xl mx-auto leading-relaxed">
-            Mailgun now charges $35/mo with expensive overage fees. Sendport provides 90,000 emails per month, automated 30-day domain warmup, live spam checks, and sub-50ms dispatch latency for just $20/month.
+            Mailgun now charges $35/mo with expensive overage fees. Sendport provides 90,000 emails per month, automated 30-day domain warmup, live spam checks, and Sub-10ms API response time for just $20/month.
           </p>
 
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -152,7 +152,7 @@ export default function MailgunAlternativePage() {
           <div className="mt-12 flex flex-wrap items-center justify-center gap-6 text-xs text-slate-400 font-medium">
             <div className="flex items-center gap-1.5">
               <Zap className="w-4 h-4 text-amber-400" />
-              <span>Sub-50ms Global Latency</span>
+              <span>Sub-10ms API response time</span>
             </div>
             <div className="flex items-center gap-1.5">
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
@@ -201,6 +201,7 @@ export default function MailgunAlternativePage() {
                 </tbody>
               </table>
             </div>
+            <p className="text-[11px] text-slate-500 text-center mt-3">Competitor information may change. Check their official sites.</p>
           </div>
         </div>
       </section>

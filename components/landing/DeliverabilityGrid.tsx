@@ -25,7 +25,7 @@ export function DeliverabilityGrid() {
       icon: Inbox,
       title: "Faster time to inbox",
       description:
-        "Send emails from the region closest to your users. Sub-10ms delivery latency with North American, European, and Asian routing.",
+        "Send emails from the region closest to your users. Sub-10ms API dispatch time with North American, European, and Asian routing.",
     },
     {
       icon: ShieldCheck,
@@ -37,7 +37,7 @@ export function DeliverabilityGrid() {
       icon: Server,
       title: "Managed dedicated IPs",
       description:
-        "Get a fully managed dedicated IP that automatically warms up and autoscales based on your sending volume with zero waiting period.",
+        "Get a fully managed dedicated IP that automatically warms up and autoscales based on your sending volume with automated gradual warmup.",
     },
     {
       icon: UserX,
@@ -81,7 +81,7 @@ export function DeliverabilityGrid() {
           </span>
         </h2>
         <p className="mt-3 text-base text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
-          Built-in deliverability intelligence so your critical transactional and marketing emails land directly in the primary inbox.
+          Built-in deliverability intelligence built for high inbox placement for your critical transactional and marketing emails.
         </p>
       </div>
 

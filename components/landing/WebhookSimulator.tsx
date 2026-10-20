@@ -14,7 +14,7 @@ export function WebhookSimulator() {
       type: "Complained",
       color: "bg-amber-500/10 text-amber-400 border-amber-500/30",
       time: "Just now",
-      to: "olivia@gmail.com",
+      to: "olivia@example.com",
       feedback: "Spam mark",
       agent: "Gmail",
       os: "Windows",
@@ -25,7 +25,7 @@ export function WebhookSimulator() {
       type: "Bounced",
       color: "bg-rose-500/10 text-rose-400 border-rose-500/30",
       time: "12s ago",
-      to: "liam@domain-invalid.org",
+      to: "liam@example.com",
       feedback: "550 User not found",
       agent: "Outlook",
       os: "macOS",
@@ -36,7 +36,7 @@ export function WebhookSimulator() {
       type: "Delivered",
       color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
       time: "45s ago",
-      to: "sarah@techcorp.io",
+      to: "sarah@example.com",
       feedback: "250 2.0.0 OK",
       agent: "Apple Mail",
       os: "iOS",
@@ -47,7 +47,7 @@ export function WebhookSimulator() {
       type: "Opened",
       color: "bg-sky-500/10 text-sky-400 border-sky-500/30",
       time: "2m ago",
-      to: "michael@startup.co",
+      to: "michael@example.com",
       feedback: "1x1 pixel rendered",
       agent: "Superhuman",
       os: "macOS",
@@ -134,10 +134,15 @@ export function WebhookSimulator() {
                 <Webhook className="w-4 h-4 text-sky-400" />
                 <span className="text-sm font-semibold text-slate-200">Modular Webhooks</span>
               </div>
-              <span className="flex items-center gap-1.5 text-xs text-emerald-400">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                Live Stream
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-medium text-slate-400 bg-slate-900 border border-slate-800 px-2 py-0.5 rounded-full">
+                  Simulated events
+                </span>
+                <span className="flex items-center gap-1.5 text-xs text-emerald-400">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                  Live Stream
+                </span>
+              </div>
             </div>
 
             {/* Event Cards */}

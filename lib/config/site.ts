@@ -20,7 +20,7 @@ export const siteConfig = {
   stats: {
     uptime: "99.9%",
     avgLatency: "< 10ms",
-    deliverability: "99.9%",
+    deliverability: "High",
     dkimStandard: "2048-bit RSA",
     freeTierDaily: "100 sends/day",
   },
@@ -43,7 +43,7 @@ export const siteConfig = {
       features: [
         "1 Verified Sending Domain",
         "2048-bit RSA DKIM Signing",
-        "Developer REST API & SDKs",
+        "Developer REST API & SMTP Relay",
         "Instant SMTP Relay (Port 587/465)",
         "Realtime Open & Click Tracking",
         "3 Days Log Retention",

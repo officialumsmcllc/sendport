@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Sendport SMTP & Email Deliverability
  * Plugin URI:        https://getsendport.com/integrations/wordpress
- * Description:       Ultra-fast, 99.9% inbox deliverability for WordPress & WooCommerce powered by Sendport REST API and 2048-bit RSA DKIM.
+ * Description:       Ultra-fast, high inbox deliverability for WordPress & WooCommerce powered by Sendport REST API and 2048-bit RSA DKIM.
  * Version:           1.0.0
  * Requires at least: 5.6
  * Requires PHP:      7.4
@@ -245,7 +245,7 @@ if (!class_exists('Sendport_SMTP_Plugin')) {
                                     <span style="background: #0284c7; color: #fff; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; text-transform: uppercase;">Official</span>
                                 </div>
                                 <p style="color: #94a3b8; font-size: 12px; margin: 4px 0 0 0;">
-                                    <?php esc_html_e('Developer-first transactional email engine for WordPress & WooCommerce with 99.9% inbox placement.', 'sendport-smtp-email-deliverability'); ?>
+                                    <?php esc_html_e('Developer-first transactional email engine for WordPress & WooCommerce built for high inbox placement.', 'sendport-smtp-email-deliverability'); ?>
                                 </p>
                             </div>
                         </div>
@@ -277,7 +277,7 @@ if (!class_exists('Sendport_SMTP_Plugin')) {
                                 <label for="sendport_api_key"><?php esc_html_e('Sendport API Key', 'sendport-smtp-email-deliverability'); ?></label>
                             </th>
                             <td>
-                                <input type="password" id="sendport_api_key" name="sendport_api_key" value="<?php echo esc_attr(get_option('sendport_api_key')); ?>" class="regular-text" placeholder="sk_live_..." required autocomplete="off" />
+                                <input type="password" id="sendport_api_key" name="sendport_api_key" value="<?php echo esc_attr(get_option('sendport_api_key')); ?>" class="regular-text" placeholder="sk_live_your_api_key_here" required autocomplete="off" />
                                 <p class="description">
                                     <?php
                                     printf(

@@ -12,12 +12,12 @@ export default function AwsSesAlternativePage() {
   const comparison = [
     { feature: "Account Activation & Onboarding", sendport: "Instant (Send in 60 seconds)", awsSes: "Strict 'Sandbox Mode' (Days of manual review)", note: "Zero waiting for AWS approval tickets" },
     { feature: "Setup Complexity (DevOps)", sendport: "1-Click API Key or SMTP", awsSes: "Complex IAM Roles, SNS Topics & CloudWatch", note: "No AWS infrastructure overhead" },
-    { feature: "Automated 30-Day Domain Warmup", sendport: "Built-in Automatic Curve", awsSes: "Manual (Must script yourself)", note: "Guaranteed primary inbox placement" },
+    { feature: "Automated 30-Day Domain Warmup", sendport: "Built-in Automatic Curve", awsSes: "Manual (Must script yourself)", note: "Built for high inbox placement" },
     { feature: "Live Spam Score & Pre-Flight Check", sendport: "Included AI Spam Diagnostics", awsSes: "Not Available (Must build own tools)", note: "Test emails before dispatch" },
     { feature: "Visual Dashboard & Analytics", sendport: "Real-time opens, clicks & latency", awsSes: "Raw SNS/CloudWatch metrics only", note: "Modern developer interface" },
     { feature: "Multi-Currency & Regional Payments", sendport: "USD, PKR, EUR, GBP, USDT, Easypaisa, Raast", awsSes: "AWS Consolidated Billing (USD Credit Card)", note: "Flexible local payment rails" },
     { feature: "Monthly Volume on Growth ($20)", sendport: "90,000 emails/mo", awsSes: "Variable (plus SNS & data transfer add-ons)", note: "Transparent all-inclusive pricing" },
-    { feature: "2048-bit RSA DKIM & DMARC", sendport: "Automatic 2048-bit RSA Keys & Instant Verification", awsSes: "Manual Route 53 CNAME entry", note: "Zero DNS misconfiguration risk" },
+    { feature: "2048-bit RSA DKIM signing, SPF and DMARC", sendport: "Automatic 2048-bit RSA Keys & Instant Verification", awsSes: "Manual Route 53 CNAME entry", note: "Zero DNS misconfiguration risk" },
     { feature: "Audience Marketing Contact Fees", sendport: "$0 Extra (Included in plan)", awsSes: "Requires separate Amazon Pinpoint", note: "All-in-one transactional & marketing" },
     { feature: "Inbound Email Webhook Parsing", sendport: "Included Free", awsSes: "Requires S3 bucket + Lambda + SNS", note: "Native JSON webhooks without AWS bloat" },
   ];
@@ -201,6 +201,7 @@ export default function AwsSesAlternativePage() {
                 </tbody>
               </table>
             </div>
+            <p className="text-[11px] text-slate-500 text-center mt-3">Competitor information may change. Check their official sites.</p>
           </div>
         </div>
       </section>

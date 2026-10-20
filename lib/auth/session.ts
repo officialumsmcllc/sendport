@@ -1,21 +1,25 @@
 import crypto from "crypto";
 import { cookies } from "next/headers";
 
+export const SESSION_COOKIE_NAME = "sendport_session";
+
 function getSessionSecret(): string {
   const secret = process.env.SESSION_SECRET;
-  if (
-    process.env.NODE_ENV === "production" &&
-    (!secret || secret === "sendport_super_secure_session_secret_key_2026")
-  ) {
-    console.warn(
-      "[SECURITY ALERT] SESSION_SECRET is not set or using the default key in production! Set a high-entropy SESSION_SECRET in your environment variables immediately."
-    );
+  if (!secret || secret.length < 32) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "FATAL: SESSION_SECRET is missing or shorter than 32 characters in production. Failing closed."
+      );
+    }
+    return "";
   }
-  return secret || "sendport_super_secure_session_secret_key_2026";
+  return secret;
 }
 
-const SECRET = getSessionSecret();
-export const SESSION_COOKIE_NAME = "sendport_session";
+// Module-level startup check in production
+if (process.env.NODE_ENV === "production") {
+  getSessionSecret();
+}
 
 export interface SessionPayload {
   userId: string;
@@ -26,27 +30,35 @@ export interface SessionPayload {
 }
 
 export function createSessionToken(payload: Omit<SessionPayload, "exp">): string {
+  const secret = getSessionSecret();
+  if (!secret) {
+    throw new Error(
+      "Cannot create session: SESSION_SECRET is missing or shorter than 32 characters."
+    );
+  }
   const fullPayload: SessionPayload = {
     ...payload,
     exp: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days
   };
   const json = JSON.stringify(fullPayload);
   const data = Buffer.from(json).toString("base64url");
-  const signature = crypto.createHmac("sha256", SECRET).update(data).digest("base64url");
+  const signature = crypto.createHmac("sha256", secret).update(data).digest("base64url");
   return `${data}.${signature}`;
 }
 
 export function verifySessionToken(token: string): SessionPayload | null {
   if (!token || !token.includes(".")) return null;
-  const [data, signature] = token.split(".");
+  const parts = token.split(".");
+  if (parts.length !== 2) return null;
+  const [data, signature] = parts;
+  if (!data || !signature) return null;
+
   const secret = getSessionSecret();
+  if (!secret) return null; // Fail closed
+
   const expectedSig = crypto.createHmac("sha256", secret).update(data).digest("base64url");
   if (signature !== expectedSig) {
-    const fallbackSig = crypto
-      .createHmac("sha256", "sendport_super_secure_session_secret_key_2026")
-      .update(data)
-      .digest("base64url");
-    if (signature !== fallbackSig) return null;
+    return null;
   }
 
   try {
