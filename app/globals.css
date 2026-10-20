@@ -8,14 +8,14 @@
 }
 
 /* Global Selection Styling - solid high-contrast blue with crisp white text */
-::selection {
-  background-color: #2563eb;
-  color: #ffffff;
+*::selection {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
 }
 
-::-moz-selection {
-  background-color: #2563eb;
-  color: #ffffff;
+*::-moz-selection {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
 }
 
 /* Ensure standard inputs in light containers have crystal clear dark text */
@@ -93,10 +93,39 @@ input.force-dark-text {
   background-color: #ffffff;
 }
 
-/* Style native select options on Chromium/Windows */
-select option {
+/* Explicit high-contrast dropdown option styling for light containers & white modals */
+.bg-white select option,
+[class*="bg-white"] select option,
+.bg-slate-50 select option,
+.bg-slate-100 select option,
+select.bg-white option,
+select[class*="text-slate-900"] option {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
+/* Style native select options on dark containers */
+select option,
+[class*="bg-slate-950"] select option,
+[class*="bg-slate-900"] select option,
+[class*="bg-slate-800"] select option,
+[class*="bg-zinc-950"] select option,
+[class*="bg-zinc-900"] select option,
+.bg-black select option {
   background-color: #0f172a;
   color: #f8fafc;
+}
+
+/* Clear, high-contrast input placeholders */
+input::placeholder,
+textarea::placeholder {
+  color: #94a3b8;
+}
+.bg-white input::placeholder,
+[class*="bg-white"] input::placeholder,
+.bg-slate-50 input::placeholder,
+.bg-slate-100 input::placeholder {
+  color: #64748b !important;
 }
 
 body {

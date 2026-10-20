@@ -119,7 +119,7 @@ export function Footer({ dark = true }: { dark?: boolean }) {
 
         {/* Bottom Line */}
         <div className="mt-12 pt-8 border-t border-slate-800/60 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
-          <p>© {new Date().getFullYear()} Sendport Technologies Inc. All rights reserved.</p>
+          <p suppressHydrationWarning>© {new Date().getFullYear()} Sendport Technologies Inc. All rights reserved.</p>
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-1.5 text-emerald-400">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>

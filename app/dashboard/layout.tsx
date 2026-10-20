@@ -141,9 +141,6 @@ export default function DashboardLayout({
             <Link href="/">
               <SendportLogo size={28} />
             </Link>
-            <span className="rounded-md bg-primary-50 px-2 py-0.5 text-[10px] font-bold uppercase text-primary-700 border border-primary-200">
-              v1.0
-            </span>
           </div>
 
           {/* Workspace Pill */}

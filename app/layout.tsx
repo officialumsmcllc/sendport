@@ -89,11 +89,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="scroll-smooth">
+    <html lang="en" className="scroll-smooth" suppressHydrationWarning>
       <head>
         <SendportJsonLd />
       </head>
-      <body className={`${inter.variable} font-sans min-h-screen bg-black text-slate-100 antialiased selection:bg-white/20 selection:text-white`}>
+      <body className={`${inter.variable} font-sans min-h-screen bg-black text-slate-100 antialiased`} suppressHydrationWarning>
         {/* Google Analytics (gtag.js) */}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-FZSYLVT8JC"
