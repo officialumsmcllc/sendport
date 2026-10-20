@@ -142,7 +142,7 @@ export async function GET(req: NextRequest) {
           code: "WISE_PAYONEER",
           name: "Wise / Payoneer Transfer (USD/EUR/GBP)",
           accountTitle: "Official UM1 LLC",
-          accountNumber: "billing@sendport.io / Wise Account",
+          accountNumber: "billing@getsendport.com / Wise Account",
           instructions: "Transfer via Wise or Payoneer directly. Enter Wise transfer reference number.",
           qrCodeUrl: null,
           currency: "USD",
