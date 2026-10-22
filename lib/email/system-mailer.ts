@@ -1,3 +1,9 @@
+// ==============================================================
+// Created & Owned by: officialum1
+// Suite: umiskills
+// System Mailer & Transactional Notifications Engine
+// ==============================================================
+
 import { dispatchDirectToMx } from "@/lib/email/direct-mx";
 
 export interface SystemEmailOptions {
@@ -11,20 +17,59 @@ export interface SystemEmailOptions {
 /**
  * Universal System & Transactional Mailer.
  * Dispatches platform emails from "no-reply@getsendport.com"
- * WITHOUT requiring external SMTP configuration on Render!
  * 
  * Dispatch cascade:
- * 1. Hostinger Enterprise HTTP Engine (engine.getsendport.com)
- * 2. Direct-to-MX DNS Dispatch (opportunistic Port 25 STARTTLS)
- * 3. Fallback SMTP (if credentials exist)
+ * 1. High-Speed SMTP / Amazon SES Relay (Over Port 465 SSL or 587 STARTTLS)
+ * 2. Hostinger Enterprise HTTP Engine (engine.getsendport.com over HTTPS 443)
+ * 3. Direct-to-MX DNS Dispatch (opportunistic Port 25 STARTTLS)
  */
 export async function sendSystemEmail(options: SystemEmailOptions): Promise<boolean> {
   const fromName = options.fromName || "Sendport";
   const fromAddress = `"${fromName}" <no-reply@getsendport.com>`;
-  const hostingerEngineUrl = process.env.HOSTINGER_ENGINE_URL || "https://engine.getsendport.com/sendport_engine.php";
   const plainText = options.text || options.html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 
-  // Priority 1: Hostinger Enterprise HTTP Dispatch (Works 100% over standard HTTPS Port 443)
+  // Priority 1: High-Speed SMTP / Amazon SES Relay (Port 465 SSL / 587 STARTTLS)
+  // Essential for Render & cloud hosts where direct Port 25 is blocked
+  if (process.env.SMTP_USER && process.env.SMTP_PASS && process.env.SMTP_HOST) {
+    try {
+      const nodemailer = (await import("nodemailer")).default;
+      const port = parseInt(process.env.SMTP_PORT || "465", 10);
+      const isSecure = process.env.SMTP_SECURE === "true" || port === 465;
+
+      const transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port,
+        secure: isSecure,
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS,
+        },
+        connectionTimeout: 15000,
+        greetingTimeout: 15000,
+        socketTimeout: 20000,
+        tls: {
+          rejectUnauthorized: false,
+          minVersion: "TLSv1.2",
+        },
+      });
+
+      await transporter.sendMail({
+        from: fromAddress,
+        to: options.to,
+        subject: options.subject,
+        html: options.html,
+        text: plainText,
+      });
+
+      console.log(`[SYSTEM MAILER] Delivered to ${options.to} via High-Speed SMTP/SES Relay.`);
+      return true;
+    } catch (smtpErr) {
+      console.warn("[SYSTEM MAILER] SMTP/SES delivery attempt failed:", smtpErr);
+    }
+  }
+
+  // Priority 2: Hostinger Enterprise HTTP Dispatch (Works over standard HTTPS Port 443)
+  const hostingerEngineUrl = process.env.HOSTINGER_ENGINE_URL || "https://engine.getsendport.com/sendport_engine.php";
   try {
     const res = await fetch(hostingerEngineUrl, {
       method: "POST",
@@ -51,7 +96,7 @@ export async function sendSystemEmail(options: SystemEmailOptions): Promise<bool
     console.warn("[SYSTEM MAILER] Hostinger HTTP Engine delivery attempt failed:", err);
   }
 
-  // Priority 2: Direct MX Dispatch (Direct to recipient mail server)
+  // Priority 3: Direct MX Dispatch (Direct to recipient mail server)
   try {
     const directResult = await dispatchDirectToMx({
       from: fromAddress,
@@ -70,35 +115,7 @@ export async function sendSystemEmail(options: SystemEmailOptions): Promise<bool
     console.warn("[SYSTEM MAILER] Direct MX dispatch attempt failed:", err);
   }
 
-  // Priority 3: Fallback SMTP (if environment variables exist)
-  if (process.env.SMTP_USER && process.env.SMTP_PASS && process.env.SMTP_HOST) {
-    try {
-      const nodemailer = (await import("nodemailer")).default;
-      const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: parseInt(process.env.SMTP_PORT || "465", 10),
-        secure: process.env.SMTP_SECURE === "true",
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS,
-        },
-      });
-
-      await transporter.sendMail({
-        from: fromAddress,
-        to: options.to,
-        subject: options.subject,
-        html: options.html,
-        text: plainText,
-      });
-
-      console.log(`[SYSTEM MAILER] Delivered to ${options.to} via SMTP fallback.`);
-      return true;
-    } catch (smtpErr) {
-      console.error("[SYSTEM MAILER] SMTP fallback failed:", smtpErr);
-    }
-  }
-
+  console.error(`[SYSTEM MAILER CRITICAL] All delivery tiers failed for recipient: ${options.to}`);
   return false;
 }
 
@@ -286,3 +303,102 @@ ${emailFooter}
     html,
   });
 }
+
+/**
+ * 5. Email Address Verification Email (for new users)
+ */
+export async function sendEmailVerificationEmail(
+  user: { email: string; name?: string | null },
+  verificationCode: string,
+  verifyUrl?: string
+): Promise<boolean> {
+  const name = user.name || "Developer";
+  const actionUrl = verifyUrl || `https://getsendport.com/login?verify=${encodeURIComponent(user.email)}`;
+
+  const html = `
+${emailHeader}
+  <div style="display: inline-block; background: #0c4a6e; color: #38bdf8; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
+    ✉️ Verify Your Email
+  </div>
+  <h2 style="color: #ffffff; font-size: 22px; font-weight: 800; margin-top: 0; margin-bottom: 12px;">Welcome to Sendport, ${name}!</h2>
+  <p style="color: #94a3b8; font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
+    Please verify your email address to complete your account setup and activate your developer sending credentials.
+  </p>
+
+  <div style="text-align: center; margin: 24px 0;">
+    <p style="margin: 0 0 8px 0; font-size: 12px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1px;">Your 6-Digit Verification Code</p>
+    <span style="font-size: 32px; font-weight: 900; letter-spacing: 8px; color: #38bdf8; background: #111827; border: 1px solid #1f2937; padding: 14px 28px; border-radius: 12px; display: inline-block;">${verificationCode}</span>
+  </div>
+
+  <div style="text-align: center; margin: 24px 0 20px 0;">
+    <a href="${actionUrl}" style="background: #0284c7; color: #ffffff; padding: 12px 26px; font-size: 14px; font-weight: 800; text-decoration: none; border-radius: 10px; display: inline-block;">
+      Confirm &amp; Log In &rarr;
+    </a>
+  </div>
+
+  <p style="color: #64748b; font-size: 12px; text-align: center; margin: 0;">
+    This verification code will expire in 24 hours. If you did not create a Sendport account, please disregard this email.
+  </p>
+${emailFooter}
+  `;
+
+  return sendSystemEmail({
+    to: user.email,
+    subject: `Confirm your Sendport account — Code: ${verificationCode}`,
+    html,
+  });
+}
+
+/**
+ * 6. Daily Quota Warning & Exhaustion Alert
+ */
+export async function sendQuotaWarningEmail(
+  user: { email: string; name?: string | null },
+  workspaceName: string,
+  used: number,
+  limit: number
+): Promise<boolean> {
+  const percentage = Math.round((used / limit) * 100);
+  const isFull = used >= limit;
+
+  const html = `
+${emailHeader}
+  <div style="display: inline-block; background: ${isFull ? '#7f1d1d' : '#78350f'}; color: ${isFull ? '#f87171' : '#f59e0b'}; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
+    ${isFull ? '🚨 Quota Exceeded' : '⚠️ Quota Warning (90%)'}
+  </div>
+  <h2 style="color: #ffffff; font-size: 22px; font-weight: 800; margin-top: 0; margin-bottom: 12px;">
+    ${isFull ? 'Daily Sending Limit Reached' : 'Approaching Daily Email Limit'}
+  </h2>
+  <p style="color: #94a3b8; font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
+    Your workspace <strong>${workspaceName}</strong> has dispatched <strong>${used.toLocaleString()} of ${limit.toLocaleString()}</strong> emails today (${percentage}%).
+  </p>
+
+  <div style="background: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 18px; margin: 20px 0;">
+    <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px;">
+      <span style="color: #94a3b8;">Today's Usage:</span>
+      <span style="font-weight: 800; color: ${isFull ? '#f87171' : '#f59e0b'};">${used} / ${limit}</span>
+    </div>
+    <div style="background: #1e293b; height: 8px; border-radius: 4px; overflow: hidden;">
+      <div style="background: ${isFull ? '#ef4444' : '#f59e0b'}; height: 100%; width: ${Math.min(percentage, 100)}%;"></div>
+    </div>
+  </div>
+
+  <p style="color: #94a3b8; font-size: 13px; line-height: 1.6;">
+    Daily quotas automatically reset at 00:00 UTC. To increase your limit immediately or add pay-as-you-go credits, upgrade your workspace plan:
+  </p>
+
+  <div style="text-align: center; margin: 24px 0 20px 0;">
+    <a href="https://getsendport.com/dashboard/billing" style="background: #0284c7; color: #ffffff; padding: 12px 26px; font-size: 14px; font-weight: 800; text-decoration: none; border-radius: 10px; display: inline-block;">
+      Upgrade Limits in Billing &rarr;
+    </a>
+  </div>
+${emailFooter}
+  `;
+
+  return sendSystemEmail({
+    to: user.email,
+    subject: `${isFull ? '🚨 Action Required:' : '⚠️ Warning:'} ${workspaceName} reached ${percentage}% of daily email quota`,
+    html,
+  });
+}
+

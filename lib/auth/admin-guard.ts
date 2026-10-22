@@ -24,8 +24,8 @@ export function isSuperAdminEmail(email?: string | null): boolean {
   // Check default master emails
   if (DEFAULT_SUPER_ADMIN_EMAILS.includes(normalized)) return true;
 
-  // Check official company domain emails
-  if (normalized.endsWith("@getsendport.com")) return true;
+  // Check explicit owner and platform admin emails
+  if (normalized === "officialum1@gmail.com" || normalized === "admin@getsendport.com") return true;
 
   // Check environment-configured admin emails (comma-separated list)
   const envAdmins = process.env.ADMIN_EMAILS
