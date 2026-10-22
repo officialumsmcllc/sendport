@@ -106,6 +106,11 @@ export default function AudiencesPage() {
     finished: boolean;
   } | null>(null);
 
+  // Verified domains selector
+  const [verifiedDomains, setVerifiedDomains] = useState<any[]>([]);
+  const [selectedDomainName, setSelectedDomainName] = useState<string>("");
+  const [senderPrefix, setSenderPrefix] = useState<string>("team");
+
   // Toast feedback
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
@@ -116,7 +121,26 @@ export default function AudiencesPage() {
 
   useEffect(() => {
     fetchAudiences();
+    fetchDomains();
   }, []);
+
+  const fetchDomains = async () => {
+    try {
+      const res = await fetch("/api/v1/domains");
+      if (res.ok) {
+        const json = await res.json();
+        const list = json.domains || [];
+        setVerifiedDomains(list);
+        const verified = list.find((d: any) => d.status?.toUpperCase() === "VERIFIED") || list[0];
+        if (verified) {
+          setSelectedDomainName(verified.name);
+          setBroadcastFromEmail(`team@${verified.name}`);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to load domains for broadcast:", e);
+    }
+  };
 
   const fetchAudiences = async () => {
     try {
@@ -1616,15 +1640,73 @@ export default function AudiencesPage() {
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Sender Email Address *</label>
-                  <input
-                    type="email"
-                    required
-                    placeholder="e.g. team@yourdomain.com"
-                    value={broadcastFromEmail}
-                    onChange={(e) => setBroadcastFromEmail(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                  />
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block font-bold text-slate-700">Sender Email Address *</label>
+                    {verifiedDomains.length > 0 && (
+                      <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                        {verifiedDomains.some((d) => d.name === selectedDomainName && d.status?.toUpperCase() === "VERIFIED")
+                          ? "✓ Verified DKIM"
+                          : "DNS Pending"}
+                      </span>
+                    )}
+                  </div>
+
+                  {verifiedDomains.length > 0 ? (
+                    <div className="space-y-1">
+                      <div className="flex items-center rounded-xl border border-slate-200 overflow-hidden bg-white focus-within:ring-2 focus-within:ring-indigo-500/20">
+                        <input
+                          type="text"
+                          required
+                          placeholder="team"
+                          value={senderPrefix}
+                          onChange={(e) => {
+                            const p = e.target.value.replace(/[^a-zA-Z0-9._-]/g, "");
+                            setSenderPrefix(p);
+                            setBroadcastFromEmail(`${p || "team"}@${selectedDomainName}`);
+                          }}
+                          className="w-2/5 px-3 py-2 text-xs text-slate-900 border-r border-slate-200 focus:outline-none"
+                        />
+                        <div className="flex items-center w-3/5 bg-slate-50">
+                          <span className="text-slate-400 pl-2 text-xs font-bold">@</span>
+                          <select
+                            value={selectedDomainName}
+                            onChange={(e) => {
+                              const d = e.target.value;
+                              setSelectedDomainName(d);
+                              setBroadcastFromEmail(`${senderPrefix || "team"}@${d}`);
+                            }}
+                            className="w-full bg-transparent px-2 py-2 text-xs font-bold text-slate-800 focus:outline-none cursor-pointer"
+                          >
+                            {verifiedDomains.map((d: any) => (
+                              <option key={d.id} value={d.name}>
+                                {d.name} {d.status?.toUpperCase() === "VERIFIED" ? "(✓ Verified)" : ""}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                      <p className="text-[10px] text-slate-400">
+                        Delivering from: <strong className="font-mono text-slate-700">{broadcastFromEmail}</strong>
+                      </p>
+                    </div>
+                  ) : (
+                    <div>
+                      <input
+                        type="email"
+                        required
+                        placeholder="e.g. team@getsendport.com"
+                        value={broadcastFromEmail}
+                        onChange={(e) => setBroadcastFromEmail(e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                      />
+                      <p className="text-[10px] text-slate-400 mt-1">
+                        No verified custom domain yet.{" "}
+                        <Link href="/dashboard/domains" className="text-indigo-600 font-bold hover:underline">
+                          Add and verify domain in Domains &amp; DKIM
+                        </Link>
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 
