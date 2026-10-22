@@ -756,14 +756,17 @@ export default function AudiencesPage() {
         {/* Selected audience actions */}
         {activeAudienceObj && (
           <div className="flex items-center gap-1.5 self-end sm:self-auto shrink-0">
-            <Link
-              href="/dashboard/playground"
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-indigo-50 border border-indigo-200/80 text-indigo-700 hover:bg-indigo-100 text-xs font-semibold transition-colors"
-              title="Compose email to this audience"
+            <button
+              onClick={() => {
+                setBroadcastProgress(null);
+                setShowBroadcastModal(true);
+              }}
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-indigo-50 border border-indigo-200/80 text-indigo-700 hover:bg-indigo-100 text-xs font-semibold transition-colors cursor-pointer"
+              title="Compose and dispatch campaign to this audience"
             >
               <Send className="w-3 h-3 text-indigo-600" />
               <span>Send Campaign</span>
-            </Link>
+            </button>
 
             <button
               onClick={() => {
