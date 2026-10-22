@@ -14,11 +14,13 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSignupPrompt, setShowSignupPrompt] = useState(false);
+  const [showVerifyPrompt, setShowVerifyPrompt] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setShowSignupPrompt(false);
+    setShowVerifyPrompt(false);
     setLoading(true);
 
     try {
@@ -33,7 +35,9 @@ export default function LoginPage() {
 
       if (!res.ok) {
         setError(data.error || "Failed to log in.");
-        if (data.error && data.error.includes("registering first")) {
+        if (data.requireVerification) {
+          setShowVerifyPrompt(true);
+        } else if (data.error && data.error.includes("registering first")) {
           setShowSignupPrompt(true);
         }
         return;
@@ -110,6 +114,14 @@ export default function LoginPage() {
                   <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-400" />
                   <span>{error}</span>
                 </div>
+                {showVerifyPrompt && (
+                  <Link
+                    href={`/signup?verify=${encodeURIComponent(email)}`}
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-sky-500/30 border border-sky-500/40 px-3 py-1.5 rounded-lg hover:bg-sky-500/50 transition-colors w-full justify-center"
+                  >
+                    Enter 6-Digit Code to Activate Account <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                )}
                 {showSignupPrompt && (
                   <Link
                     href={`/signup?email=${encodeURIComponent(email)}`}

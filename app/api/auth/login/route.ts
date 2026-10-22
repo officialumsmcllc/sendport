@@ -95,6 +95,38 @@ export async function POST(req: NextRequest) {
     resetLoginAttempts(`ip:${ip}`);
     resetLoginAttempts(`email:${normalizedEmail}`);
 
+    // Check if account email is verified
+    if (!user.emailVerified && !isSuperAdminUser(user.email, user.role)) {
+      let currentCode = user.verificationCode;
+      if (!currentCode || (user.verificationExpires && new Date(user.verificationExpires) < new Date())) {
+        const generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
+        currentCode = generatedCode;
+        const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { verificationCode: generatedCode, verificationExpires: expiresAt },
+        });
+
+        import("@/lib/email/system-mailer")
+          .then(({ sendEmailVerificationEmail }) =>
+            sendEmailVerificationEmail({ email: user.email, name: user.name }, generatedCode)
+          )
+          .catch((err) => console.warn("Async login verification email error:", err));
+      }
+
+      const isDev = process.env.NODE_ENV !== "production" || !process.env.SMTP_USER;
+
+      return NextResponse.json(
+        {
+          error: "Please verify your email address to activate your account. Enter the 6-digit code sent to your inbox.",
+          requireVerification: true,
+          email: user.email,
+          verificationCode: isDev ? currentCode : undefined,
+        },
+        { status: 403 }
+      );
+    }
+
     // Check if user is a designated super admin
     const isAdmin = isSuperAdminUser(user.email, user.role);
     let effectiveRole = user.role;

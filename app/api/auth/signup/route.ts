@@ -46,33 +46,69 @@ export async function POST(req: NextRequest) {
     let user = existingUser;
     let workspaceId: string | undefined;
 
+    // Generate secure 6-digit email verification code with 30-minute validity
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const verificationExpires = new Date(Date.now() + 30 * 60 * 1000);
+
     if (existingUser) {
-      // If user exists AND has an active workspace membership, require them to log in
+      // If user exists AND has an active workspace membership
       if (existingUser.workspaces && existingUser.workspaces.length > 0) {
+        // If they already exist but never verified, resend code and require verification
+        if (!existingUser.emailVerified) {
+          await prisma.user.update({
+            where: { id: existingUser.id },
+            data: {
+              passwordHash,
+              verificationCode,
+              verificationExpires,
+            },
+          });
+
+          import("@/lib/email/system-mailer")
+            .then(({ sendEmailVerificationEmail }) =>
+              sendEmailVerificationEmail({ email: existingUser.email, name: existingUser.name }, verificationCode)
+            )
+            .catch((err) => console.warn("Async verification email error:", err));
+
+          return NextResponse.json({
+            success: true,
+            requireVerification: true,
+            email: existingUser.email,
+            message: `A fresh 6-digit verification code has been sent to ${existingUser.email}. Please verify your account.`,
+            verificationCode: process.env.NODE_ENV !== "production" || !process.env.SMTP_USER ? verificationCode : undefined,
+          });
+        }
+
         return NextResponse.json(
           { error: "An account with this email already exists. Please log in." },
           { status: 409 }
         );
       }
 
-      // If user exists BUT has no workspaces (due to previous aborted creation), recover and complete setup
+      // If user exists BUT has no workspaces, recover and complete setup
       user = await prisma.user.update({
         where: { id: existingUser.id },
         data: {
           name: name?.trim() || existingUser.name,
           passwordHash,
           role: assignedRole,
+          emailVerified: false,
+          verificationCode,
+          verificationExpires,
         },
         include: { workspaces: true },
       });
     } else {
-      // Create fresh user
+      // Create fresh user with pending verification
       user = await prisma.user.create({
         data: {
           name: name?.trim() || normalizedEmail.split("@")[0],
           email: normalizedEmail,
           passwordHash,
           role: assignedRole,
+          emailVerified: false,
+          verificationCode,
+          verificationExpires,
         },
         include: { workspaces: true },
       });
@@ -97,40 +133,30 @@ export async function POST(req: NextRequest) {
     });
     workspaceId = workspace.id;
 
-    // Send Welcome Email asynchronously from no-reply@getsendport.com
+    // Send 6-Digit Verification Code Email asynchronously from no-reply@getsendport.com
     import("@/lib/email/system-mailer")
-      .then(({ sendWelcomeEmail }) => sendWelcomeEmail({ email: user.email, name: user.name }))
-      .catch((err) => console.warn("Async welcome email error:", err));
+      .then(({ sendEmailVerificationEmail }) =>
+        sendEmailVerificationEmail({ email: user.email, name: user.name }, verificationCode)
+      )
+      .catch((err) => console.warn("Async verification email error:", err));
 
-    // Create session token
-    const token = createSessionToken({
-      userId: user.id,
-      email: user.email,
-      name: user.name || undefined,
-      role: user.role,
-    });
+    const isDev = process.env.NODE_ENV !== "production" || !process.env.SMTP_USER;
 
-    const response = NextResponse.json({
+    return NextResponse.json({
       success: true,
-      message: "Account created successfully! Welcome to Sendport.",
+      requireVerification: true,
+      message: `A 6-digit confirmation code has been sent to ${user.email}. Please enter it below to activate your account.`,
+      email: user.email,
+      workspaceId,
+      verificationCode: isDev ? verificationCode : undefined,
       user: {
         id: user.id,
         email: user.email,
         name: user.name,
         role: user.role,
-        workspaceId,
+        emailVerified: false,
       },
     });
-
-    response.cookies.set(SESSION_COOKIE_NAME, token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60,
-      path: "/",
-    });
-
-    return response;
   } catch (error: any) {
     console.error("Signup error:", error);
     return NextResponse.json(

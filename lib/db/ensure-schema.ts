@@ -30,6 +30,27 @@ export async function ensureDbSchema(): Promise<void> {
             ALTER TABLE "PaymentTransaction" ADD COLUMN IF NOT EXISTS "creditsPurchased" INTEGER;
           EXCEPTION WHEN others THEN NULL;
           END;
+
+          BEGIN
+            ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "emailVerified" BOOLEAN NOT NULL DEFAULT false;
+          EXCEPTION WHEN others THEN NULL;
+          END;
+
+          BEGIN
+            ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "verificationCode" TEXT;
+          EXCEPTION WHEN others THEN NULL;
+          END;
+
+          BEGIN
+            ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "verificationExpires" TIMESTAMP;
+          EXCEPTION WHEN others THEN NULL;
+          END;
+
+          -- Automatically verify legacy/existing accounts so existing owners aren't locked out
+          BEGIN
+            UPDATE "User" SET "emailVerified" = true WHERE "emailVerified" = false AND "verificationCode" IS NULL;
+          EXCEPTION WHEN others THEN NULL;
+          END;
         END $$;
       `);
       schemaEnsured = true;
