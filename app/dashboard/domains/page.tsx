@@ -295,7 +295,21 @@ export default function DomainsPage() {
 
       {/* DOMAINS LIST TABLE */}
       <div className="rounded-2xl border border-slate-200 bg-white shadow-card overflow-hidden">
-        {domains.length === 0 && !loading ? (
+        {loading ? (
+          <div className="p-6 space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-16 bg-slate-50 border border-slate-100 rounded-xl p-4 flex items-center justify-between animate-pulse">
+                <div className="flex items-center gap-3">
+                  <div className="w-5 h-5 bg-slate-200 rounded-full" />
+                  <div className="h-4 w-36 bg-slate-200 rounded" />
+                </div>
+                <div className="h-5 w-24 bg-slate-100 rounded-full" />
+                <div className="h-4 w-28 bg-slate-100 rounded" />
+                <div className="h-7 w-20 bg-slate-200 rounded-lg" />
+              </div>
+            ))}
+          </div>
+        ) : domains.length === 0 ? (
           <div className="p-12 text-center text-slate-500 space-y-3">
             <Globe className="w-10 h-10 mx-auto text-slate-300" />
             <h3 className="text-sm font-bold text-slate-800">No Sending Domains Added Yet</h3>

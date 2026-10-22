@@ -127,7 +127,12 @@ export default function AudiencesPage() {
         setAudiences(json.data);
         const activeId = selectedAudience || json.data[0].id;
         setSelectedAudience(activeId);
-        fetchContacts(activeId);
+        // Await contacts BEFORE terminating the loading spinner to prevent 0-contact flash
+        const cRes = await fetch(`/api/v1/audiences/${activeId}/contacts`);
+        const cJson = await cRes.json();
+        if (cJson.data) {
+          setContacts(cJson.data);
+        }
       } else {
         // Create initial default audience if empty
         const createRes = await fetch("/api/v1/audiences", {
@@ -154,6 +159,7 @@ export default function AudiencesPage() {
   const fetchContacts = async (audienceId: string) => {
     try {
       setSelectedContactIds([]);
+      setLoading(true);
       const res = await fetch(`/api/v1/audiences/${audienceId}/contacts`);
       const json = await res.json();
       if (json.data) {
@@ -161,6 +167,8 @@ export default function AudiencesPage() {
       }
     } catch (err) {
       console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -900,7 +908,36 @@ export default function AudiencesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-700">
-              {filteredContacts.length === 0 ? (
+              {loading ? (
+                <>
+                  {[1, 2, 3, 4].map((i) => (
+                    <tr key={i} className="animate-pulse">
+                      <td className="px-4 py-4 w-10">
+                        <div className="h-4 w-4 bg-slate-200 rounded" />
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="h-4 w-44 bg-slate-200 rounded mb-1" />
+                        <div className="h-3 w-28 bg-slate-100 rounded" />
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="h-4 w-28 bg-slate-200 rounded" />
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="h-5 w-20 bg-slate-100 rounded-full" />
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="h-5 w-24 bg-emerald-50 rounded-full" />
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="h-4 w-20 bg-slate-100 rounded" />
+                      </td>
+                      <td className="px-4 py-4 text-right">
+                        <div className="h-7 w-14 bg-slate-100 rounded-lg ml-auto" />
+                      </td>
+                    </tr>
+                  ))}
+                </>
+              ) : filteredContacts.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-5 py-16 text-center">
                     <div className="max-w-sm mx-auto space-y-3">
