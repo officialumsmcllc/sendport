@@ -120,23 +120,23 @@ export function Navbar({
           {/* Currency Switcher */}
           {onCurrencyChange && (
             <div
-              className={`flex items-center gap-1 rounded-xl px-2.5 py-1 text-xs font-semibold border ${
+              className={`relative flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium border transition-all ${
                 dark
-                  ? "border-slate-800 bg-slate-900 text-slate-300"
-                  : "border-slate-200 bg-slate-50 text-slate-700"
+                  ? "border-slate-800/80 bg-slate-900/90 text-slate-300 hover:border-slate-700 hover:bg-slate-900"
+                  : "border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300"
               }`}
             >
-              <Globe className="w-3.5 h-3.5 text-slate-400" />
+              <Globe className="w-3.5 h-3.5 text-slate-400 shrink-0" />
               <select
                 aria-label="Select Currency"
                 value={activeCurrency}
                 onChange={(e) => onCurrencyChange(e.target.value as SupportedCurrency)}
-                className={`bg-transparent text-xs font-semibold outline-none cursor-pointer ${
+                className={`bg-transparent text-xs font-semibold outline-none cursor-pointer pr-1 ${
                   dark ? "text-slate-200" : "text-slate-800"
                 }`}
               >
                 {Object.keys(CURRENCIES).map((code) => (
-                  <option key={code} value={code} className={dark ? "bg-slate-900 text-white" : ""}>
+                  <option key={code} value={code} className={dark ? "bg-slate-950 text-white py-1" : "py-1"}>
                     {code} ({CURRENCIES[code as SupportedCurrency].symbol})
                   </option>
                 ))}
