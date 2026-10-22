@@ -41,34 +41,33 @@ export default function HomePage() {
             <div className="h-[600px] w-[1000px] rounded-full bg-gradient-to-tr from-primary-900/30 via-indigo-900/20 to-sky-900/30 blur-3xl animate-glow" />
           </div>
 
-          {/* Floating Diagnostic Cards for Desktop */}
-          <div className="hidden xl:flex absolute left-12 top-1/3 flex-col gap-2 p-3.5 rounded-2xl border border-white/10 bg-slate-950/70 backdrop-blur-xl shadow-2xl animate-float max-w-[220px] pointer-events-none z-10">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-[11px] font-mono font-bold text-white">DKIM Key Active</span>
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
+            {/* Centered Floating Diagnostic Cards scoped within max-w-7xl */}
+            <div className="hidden xl:flex absolute -left-2 2xl:left-2 top-4 flex-col gap-2 p-3.5 rounded-2xl border border-white/10 bg-slate-950/80 backdrop-blur-xl shadow-2xl animate-float max-w-[210px] pointer-events-none z-10">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-[11px] font-mono font-bold text-white">DKIM Key Active</span>
+              </div>
+              <p className="text-[10px] text-slate-400 font-mono">2048-bit RSA · SPF Aligned</p>
+              <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                <div className="h-full bg-emerald-400 rounded-full w-full animate-pulse" />
+              </div>
             </div>
-            <p className="text-[10px] text-slate-400 font-mono">2048-bit RSA · SPF Aligned</p>
-            <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
-              <div className="h-full bg-emerald-400 rounded-full w-full animate-pulse" />
-            </div>
-          </div>
 
-          <div className="hidden xl:flex absolute right-12 top-1/3 flex-col gap-2 p-3.5 rounded-2xl border border-white/10 bg-slate-950/70 backdrop-blur-xl shadow-2xl animate-float-slow max-w-[220px] pointer-events-none z-10">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Edge Dispatch</span>
-              <span className="text-[11px] font-mono font-bold text-emerald-400">8.4 ms</span>
+            <div className="hidden xl:flex absolute -right-2 2xl:right-2 top-4 flex-col gap-2 p-3.5 rounded-2xl border border-white/10 bg-slate-950/80 backdrop-blur-xl shadow-2xl animate-float-slow max-w-[210px] pointer-events-none z-10">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Edge Dispatch</span>
+                <span className="text-[11px] font-mono font-bold text-emerald-400">8.4 ms</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-sky-400 animate-ping" />
+                <span className="text-[10px] text-slate-300 font-mono">Region: us-east-1</span>
+              </div>
+              <div className="text-[9px] text-slate-500 font-mono flex items-center justify-between">
+                <span>Queue: 0 ms</span>
+                <span className="text-emerald-400 font-bold">High Inbox Placement</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-sky-400 animate-ping" />
-              <span className="text-[10px] text-slate-300 font-mono">Region: us-east-1</span>
-            </div>
-            <div className="text-[9px] text-slate-500 font-mono flex items-center justify-between">
-              <span>Queue: 0 ms</span>
-              <span className="text-emerald-400 font-bold">High Inbox Placement</span>
-            </div>
-          </div>
-
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="text-center space-y-6 max-w-4xl mx-auto">
               {/* Rainbow / Sleek Badge */}
               <div className="inline-flex p-[1px] rounded-full rainbow-border shadow-lg shadow-primary-500/10 hover:scale-105 transition-transform duration-300">

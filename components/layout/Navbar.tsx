@@ -171,10 +171,11 @@ export function Navbar({
               <button
                 onClick={handleLogout}
                 title="Log out"
-                className={`p-2 rounded-xl border text-xs transition-colors ${
+                aria-label="Log out of account"
+                className={`flex items-center justify-center p-2 rounded-xl border text-xs transition-all ${
                   dark
-                    ? "border-slate-800 bg-slate-900 text-slate-400 hover:text-rose-400 hover:border-rose-900/50"
-                    : "border-slate-200 bg-slate-50 text-slate-600 hover:text-rose-600 hover:border-rose-200"
+                    ? "border-slate-800 bg-slate-900/90 text-slate-400 hover:text-rose-400 hover:border-rose-900/50 hover:bg-rose-950/20"
+                    : "border-slate-200 bg-slate-50 text-slate-600 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50"
                 }`}
               >
                 <LogOut className="w-3.5 h-3.5" />
