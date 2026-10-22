@@ -22,6 +22,16 @@ export async function ensureDbSchema(): Promise<void> {
           END;
 
           BEGIN
+            ALTER TABLE "Workspace" ADD COLUMN IF NOT EXISTS "planExpiresAt" TIMESTAMP;
+          EXCEPTION WHEN others THEN NULL;
+          END;
+
+          BEGIN
+            ALTER TABLE "Workspace" ADD COLUMN IF NOT EXISTS "isPlanExpired" BOOLEAN NOT NULL DEFAULT false;
+          EXCEPTION WHEN others THEN NULL;
+          END;
+
+          BEGIN
             ALTER TABLE "PaymentTransaction" ADD COLUMN IF NOT EXISTS "isCreditTopup" BOOLEAN NOT NULL DEFAULT false;
           EXCEPTION WHEN others THEN NULL;
           END;

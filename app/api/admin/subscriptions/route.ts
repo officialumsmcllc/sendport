@@ -36,9 +36,25 @@ export async function GET() {
       },
     });
 
+    const now = Date.now();
+    const enrichedSubscriptions = subscriptions.map((s) => {
+      let daysRemaining: number | null = null;
+      let isExpired = false;
+      if (s.expiresAt) {
+        const diffMs = new Date(s.expiresAt).getTime() - now;
+        daysRemaining = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+        isExpired = daysRemaining <= 0;
+      }
+      return {
+        ...s,
+        daysRemaining,
+        isExpired,
+      };
+    });
+
     return NextResponse.json({
       success: true,
-      subscriptions,
+      subscriptions: enrichedSubscriptions,
       users,
     });
   } catch (error: any) {
@@ -61,7 +77,9 @@ export async function POST(req: NextRequest) {
     }
 
     const quota = Number(dailyLimit) || (plan === "SCALE_PRO" ? 25000 : plan === "GROWTH" ? 3000 : 100);
-    const expiresAt = expiryDays ? new Date(Date.now() + Number(expiryDays) * 24 * 60 * 60 * 1000) : null;
+    const defaultDays = billingCycle === "ANNUAL" ? 365 : 30;
+    const effectiveDays = expiryDays ? Number(expiryDays) : defaultDays;
+    const expiresAt = new Date(Date.now() + effectiveDays * 24 * 60 * 60 * 1000);
 
     // Create or update subscription record
     const sub = await prisma.subscription.create({
@@ -76,7 +94,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Automatically sync workspace daily quota and plan
+    // Automatically sync workspace daily quota, plan and planExpiresAt
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: { workspaces: true },
@@ -89,6 +107,8 @@ export async function POST(req: NextRequest) {
           data: {
             plan,
             dailyQuota: quota,
+            planExpiresAt: expiresAt,
+            isPlanExpired: false,
           },
         });
       }
@@ -99,6 +119,7 @@ export async function POST(req: NextRequest) {
       plan,
       quota,
       expiresAt,
+      effectiveDays,
     });
 
     // Send Plan Upgrade Confirmation Email from no-reply@getsendport.com
@@ -110,8 +131,11 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `User upgraded to ${plan} (${quota.toLocaleString()} emails/day) successfully!`,
-      subscription: sub,
+      message: `User upgraded to ${plan} (${quota.toLocaleString()} emails/day, ${effectiveDays} days active) successfully!`,
+      subscription: {
+        ...sub,
+        daysRemaining: effectiveDays,
+      },
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

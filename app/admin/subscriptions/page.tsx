@@ -216,10 +216,26 @@ export default function AdminSubscriptionsPage() {
                     </td>
                     <td className="p-4 text-right text-[11px] font-mono text-slate-400" suppressHydrationWarning>
                       <p>{new Date(sub.startedAt).toLocaleDateString()}</p>
-                      {sub.expiresAt && (
-                        <p className="text-[10px] text-amber-400 mt-0.5">
-                          Exp: {new Date(sub.expiresAt).toLocaleDateString()}
-                        </p>
+                      {sub.expiresAt ? (
+                        sub.daysRemaining !== null && sub.daysRemaining > 0 ? (
+                          <span
+                            className={`inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold ${
+                              sub.daysRemaining <= 5
+                                ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                                : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                            }`}
+                          >
+                            ⏳ {sub.daysRemaining} days left
+                          </span>
+                        ) : (
+                          <span className="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30">
+                            🚨 Expired {sub.daysRemaining !== null ? `(${Math.abs(sub.daysRemaining)}d ago)` : ""}
+                          </span>
+                        )
+                      ) : (
+                        <span className="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400 border border-white/5">
+                          Lifetime / Active
+                        </span>
                       )}
                     </td>
                   </tr>

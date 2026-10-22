@@ -29,6 +29,7 @@ import {
   Flame,
   UserCheck,
   Gift,
+  RotateCw,
 } from "lucide-react";
 
 export default function DashboardLayout({
@@ -65,6 +66,8 @@ export default function DashboardLayout({
         plan: string;
         dailyQuota: number;
         usedToday: number;
+        planExpiresAt?: string | Date | null;
+        isPlanExpired?: boolean;
       };
     }[];
   } | null>(() => {
@@ -166,6 +169,44 @@ export default function DashboardLayout({
                 style={{ width: `${Math.max(2, quotaPct)}%` }}
               />
             </div>
+
+            {currentWs?.planExpiresAt && (
+              <div className="mt-2.5 pt-2 border-t border-slate-200/80">
+                {(() => {
+                  const daysLeft = Math.ceil(
+                    (new Date(currentWs.planExpiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+                  );
+                  const isExp = daysLeft <= 0 || currentWs.isPlanExpired;
+                  if (isExp) {
+                    return (
+                      <div className="space-y-1.5 pt-0.5">
+                        <div className="flex items-center justify-between text-[11px] text-rose-600 font-bold">
+                          <span>Subscription Expired</span>
+                        </div>
+                        <Link
+                          href="/dashboard/billing"
+                          className="flex items-center justify-center gap-1.5 w-full py-1.5 px-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-[11px] shadow-sm transition-colors"
+                        >
+                          <RotateCw className="w-3 h-3" /> Renew Plan Now
+                        </Link>
+                      </div>
+                    );
+                  }
+                  return (
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="text-slate-500">Validity:</span>
+                      <span
+                        className={`font-bold ${
+                          daysLeft <= 3 ? "text-amber-600 font-black animate-pulse" : "text-emerald-700"
+                        }`}
+                      >
+                        {daysLeft} day{daysLeft === 1 ? "" : "s"} left
+                      </span>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
           </div>
 
           {/* Navigation Links */}

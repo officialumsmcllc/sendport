@@ -38,6 +38,8 @@ model Workspace {
   dailyQuota  Int               @default(100)
   usedToday   Int               @default(0)
   credits     Int               @default(0) // Pay-as-you-go non-expiring email top-ups
+  planExpiresAt DateTime?
+  isPlanExpired Boolean           @default(false)
   quotaResetAt DateTime         @default(now())
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
