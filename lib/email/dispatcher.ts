@@ -435,13 +435,22 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
     // Optional Relay Fallback if configured
     if (process.env.SMTP_USER && process.env.SMTP_PASS && process.env.SMTP_HOST) {
       try {
+        const port = parseInt(process.env.SMTP_PORT || "465", 10);
+        const isSecure = process.env.SMTP_SECURE === "true" || port === 465;
+
         const transporter = nodemailer.createTransport({
           host: process.env.SMTP_HOST,
-          port: parseInt(process.env.SMTP_PORT || "465", 10),
-          secure: process.env.SMTP_SECURE === "true",
+          port,
+          secure: isSecure,
           auth: {
             user: process.env.SMTP_USER,
             pass: process.env.SMTP_PASS,
+          },
+          connectionTimeout: 15000,
+          greetingTimeout: 15000,
+          tls: {
+            rejectUnauthorized: false,
+            minVersion: "TLSv1.2",
           },
         });
 

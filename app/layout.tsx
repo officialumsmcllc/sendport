@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Script from "next/script";
-import { Inter } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { siteConfig } from "@/lib/config/site";
 import { SendportJsonLd } from "@/components/seo/JsonLd";
@@ -8,6 +8,12 @@ import { SendportJsonLd } from "@/components/seo/JsonLd";
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
   display: "swap",
 });
 
@@ -93,7 +99,7 @@ export default function RootLayout({
       <head>
         <SendportJsonLd />
       </head>
-      <body className={`${inter.variable} font-sans min-h-screen bg-black text-slate-100 antialiased`} suppressHydrationWarning>
+      <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans min-h-screen bg-black text-slate-100 antialiased`} suppressHydrationWarning>
         {/* Google Analytics (gtag.js) */}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-FZSYLVT8JC"
