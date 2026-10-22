@@ -40,11 +40,20 @@ function BillingContent() {
   const [copiedText, setCopiedText] = useState(false);
 
   // Live workspace quota & active plan from real database
-  const [workspaceStats, setWorkspaceStats] = useState({
+  const [workspaceStats, setWorkspaceStats] = useState<{
+    plan: string;
+    usedToday: number;
+    dailyQuota: number;
+    credits: number;
+    planExpiresAt?: string | null;
+    isPlanExpired?: boolean;
+  }>({
     plan: "STARTER",
     usedToday: 0,
     dailyQuota: 100,
     credits: 0,
+    planExpiresAt: null,
+    isPlanExpired: false,
   });
 
   // Purchase Mode: Monthly Subscription Plan vs Pay-As-You-Go Credits
@@ -120,6 +129,8 @@ function BillingContent() {
             usedToday: data.stats.usedToday || 0,
             dailyQuota: data.stats.dailyQuota || 100,
             credits: data.stats.credits || 0,
+            planExpiresAt: data.stats.planExpiresAt || null,
+            isPlanExpired: Boolean(data.stats.isPlanExpired),
           });
 
           // Set sensible upgrade recommendation based on current active plan if not explicitly passed
@@ -272,11 +283,46 @@ function BillingContent() {
       {/* CURRENT USAGE SUMMARY */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2 rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="space-y-1">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-extrabold uppercase tracking-wider">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              Current Active Plan: {currentPlan}
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-extrabold uppercase tracking-wider">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                Current Active Plan: {currentPlan}
+              </div>
+
+              {/* LIVE DAYS REMAINING COUNTDOWN BADGE */}
+              {workspaceStats.planExpiresAt ? (
+                (() => {
+                  const daysLeft = Math.ceil(
+                    (new Date(workspaceStats.planExpiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+                  );
+                  const isExp = daysLeft <= 0 || workspaceStats.isPlanExpired;
+                  if (isExp) {
+                    return (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-100 border border-rose-300 text-rose-800 text-[11px] font-black uppercase tracking-wider">
+                        🚨 Plan Expired
+                      </span>
+                    );
+                  }
+                  return (
+                    <span
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider ${
+                        daysLeft <= 3
+                          ? "bg-amber-100 border border-amber-300 text-amber-900 animate-pulse"
+                          : "bg-sky-50 border border-sky-200 text-sky-800"
+                      }`}
+                    >
+                      ⏳ {daysLeft} Days Remaining ({new Date(workspaceStats.planExpiresAt).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })})
+                    </span>
+                  );
+                })()
+              ) : currentPlan !== "STARTER" ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-sky-50 border border-sky-200 text-sky-800 text-[11px] font-black uppercase tracking-wider">
+                  ⏳ 30 Days Active
+                </span>
+              ) : null}
             </div>
+
             <h2 className="text-xl font-black text-slate-900">
               {currentPlan === "GROWTH"
                 ? `Growth Plan (${(workspaceStats.dailyQuota || 3000).toLocaleString()} emails/day)`
@@ -284,7 +330,42 @@ function BillingContent() {
                 ? `Scale Pro Plan (${(workspaceStats.dailyQuota || 25000).toLocaleString()} emails/day)`
                 : `Starter Plan (${(currentPlan === "STARTER" && workspaceStats.dailyQuota > 100 ? 100 : workspaceStats.dailyQuota).toLocaleString()} emails/day)`}
             </h2>
-            <p className="text-xs text-slate-500">Daily quota resets automatically at 00:00 UTC.</p>
+
+            {workspaceStats.planExpiresAt ? (
+              (() => {
+                const daysLeft = Math.ceil(
+                  (new Date(workspaceStats.planExpiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+                );
+                const isExp = daysLeft <= 0 || workspaceStats.isPlanExpired;
+                if (isExp) {
+                  return (
+                    <div className="pt-2 flex items-center gap-2">
+                      <p className="text-xs text-rose-600 font-bold">
+                        Your monthly plan has expired. Daily quota has been reset to Starter (100/day).
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedUpgradePlan(currentPlan as any);
+                          const el = document.getElementById("payment-section");
+                          if (el) el.scrollIntoView({ behavior: "smooth" });
+                        }}
+                        className="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs rounded-lg shadow-sm"
+                      >
+                        Renew Plan Now →
+                      </button>
+                    </div>
+                  );
+                }
+                return (
+                  <p className="text-xs text-slate-500">
+                    Plan valid until <strong className="text-slate-800 font-semibold">{new Date(workspaceStats.planExpiresAt).toLocaleDateString([], { month: "long", day: "numeric", year: "numeric" })}</strong> ({daysLeft} days remaining). Daily quota resets automatically at 00:00 UTC.
+                  </p>
+                );
+              })()
+            ) : (
+              <p className="text-xs text-slate-500">Daily quota resets automatically at 00:00 UTC.</p>
+            )}
           </div>
 
           <div className="text-right w-full sm:w-auto">
@@ -403,7 +484,16 @@ function BillingContent() {
                   <h3 className="text-lg font-bold text-slate-900">{p.name}</h3>
                   {isCurrentPlan && (
                     <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-lg">
-                      Active
+                      {workspaceStats.planExpiresAt ? (
+                        (() => {
+                          const daysLeft = Math.ceil(
+                            (new Date(workspaceStats.planExpiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+                          );
+                          return daysLeft > 0 ? `Active · ${daysLeft}d left` : "Expired";
+                        })()
+                      ) : (
+                        "Active"
+                      )}
                     </span>
                   )}
                 </div>

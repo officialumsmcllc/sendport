@@ -158,6 +158,8 @@ export async function GET(req: NextRequest) {
       dailyQuota: auth.workspace.dailyQuota || 100,
       credits: (auth.workspace as any).credits || 0,
       plan: auth.workspace.plan || "STARTER",
+      planExpiresAt: (auth.workspace as any).planExpiresAt || null,
+      isPlanExpired: Boolean((auth.workspace as any).isPlanExpired),
     };
 
     // Update real-time daily counter
