@@ -30,6 +30,8 @@ export async function GET() {
                 plan: true,
                 dailyQuota: true,
                 usedToday: true,
+                planExpiresAt: true,
+                isPlanExpired: true,
               },
             },
           },
@@ -44,12 +46,35 @@ export async function GET() {
       },
     });
 
+    const now = Date.now();
+    const enrichedUsers = users.map((u) => {
+      const ws = u.workspaces?.[0]?.workspace;
+      let daysRemaining: number | null = null;
+      let isExpired = false;
+      if (ws?.planExpiresAt) {
+        const diffMs = new Date(ws.planExpiresAt).getTime() - now;
+        daysRemaining = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+        isExpired = daysRemaining <= 0 || Boolean(ws.isPlanExpired);
+      }
+      return {
+        ...u,
+        workspaces: u.workspaces.map((w) => ({
+          ...w,
+          workspace: {
+            ...w.workspace,
+            daysRemaining,
+            isExpired,
+          },
+        })),
+      };
+    });
+
     const totalUsers = users.length;
     const totalAdmins = users.filter((u) => u.role === "ADMIN").length;
     const activeWorkspacesCount = await prisma.workspace.count();
 
     return NextResponse.json({
-      users,
+      users: enrichedUsers,
       stats: {
         totalUsers,
         totalAdmins,
@@ -69,7 +94,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { userId, workspaceId, role, plan, dailyQuota, resetUsedToday, newPassword } = body;
+    const { userId, workspaceId, role, plan, dailyQuota, resetUsedToday, newPassword, expiryDays, planExpiresAt } = body;
 
     // 1. Update user password directly if provided by admin
     if (userId && newPassword) {
@@ -96,12 +121,31 @@ export async function PATCH(req: NextRequest) {
       logSecurityAudit("USER_ROLE_CHANGED", session.userId, { targetUserId: userId, newRole: role });
     }
 
-    // 2. Update workspace settings (plan, quota, reset counter)
+    // 3. Update workspace settings (plan, quota, reset counter, validity)
+    let updatedExpiresAt: Date | null | undefined = undefined;
     if (workspaceId) {
       const updateData: any = {};
       if (plan) updateData.plan = plan;
       if (dailyQuota !== undefined) updateData.dailyQuota = Number(dailyQuota);
       if (resetUsedToday) updateData.usedToday = 0;
+
+      if (expiryDays !== undefined) {
+        if (expiryDays === null || Number(expiryDays) <= 0) {
+          updateData.planExpiresAt = null;
+          updateData.isPlanExpired = false;
+          updatedExpiresAt = null;
+        } else {
+          const exp = new Date(Date.now() + Number(expiryDays) * 24 * 60 * 60 * 1000);
+          updateData.planExpiresAt = exp;
+          updateData.isPlanExpired = false;
+          updatedExpiresAt = exp;
+        }
+      } else if (planExpiresAt !== undefined) {
+        const exp = planExpiresAt ? new Date(planExpiresAt) : null;
+        updateData.planExpiresAt = exp;
+        updateData.isPlanExpired = false;
+        updatedExpiresAt = exp;
+      }
 
       await prisma.workspace.update({
         where: { id: workspaceId },
@@ -111,8 +155,8 @@ export async function PATCH(req: NextRequest) {
       logSecurityAudit("WORKSPACE_ADMIN_MODIFIED", session.userId, { workspaceId, updateData });
     }
 
-    // 3. Keep Subscription record in sync with workspace plan
-    if (userId && plan) {
+    // 4. Keep Subscription record in sync with workspace plan and expiry
+    if (userId && (plan || updatedExpiresAt !== undefined)) {
       try {
         const existingSub = await prisma.subscription.findFirst({
           where: { userId },
@@ -121,17 +165,19 @@ export async function PATCH(req: NextRequest) {
           await prisma.subscription.update({
             where: { id: existingSub.id },
             data: {
-              plan,
-              dailyLimit: dailyQuota !== undefined ? Number(dailyQuota) : existingSub.dailyLimit,
+              ...(plan ? { plan } : {}),
+              ...(dailyQuota !== undefined ? { dailyLimit: Number(dailyQuota) } : {}),
+              ...(updatedExpiresAt !== undefined ? { expiresAt: updatedExpiresAt } : {}),
               status: "ACTIVE",
             },
           });
-        } else {
+        } else if (plan) {
           await prisma.subscription.create({
             data: {
               userId,
               plan,
               dailyLimit: dailyQuota !== undefined ? Number(dailyQuota) : 500,
+              expiresAt: updatedExpiresAt || null,
               status: "ACTIVE",
             },
           });

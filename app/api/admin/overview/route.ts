@@ -57,7 +57,7 @@ export async function GET() {
       prisma.broadcastBlast.count(),
       prisma.emailTemplate.count(),
       prisma.user.findMany({
-        take: 5,
+        take: 6,
         orderBy: { createdAt: "desc" },
         select: {
           id: true,
@@ -65,6 +65,18 @@ export async function GET() {
           name: true,
           role: true,
           createdAt: true,
+          workspaces: {
+            take: 1,
+            select: {
+              workspace: {
+                select: {
+                  plan: true,
+                  planExpiresAt: true,
+                  isPlanExpired: true,
+                },
+              },
+            },
+          },
         },
       }),
       prisma.auditLog.findMany({

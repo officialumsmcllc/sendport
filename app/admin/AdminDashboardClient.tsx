@@ -529,34 +529,76 @@ export default function AdminDashboardClient({ initialData }: { initialData: Adm
                   <th className="py-2.5 px-3">Name</th>
                   <th className="py-2.5 px-3">Email</th>
                   <th className="py-2.5 px-3">Role</th>
+                  <th className="py-2.5 px-3">Plan & Validity</th>
                   <th className="py-2.5 px-3">Joined Date</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {(data?.recentSignups || initialData.recentSignups || []).map((u: any) => (
-                  <tr key={u.id} className="hover:bg-white/[0.02] transition-colors">
-                    <td className="py-2.5 px-3 font-semibold text-white">
-                      {u.name || "Anonymous User"}
-                    </td>
-                    <td className="py-2.5 px-3 text-slate-400 font-mono text-[11px]">
-                      {u.email}
-                    </td>
-                    <td className="py-2.5 px-3">
-                      <span
-                        className={`inline-block px-2 py-0.5 rounded text-[10px] font-black uppercase ${
-                          u.role === "ADMIN"
-                            ? "bg-amber-500/10 text-amber-400 border border-amber-500/30"
-                            : "bg-slate-800 text-slate-300"
-                        }`}
-                      >
-                        {u.role}
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-3 text-slate-400 font-mono text-[11px]" suppressHydrationWarning>
-                      {new Date(u.createdAt).toLocaleDateString()}
-                    </td>
-                  </tr>
-                ))}
+                {(data?.recentSignups || initialData.recentSignups || []).map((u: any) => {
+                  const ws = u.workspaces?.[0]?.workspace;
+                  const plan = ws?.plan || "STARTER";
+                  let daysLeft: number | null = null;
+                  if (ws?.planExpiresAt) {
+                    daysLeft = Math.ceil(
+                      (new Date(ws.planExpiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+                    );
+                  }
+
+                  return (
+                    <tr key={u.id} className="hover:bg-white/[0.02] transition-colors">
+                      <td className="py-2.5 px-3 font-semibold text-white">
+                        {u.name || "Anonymous User"}
+                      </td>
+                      <td className="py-2.5 px-3 text-slate-400 font-mono text-[11px]">
+                        {u.email}
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <span
+                          className={`inline-block px-2 py-0.5 rounded text-[10px] font-black uppercase ${
+                            u.role === "ADMIN"
+                              ? "bg-amber-500/10 text-amber-400 border border-amber-500/30"
+                              : "bg-slate-800 text-slate-300"
+                          }`}
+                        >
+                          {u.role}
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-3" suppressHydrationWarning>
+                        <div className="flex items-center gap-1.5 font-mono text-[11px]">
+                          <span
+                            className={`px-1.5 py-0.5 rounded text-[10px] font-black uppercase ${
+                              plan === "SCALE_PRO"
+                                ? "bg-amber-500/15 text-amber-300 border border-amber-500/30"
+                                : plan === "GROWTH"
+                                ? "bg-sky-500/15 text-sky-300 border border-sky-500/30"
+                                : "bg-slate-800 text-slate-400"
+                            }`}
+                          >
+                            {plan}
+                          </span>
+                          {daysLeft !== null ? (
+                            daysLeft > 0 ? (
+                              <span
+                                className={`text-[10px] font-bold ${
+                                  daysLeft <= 5 ? "text-amber-400 font-black animate-pulse" : "text-emerald-400"
+                                }`}
+                              >
+                                ⏳ {daysLeft}d left
+                              </span>
+                            ) : (
+                              <span className="text-[10px] font-bold text-rose-400">Expired</span>
+                            )
+                          ) : (
+                            <span className="text-[10px] text-slate-500">Free</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-2.5 px-3 text-slate-400 font-mono text-[11px]" suppressHydrationWarning>
+                        {new Date(u.createdAt).toLocaleDateString()}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

@@ -124,7 +124,7 @@ export async function getAdminOverviewData(): Promise<AdminInitialData> {
       prisma.broadcastBlast.count().catch(() => 0),
       prisma.emailTemplate.count().catch(() => 0),
       prisma.user.findMany({
-        take: 5,
+        take: 6,
         orderBy: { createdAt: "desc" },
         select: {
           id: true,
@@ -132,6 +132,18 @@ export async function getAdminOverviewData(): Promise<AdminInitialData> {
           name: true,
           role: true,
           createdAt: true,
+          workspaces: {
+            take: 1,
+            select: {
+              workspace: {
+                select: {
+                  plan: true,
+                  planExpiresAt: true,
+                  isPlanExpired: true,
+                },
+              },
+            },
+          },
         },
       }).catch(() => []),
       prisma.auditLog.findMany({
