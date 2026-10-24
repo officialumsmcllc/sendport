@@ -1,3 +1,9 @@
+// ==============================================================
+// Created & Owned by: officialum1
+// Suite: umiskills
+// Multi-Channel High-Deliverability Email Dispatcher
+// ==============================================================
+
 import crypto from "crypto";
 import nodemailer from "nodemailer";
 import { prisma } from "@/lib/db/prisma";
@@ -278,55 +284,18 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
   let deliveryStatus: "DELIVERED" | "FAILED" = "FAILED";
   let deliveryError: string | null = null;
 
-  // 6. Real-time Internet Delivery:
-  // Priority 1: Dedicated Autonomous MTA Server (DigitalOcean / Custom VPS with 2048-bit DKIM & Direct MX)
-  if (process.env.MTA_SERVER_URL) {
-    try {
-      const mtaRes = await fetch(`${process.env.MTA_SERVER_URL}/v1/deliver`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-MTA-Key": process.env.MTA_SECRET_KEY || "",
-        },
-        body: JSON.stringify({
-          from_address: options.from,
-          to_addresses: recipients,
-          subject: options.subject,
-          html: processedHtml,
-          text: plainTextBody,
-          reply_to: options.replyTo,
-          headers: {
-            "List-Unsubscribe": listUnsubscribeHeader,
-            "List-Unsubscribe-Post": listUnsubscribePostHeader,
-            ...options.headers,
-          },
-          dkim_selector: domainRecord?.dkimSelector || "sendport",
-          dkim_private_key: domainRecord?.dkimPrivateKey || undefined,
-        }),
-      });
-
-      if (mtaRes.ok) {
-        deliveryStatus = "DELIVERED";
-        console.log(`[AUTONOMOUS MTA DISPATCH] Direct MX Delivery Success via VPS MTA Daemon`);
-      } else {
-        const mtaErr = await mtaRes.text();
-        deliveryError = `VPS MTA Error: ${mtaErr || mtaRes.statusText}`;
-      }
-    } catch (mtaErr: any) {
-      deliveryError = `VPS MTA connection error: ${mtaErr.message}`;
-    }
-  }
-
-  // Priority 2: Hostinger Enterprise Engine (Full DKIM Injection & Custom Envelope Sender - 0% 'via' tag)
+  // 6. Real-time Internet Delivery Cascade:
+  // Priority 1: Hostinger Enterprise Engine (Native HTTPS Port 443 with Full DKIM & Custom Envelope Sender)
   const hostingerEngineUrl = process.env.HOSTINGER_ENGINE_URL || "https://engine.getsendport.com/sendport_engine.php";
+  const sendportSecret = process.env.SENDPORT_SECRET || "sendport_enterprise_jwt_secret_key_2026";
 
-  if (deliveryStatus !== "DELIVERED" && process.env.USE_HOSTINGER_ENGINE !== "false") {
+  if (process.env.USE_HOSTINGER_ENGINE !== "false") {
     try {
       const hRes = await fetch(hostingerEngineUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-Sendport-Key": process.env.SENDPORT_SECRET || "",
+          "X-Sendport-Key": sendportSecret,
         },
         body: JSON.stringify({
           from_address: options.from,
@@ -349,6 +318,7 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
             ...options.headers,
           },
         }),
+        signal: AbortSignal.timeout(8000),
       });
       const hData = await hRes.json().catch(() => ({}));
       if (hRes.ok && hData.success) {
@@ -362,6 +332,51 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
     }
   }
 
+  // Priority 2: High-Speed SMTP / SES Relay (Port 465 SSL / 587 TLS)
+  if (deliveryStatus !== "DELIVERED" && process.env.SMTP_USER && process.env.SMTP_PASS && process.env.SMTP_HOST) {
+    try {
+      const port = parseInt(process.env.SMTP_PORT || "465", 10);
+      const isSecure = process.env.SMTP_SECURE === "true" || port === 465;
+
+      const transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port,
+        secure: isSecure,
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS,
+        },
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 15000,
+        tls: {
+          rejectUnauthorized: false,
+          minVersion: "TLSv1.2",
+        },
+      });
+
+      await transporter.sendMail({
+        from: options.from,
+        to: recipients,
+        subject: options.subject,
+        html: processedHtml,
+        text: plainTextBody,
+        replyTo: options.replyTo,
+        headers: {
+          "Message-ID": `<${messageId}@${senderDomain}>`,
+          "List-Unsubscribe": listUnsubscribeHeader,
+          "List-Unsubscribe-Post": listUnsubscribePostHeader,
+          ...(dkimSignatureHeader ? { "DKIM-Signature": dkimSignatureHeader } : {}),
+          ...options.headers,
+        },
+      });
+      deliveryStatus = "DELIVERED";
+      console.log(`[SMTP RELAY DISPATCH] Successfully delivered via ${process.env.SMTP_HOST}`);
+    } catch (smtpError: any) {
+      deliveryError = `Outbound Relay Error: ${smtpError.message}`;
+    }
+  }
+
   // Priority 3: Cloudflare Edge Worker Layer
   if (deliveryStatus !== "DELIVERED" && process.env.CLOUDFLARE_WORKER_URL) {
     try {
@@ -369,7 +384,7 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-Sendport-Key": process.env.SENDPORT_SECRET || "",
+          "X-Sendport-Key": process.env.SENDPORT_SECRET || "sendport_edge_master_key_2026",
         },
         body: JSON.stringify({
           from_address: options.from,
@@ -389,6 +404,7 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
             ...options.headers,
           },
         }),
+        signal: AbortSignal.timeout(8000),
       });
       const cfData = await cfRes.json().catch(() => ({}));
       if (cfRes.ok && cfData.success) {
@@ -402,6 +418,46 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
     }
   }
 
+  // Priority 4: Dedicated Autonomous MTA Server (with strict 3s timeout to prevent hanging)
+  if (deliveryStatus !== "DELIVERED" && process.env.MTA_SERVER_URL) {
+    try {
+      const mtaRes = await fetch(`${process.env.MTA_SERVER_URL}/v1/deliver`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-MTA-Key": process.env.MTA_SECRET_KEY || "",
+        },
+        body: JSON.stringify({
+          from_address: options.from,
+          to_addresses: recipients,
+          subject: options.subject,
+          html: processedHtml,
+          text: plainTextBody,
+          reply_to: options.replyTo,
+          headers: {
+            "List-Unsubscribe": listUnsubscribeHeader,
+            "List-Unsubscribe-Post": listUnsubscribePostHeader,
+            ...options.headers,
+          },
+          dkim_selector: domainRecord?.dkimSelector || "sendport",
+          dkim_private_key: domainRecord?.dkimPrivateKey || undefined,
+        }),
+        signal: AbortSignal.timeout(3000),
+      });
+
+      if (mtaRes.ok) {
+        deliveryStatus = "DELIVERED";
+        console.log(`[AUTONOMOUS MTA DISPATCH] Direct MX Delivery Success via VPS MTA Daemon`);
+      } else {
+        const mtaErr = await mtaRes.text();
+        deliveryError = `VPS MTA Error: ${mtaErr || mtaRes.statusText}`;
+      }
+    } catch (mtaErr: any) {
+      deliveryError = `VPS MTA connection error: ${mtaErr.message}`;
+    }
+  }
+
+  // Priority 5: Direct MX Handshake (Opportunistic)
   if (deliveryStatus !== "DELIVERED") {
     const directResult = await dispatchDirectToMx({
       from: options.from,
@@ -427,52 +483,6 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
     } else {
       deliveryError = directResult.error || deliveryError || "Direct MX delivery failed";
       console.warn(`[DIRECT MX FAILED]:`, deliveryError);
-    }
-  }
-
-  if (deliveryStatus !== "DELIVERED") {
-
-    // Optional Relay Fallback if configured
-    if (process.env.SMTP_USER && process.env.SMTP_PASS && process.env.SMTP_HOST) {
-      try {
-        const port = parseInt(process.env.SMTP_PORT || "465", 10);
-        const isSecure = process.env.SMTP_SECURE === "true" || port === 465;
-
-        const transporter = nodemailer.createTransport({
-          host: process.env.SMTP_HOST,
-          port,
-          secure: isSecure,
-          auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS,
-          },
-          connectionTimeout: 15000,
-          greetingTimeout: 15000,
-          tls: {
-            rejectUnauthorized: false,
-            minVersion: "TLSv1.2",
-          },
-        });
-
-        await transporter.sendMail({
-          from: options.from,
-          to: recipients,
-          subject: options.subject,
-          html: processedHtml,
-          text: plainTextBody,
-          replyTo: options.replyTo,
-          headers: {
-            "Message-ID": `<${messageId}@${senderDomain}>`,
-            "List-Unsubscribe": listUnsubscribeHeader,
-            "List-Unsubscribe-Post": listUnsubscribePostHeader,
-            ...(dkimSignatureHeader ? { "DKIM-Signature": dkimSignatureHeader } : {}),
-            ...options.headers,
-          },
-        });
-        deliveryStatus = "DELIVERED";
-      } catch (smtpError: any) {
-        deliveryError = `Outbound Relay Error: ${smtpError.message}`;
-      }
     }
   }
 
