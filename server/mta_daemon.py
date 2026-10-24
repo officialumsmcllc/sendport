@@ -1,3 +1,7 @@
+# ==============================================================
+# Created & Owned by: officialum1
+# Suite: umiskills
+# ==============================================================
 """
 Sendport Autonomous Mail Transfer Agent (MTA) & Direct Delivery Daemon
 Built with FastAPI, aiosmtplib, dnspython, and dkimpy for 100% independent direct mail delivery.
@@ -141,7 +145,7 @@ async def deliver_email_direct(payload: SendEmailPayload):
                 selector=payload.dkim_selector.encode("utf-8"),
                 domain=sender_domain.encode("utf-8"),
                 privkey=payload.dkim_private_key.encode("utf-8"),
-                include_headers=["From", "To", "Subject", "Date", "Message-ID"]
+                include_headers=[b"from", b"to", b"subject", b"date", b"message-id"]
             )
             raw_email_bytes = dkim_header + raw_email_bytes
             logger.info(f"✅ DKIM Signature successfully generated for domain [{sender_domain}]")
@@ -165,9 +169,9 @@ async def deliver_email_direct(payload: SendEmailPayload):
                 await smtp_client.login(RELAY_USER, RELAY_PASS)
 
             response = await smtp_client.sendmail(
-                sender=payload.from_address,
-                recipients=payload.to_addresses,
-                message=raw_email_bytes
+                payload.from_address,
+                payload.to_addresses,
+                raw_email_bytes
             )
             await smtp_client.quit()
             delivery_target = f"Relay:{RELAY_HOST}:{RELAY_PORT}"
@@ -183,9 +187,9 @@ async def deliver_email_direct(payload: SendEmailPayload):
             await smtp_client.helo(hostname=DEFAULT_HELO_HOST)
 
             response = await smtp_client.sendmail(
-                sender=payload.from_address,
-                recipients=payload.to_addresses,
-                message=raw_email_bytes
+                payload.from_address,
+                payload.to_addresses,
+                raw_email_bytes
             )
             await smtp_client.quit()
             delivery_target = f"MX:{mx_host}:25"

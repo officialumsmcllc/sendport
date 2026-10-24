@@ -285,11 +285,55 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
   let deliveryError: string | null = null;
 
   // 6. Real-time Internet Delivery Cascade:
-  // Priority 1: Hostinger Enterprise Engine (Native HTTPS Port 443 with Full DKIM & Custom Envelope Sender)
+  // Priority 1: Dedicated Autonomous MTA Server (AlphaVPS 104.152.50.164 Direct Port 25 Engine)
+  const mtaServerUrl = process.env.MTA_SERVER_URL || "http://104.152.50.164";
+  const mtaSecretKey = process.env.MTA_SECRET_KEY || "sendport_mta_master_secret_key_2026";
+
+  if (mtaServerUrl && process.env.USE_MTA_SERVER !== "false") {
+    try {
+      const mtaRes = await fetch(`${mtaServerUrl}/v1/deliver`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-MTA-Key": mtaSecretKey,
+        },
+        body: JSON.stringify({
+          from_address: options.from,
+          to_addresses: recipients,
+          subject: options.subject,
+          html: processedHtml,
+          text: plainTextBody,
+          reply_to: options.replyTo,
+          headers: {
+            "List-Unsubscribe": listUnsubscribeHeader,
+            "List-Unsubscribe-Post": listUnsubscribePostHeader,
+            ...options.headers,
+          },
+          dkim_selector: domainRecord?.dkimSelector || "sendport",
+          dkim_private_key: domainRecord?.dkimPrivateKey || undefined,
+        }),
+        signal: AbortSignal.timeout(12000),
+      });
+
+      if (mtaRes.ok) {
+        deliveryStatus = "DELIVERED";
+        console.log(`[AUTONOMOUS MTA DISPATCH] Direct MX Delivery Success via AlphaVPS MTA Daemon (${mtaServerUrl})`);
+      } else {
+        const mtaErr = await mtaRes.text();
+        deliveryError = `AlphaVPS MTA Error: ${mtaErr || mtaRes.statusText}`;
+        console.warn(`[MTA WARN] ${deliveryError}, falling back to Hostinger/Relay`);
+      }
+    } catch (mtaErr: any) {
+      deliveryError = `AlphaVPS MTA connection error: ${mtaErr.message}`;
+      console.warn(`[MTA WARN] ${deliveryError}, falling back to Hostinger/Relay`);
+    }
+  }
+
+  // Priority 2: Hostinger Enterprise Engine (Native HTTPS Port 443 with Full DKIM & Custom Envelope Sender)
   const hostingerEngineUrl = process.env.HOSTINGER_ENGINE_URL || "https://engine.getsendport.com/sendport_engine.php";
   const sendportSecret = process.env.SENDPORT_SECRET || "sendport_enterprise_jwt_secret_key_2026";
 
-  if (process.env.USE_HOSTINGER_ENGINE !== "false") {
+  if (deliveryStatus !== "DELIVERED" && process.env.USE_HOSTINGER_ENGINE !== "false") {
     try {
       const hRes = await fetch(hostingerEngineUrl, {
         method: "POST",
@@ -332,7 +376,7 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
     }
   }
 
-  // Priority 2: High-Speed SMTP / SES Relay (Port 465 SSL / 587 TLS)
+  // Priority 3: High-Speed SMTP / SES Relay (Port 465 SSL / 587 TLS)
   if (deliveryStatus !== "DELIVERED" && process.env.SMTP_USER && process.env.SMTP_PASS && process.env.SMTP_HOST) {
     try {
       const port = parseInt(process.env.SMTP_PORT || "465", 10);
@@ -377,7 +421,7 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
     }
   }
 
-  // Priority 3: Cloudflare Edge Worker Layer
+  // Priority 4: Cloudflare Edge Worker Layer
   if (deliveryStatus !== "DELIVERED" && process.env.CLOUDFLARE_WORKER_URL) {
     try {
       const cfRes = await fetch(process.env.CLOUDFLARE_WORKER_URL, {
@@ -415,45 +459,6 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
       }
     } catch (cfErr: any) {
       deliveryError = `Cloudflare Worker Connection Error: ${cfErr.message}`;
-    }
-  }
-
-  // Priority 4: Dedicated Autonomous MTA Server (with strict 3s timeout to prevent hanging)
-  if (deliveryStatus !== "DELIVERED" && process.env.MTA_SERVER_URL) {
-    try {
-      const mtaRes = await fetch(`${process.env.MTA_SERVER_URL}/v1/deliver`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-MTA-Key": process.env.MTA_SECRET_KEY || "",
-        },
-        body: JSON.stringify({
-          from_address: options.from,
-          to_addresses: recipients,
-          subject: options.subject,
-          html: processedHtml,
-          text: plainTextBody,
-          reply_to: options.replyTo,
-          headers: {
-            "List-Unsubscribe": listUnsubscribeHeader,
-            "List-Unsubscribe-Post": listUnsubscribePostHeader,
-            ...options.headers,
-          },
-          dkim_selector: domainRecord?.dkimSelector || "sendport",
-          dkim_private_key: domainRecord?.dkimPrivateKey || undefined,
-        }),
-        signal: AbortSignal.timeout(3000),
-      });
-
-      if (mtaRes.ok) {
-        deliveryStatus = "DELIVERED";
-        console.log(`[AUTONOMOUS MTA DISPATCH] Direct MX Delivery Success via VPS MTA Daemon`);
-      } else {
-        const mtaErr = await mtaRes.text();
-        deliveryError = `VPS MTA Error: ${mtaErr || mtaRes.statusText}`;
-      }
-    } catch (mtaErr: any) {
-      deliveryError = `VPS MTA connection error: ${mtaErr.message}`;
     }
   }
 
