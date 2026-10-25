@@ -176,13 +176,13 @@ export default function AdminSystemPage() {
                 </span>
               </div>
               <p className="text-xs text-slate-400 mt-1 font-mono">
-                Host: <span className="text-amber-400 font-bold">mail.getsendport.com</span> &bull; IPv4: <span className="text-white font-bold">142.93.120.58</span> &bull; Daemon: Python aiosmtpd + Postfix
+                Host: <span className="text-amber-400 font-bold">mail.getsendport.com</span> &bull; IPv4: <span className="text-white font-bold">45.59.103.242</span> &bull; Daemon: Python Autonomous MTA
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2 text-xs font-mono">
             <span className="px-3 py-1.5 rounded-lg bg-[#080d19] border border-white/5 text-slate-300">
-              MTA API: <span className="text-emerald-400 font-bold">Online :8000</span>
+              MTA API: <span className="text-emerald-400 font-bold">Online :80</span>
             </span>
             <span className="px-3 py-1.5 rounded-lg bg-[#080d19] border border-white/5 text-slate-300">
               DKIM: <span className="text-amber-400 font-bold">2048-bit RSA</span>
