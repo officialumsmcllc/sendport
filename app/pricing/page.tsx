@@ -144,7 +144,7 @@ export default function PricingPage() {
                 <select
                   value={currency}
                   onChange={(e) => setCurrency(e.target.value as SupportedCurrency)}
-                  className="bg-transparent text-xs font-semibold outline-none cursor-pointer text-white"
+                  className="bg-slate-900 text-xs font-semibold outline-none cursor-pointer text-white [color-scheme:dark]"
                   aria-label="Select currency"
                 >
                   {Object.keys(CURRENCIES).map((code) => (

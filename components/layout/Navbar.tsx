@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { SendportLogo } from "@/components/brand/Logo";
-import { ArrowRight, Menu, X, Globe, Terminal, ShieldCheck, LogOut } from "lucide-react";
+import { ArrowRight, Menu, X, Globe, Terminal, ShieldCheck, LogOut, ChevronDown } from "lucide-react";
 import { CURRENCIES, SupportedCurrency } from "@/lib/payments/currencies";
 import { isSuperAdminUser } from "@/lib/auth/admin-guard";
 
@@ -19,6 +19,8 @@ export function Navbar({
 }) {
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [currencyDropdownOpen, setCurrencyDropdownOpen] = useState(false);
+  const currencyMenuRef = React.useRef<HTMLDivElement>(null);
   const [user, setUser] = useState<{ id?: string; email: string; name?: string; role: string } | null>(() => {
     if (typeof window !== "undefined") {
       try {
@@ -52,6 +54,18 @@ export function Navbar({
         setAuthChecked(true);
       });
   }, []);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (currencyMenuRef.current && !currencyMenuRef.current.contains(event.target as Node)) {
+        setCurrencyDropdownOpen(false);
+      }
+    }
+    if (currencyDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [currencyDropdownOpen]);
 
   const handleLogout = async () => {
     try {
@@ -119,28 +133,55 @@ export function Navbar({
         <div className="hidden md:flex items-center gap-3" suppressHydrationWarning>
           {/* Currency Switcher */}
           {onCurrencyChange && (
-            <div
-              className={`relative flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium border transition-all ${
-                dark
-                  ? "border-slate-800/80 bg-slate-900/90 text-slate-300 hover:border-slate-700 hover:bg-slate-900"
-                  : "border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300"
-              }`}
-            >
-              <Globe className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-              <select
-                aria-label="Select Currency"
-                value={activeCurrency}
-                onChange={(e) => onCurrencyChange(e.target.value as SupportedCurrency)}
-                className={`bg-transparent text-xs font-semibold outline-none cursor-pointer pr-1 ${
-                  dark ? "text-slate-200" : "text-slate-800"
+            <div className="relative" ref={currencyMenuRef}>
+              <button
+                type="button"
+                onClick={() => setCurrencyDropdownOpen(!currencyDropdownOpen)}
+                className={`flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-semibold border transition-all ${
+                  dark
+                    ? "border-slate-800 bg-slate-900/90 text-slate-300 hover:border-slate-700 hover:bg-slate-800 hover:text-white"
+                    : "border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300"
                 }`}
               >
-                {Object.keys(CURRENCIES).map((code) => (
-                  <option key={code} value={code} className={dark ? "bg-slate-950 text-white py-1" : "py-1"}>
-                    {code} ({CURRENCIES[code as SupportedCurrency].symbol})
-                  </option>
-                ))}
-              </select>
+                <Globe className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                <span>{activeCurrency} ({CURRENCIES[activeCurrency]?.symbol || "$"})</span>
+                <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${currencyDropdownOpen ? "rotate-180" : ""}`} />
+              </button>
+
+              {currencyDropdownOpen && (
+                <div
+                  className={`absolute right-0 mt-2 w-48 rounded-xl shadow-2xl border py-1.5 z-50 backdrop-blur-xl transition-all ${
+                    dark
+                      ? "bg-slate-950/95 border-slate-800 shadow-black/80 text-slate-200"
+                      : "bg-white border-slate-200 shadow-slate-300/50 text-slate-800"
+                  }`}
+                >
+                  {Object.keys(CURRENCIES).map((code) => {
+                    const c = code as SupportedCurrency;
+                    const isSelected = activeCurrency === c;
+                    return (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() => {
+                          onCurrencyChange(c);
+                          setCurrencyDropdownOpen(false);
+                        }}
+                        className={`w-full flex items-center justify-between px-3.5 py-2 text-xs font-medium transition text-left ${
+                          isSelected
+                            ? "bg-amber-500/15 text-amber-400 font-semibold"
+                            : dark
+                            ? "hover:bg-slate-900 text-slate-300 hover:text-white"
+                            : "hover:bg-slate-100 text-slate-700 hover:text-slate-950"
+                        }`}
+                      >
+                        <span>{c} ({CURRENCIES[c].symbol})</span>
+                        <span className="text-[10px] text-slate-500 uppercase">{CURRENCIES[c].name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
 
