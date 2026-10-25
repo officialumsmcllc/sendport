@@ -1,9 +1,3 @@
-// ==============================================================
-// Created & Owned by: officialum1
-// Suite: umiskills
-// Sendport Signup & 6-Digit Email Verification Flow (Option B)
-// ==============================================================
-
 "use client";
 
 import React, { useState, useEffect, Suspense } from "react";

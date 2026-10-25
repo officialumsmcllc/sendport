@@ -1,9 +1,3 @@
-// ==============================================================
-// Created & Owned by: officialum1
-// Suite: umiskills
-// 6-Digit Email Verification Handler
-// ==============================================================
-
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { createSessionToken, SESSION_COOKIE_NAME } from "@/lib/auth/session";

@@ -1,11 +1,5 @@
 import { ImageResponse } from "next/og";
 
-// ==============================================================
-// Created & Owned by: officialum1
-// Suite: umiskills
-// SEO Engine: Dynamic OpenGraph High-Impact Banner Card
-// ==============================================================
-
 export const runtime = "edge";
 export const alt = "Sendport — The Developer-First Email Delivery Platform";
 export const size = {

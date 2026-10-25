@@ -1,7 +1,3 @@
-# ==============================================================
-# Created & Owned by: officialum1
-# Suite: umiskills
-# ==============================================================
 """
 Sendport Autonomous Mail Transfer Agent (MTA) & Direct Delivery Daemon
 Built with FastAPI, aiosmtplib, dnspython, and dkimpy for 100% independent direct mail delivery.
@@ -135,12 +131,6 @@ async def deliver_email_direct(payload: SendEmailPayload):
             except Exception as e:
                 logger.warn(f"Failed to attach file {att.filename}: {e}")
 
-    # RFC 8058 / Yahoo Mandatory One-Click Unsubscribe & Compliance Headers
-    if "List-Unsubscribe" not in msg:
-        msg["List-Unsubscribe"] = f"<https://getsendport.com/unsubscribe?email={first_recipient}>, <mailto:unsubscribe@{sender_domain}>"
-    if "List-Unsubscribe-Post" not in msg:
-        msg["List-Unsubscribe-Post"] = "List-Unsubscribe=One-Click"
-
     # Ensure strict RFC 5321 CRLF line endings before DKIM signing
     raw_email_bytes = msg.as_bytes().replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")
 
@@ -156,13 +146,19 @@ async def deliver_email_direct(payload: SendEmailPayload):
 
     if dkim_priv:
         try:
+            headers_to_sign = [b"from", b"to", b"subject", b"date", b"message-id"]
+            if "List-Unsubscribe" in msg:
+                headers_to_sign.append(b"list-unsubscribe")
+            if "List-Unsubscribe-Post" in msg:
+                headers_to_sign.append(b"list-unsubscribe-post")
+
             dkim_header = dkim.sign(
                 message=raw_email_bytes,
                 selector=dkim_sel.encode("utf-8"),
                 domain=sender_domain.encode("utf-8"),
                 privkey=dkim_priv.encode("utf-8"),
                 canonicalize=(b"relaxed", b"relaxed"),
-                include_headers=[b"from", b"to", b"subject", b"date", b"message-id", b"list-unsubscribe", b"list-unsubscribe-post"]
+                include_headers=headers_to_sign
             )
             raw_email_bytes = dkim_header + raw_email_bytes
             logger.info(f"✅ DKIM Signature successfully generated for domain [{sender_domain}] with selector [{dkim_sel}] (relaxed/relaxed)")

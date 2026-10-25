@@ -1,8 +1,3 @@
-// ==============================================================
-// Created & Owned by: officialum1
-// Suite: umiskills
-// Multi-Channel High-Deliverability Email Dispatcher
-// ==============================================================
 
 import crypto from "crypto";
 import nodemailer from "nodemailer";

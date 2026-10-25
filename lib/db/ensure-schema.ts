@@ -56,6 +56,18 @@ export async function ensureDbSchema(): Promise<void> {
           EXCEPTION WHEN others THEN NULL;
           END;
 
+          BEGIN
+            CREATE TABLE IF NOT EXISTS "AppSumoRedemption" (
+              "id" TEXT PRIMARY KEY,
+              "code" TEXT UNIQUE NOT NULL,
+              "tier" INTEGER NOT NULL DEFAULT 1,
+              "userId" TEXT,
+              "workspaceId" TEXT,
+              "redeemedAt" TIMESTAMP NOT NULL DEFAULT NOW()
+            );
+          EXCEPTION WHEN others THEN NULL;
+          END;
+
           -- Automatically verify legacy/existing accounts so existing owners aren't locked out
           BEGIN
             UPDATE "User" SET "emailVerified" = true WHERE "emailVerified" = false AND "verificationCode" IS NULL;

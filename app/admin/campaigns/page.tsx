@@ -1,8 +1,3 @@
-// ==============================================================
-// Created & Owned by: officialum1
-// Suite: umiskills
-// ==============================================================
-
 "use client";
 
 import React, { useState, useEffect } from "react";

@@ -1,9 +1,3 @@
-// ==============================================================
-// Created & Owned by: officialum1
-// Suite: umiskills
-// System Mailer & Transactional Notifications Engine
-// ==============================================================
-
 import { dispatchDirectToMx } from "@/lib/email/direct-mx";
 
 export interface SystemEmailOptions {

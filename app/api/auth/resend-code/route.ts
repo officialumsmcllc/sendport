@@ -1,9 +1,3 @@
-// ==============================================================
-// Created & Owned by: officialum1
-// Suite: umiskills
-// Resend Email Verification Code Handler
-// ==============================================================
-
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { sendEmailVerificationEmail } from "@/lib/email/system-mailer";

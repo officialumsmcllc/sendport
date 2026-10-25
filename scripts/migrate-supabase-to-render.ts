@@ -1,9 +1,3 @@
-// ==============================================================
-// Created & Owned by: officialum1
-// Suite: umiskills
-// Database Migration Tool: Supabase to Render High-Speed Postgres
-// ==============================================================
-
 import { PrismaClient } from "@prisma/client";
 
 const sourceUrl = "postgresql://postgres.wdmhfrbygqrcjxebjlrk:rf.%26HN%243im%23%2F2BK@aws-0-ap-northeast-2.pooler.supabase.com:5432/postgres?connection_limit=5";
