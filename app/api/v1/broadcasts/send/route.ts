@@ -134,7 +134,7 @@ export async function POST(req: NextRequest) {
               .replace(/\{\{\s*last_name\s*\}\}/gi, contact.lastName || "")
               .replace(/\{\{\s*email\s*\}\}/gi, contact.email);
 
-            await sendEmailEngine({
+            const sendResult = await sendEmailEngine({
               workspaceId: auth.workspace.id,
               from: fromAddress,
               to: [contact.email],
@@ -142,7 +142,12 @@ export async function POST(req: NextRequest) {
               html: personalizedHtml,
               replyTo: replyTo || undefined,
             });
-            sentCount++;
+
+            if (sendResult && sendResult.status === "delivered") {
+              sentCount++;
+            } else {
+              failedCount++;
+            }
           } catch (err) {
             console.error(`Broadcast failed to ${contact.email}:`, err);
             failedCount++;
