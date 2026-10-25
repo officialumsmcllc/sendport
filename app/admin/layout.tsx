@@ -33,6 +33,7 @@ import {
   Cpu,
   Layers,
   ChevronDown,
+  Send,
 } from "lucide-react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -81,6 +82,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     {
       title: "DELIVERY & INFRASTRUCTURE",
       items: [
+        { label: "Global Campaigns & Blasts", href: "/admin/campaigns", icon: Send, description: "Bulk campaigns, sent & remaining telemetry", category: "Delivery" },
         { label: "Global Email Logs", href: "/admin/logs", icon: Mail, description: "Inspect message IDs, latency & bounces", category: "Delivery" },
         { label: "Infrastructure & SMTP", href: "/admin/system", icon: Server, description: "SMTP relay daemon & node diagnostics", category: "Infrastructure" },
         { label: "Platform Broadcasts", href: "/admin/broadcasts", icon: Megaphone, description: "Announcements & system notifications", category: "Delivery" },
