@@ -126,7 +126,7 @@ export default function RedeemPage() {
                 ) : (
                   <div>
                     <p>{status.message}</p>
-                    {status.message.includes("sign in") && (
+                    {status.message?.includes("sign in") && (
                       <div className="mt-2.5 flex items-center gap-3 text-xs">
                         <Link href="/login" className="text-amber-400 underline font-medium">
                           Sign In
