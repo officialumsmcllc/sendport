@@ -135,20 +135,37 @@ async def deliver_email_direct(payload: SendEmailPayload):
             except Exception as e:
                 logger.warn(f"Failed to attach file {att.filename}: {e}")
 
-    raw_email_bytes = msg.as_bytes()
+    # RFC 8058 / Yahoo Mandatory One-Click Unsubscribe & Compliance Headers
+    if "List-Unsubscribe" not in msg:
+        msg["List-Unsubscribe"] = f"<https://getsendport.com/unsubscribe?email={first_recipient}>, <mailto:unsubscribe@{sender_domain}>"
+    if "List-Unsubscribe-Post" not in msg:
+        msg["List-Unsubscribe-Post"] = "List-Unsubscribe=One-Click"
 
-    # 4. Sign DKIM (2048-bit RSA)
-    if payload.dkim_private_key:
+    # Ensure strict RFC 5321 CRLF line endings before DKIM signing
+    raw_email_bytes = msg.as_bytes().replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")
+
+    # 4. Sign DKIM (2048-bit RSA) with RFC-6376 relaxed/relaxed canonicalization
+    dkim_priv = payload.dkim_private_key
+    dkim_sel = payload.dkim_selector or "sendport"
+    if not dkim_priv and os.path.exists("/opt/sendport-mta/dkim_default.pem"):
+        try:
+            with open("/opt/sendport-mta/dkim_default.pem", "r") as f:
+                dkim_priv = f.read().strip()
+        except Exception as e:
+            logger.warning(f"Failed to read default DKIM key: {e}")
+
+    if dkim_priv:
         try:
             dkim_header = dkim.sign(
                 message=raw_email_bytes,
-                selector=payload.dkim_selector.encode("utf-8"),
+                selector=dkim_sel.encode("utf-8"),
                 domain=sender_domain.encode("utf-8"),
-                privkey=payload.dkim_private_key.encode("utf-8"),
-                include_headers=[b"from", b"to", b"subject", b"date", b"message-id"]
+                privkey=dkim_priv.encode("utf-8"),
+                canonicalize=(b"relaxed", b"relaxed"),
+                include_headers=[b"from", b"to", b"subject", b"date", b"message-id", b"list-unsubscribe", b"list-unsubscribe-post"]
             )
             raw_email_bytes = dkim_header + raw_email_bytes
-            logger.info(f"✅ DKIM Signature successfully generated for domain [{sender_domain}]")
+            logger.info(f"✅ DKIM Signature successfully generated for domain [{sender_domain}] with selector [{dkim_sel}] (relaxed/relaxed)")
         except Exception as dkim_err:
             logger.error(f"DKIM signing warning for {sender_domain}: {dkim_err}")
 
@@ -161,10 +178,10 @@ async def deliver_email_direct(payload: SendEmailPayload):
                 port=RELAY_PORT,
                 timeout=20,
                 start_tls=True,
-                validate_certs=False
+                validate_certs=False,
+                local_hostname=DEFAULT_HELO_HOST
             )
             await smtp_client.connect()
-            await smtp_client.helo(hostname=DEFAULT_HELO_HOST)
             if RELAY_USER and RELAY_PASS:
                 await smtp_client.login(RELAY_USER, RELAY_PASS)
 
@@ -181,10 +198,10 @@ async def deliver_email_direct(payload: SendEmailPayload):
                 port=25,
                 timeout=15,
                 start_tls=True,
-                validate_certs=False
+                validate_certs=False,
+                local_hostname=DEFAULT_HELO_HOST
             )
             await smtp_client.connect()
-            await smtp_client.helo(hostname=DEFAULT_HELO_HOST)
 
             response = await smtp_client.sendmail(
                 payload.from_address,

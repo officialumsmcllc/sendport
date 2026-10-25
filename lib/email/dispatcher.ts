@@ -285,8 +285,8 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
   let deliveryError: string | null = null;
 
   // 6. Real-time Internet Delivery Cascade:
-  // Priority 1: Dedicated Autonomous MTA Server (AlphaVPS 104.152.50.164 Direct Port 25 Engine)
-  const mtaServerUrl = process.env.MTA_SERVER_URL || "http://104.152.50.164";
+  // Priority 1: Dedicated Autonomous MTA Server (AlphaVPS mail.getsendport.com Direct Port 25 Engine)
+  const mtaServerUrl = process.env.MTA_SERVER_URL || "http://mail.getsendport.com";
   const mtaSecretKey = process.env.MTA_SECRET_KEY || "sendport_mta_master_secret_key_2026";
 
   if (mtaServerUrl && process.env.USE_MTA_SERVER !== "false") {

@@ -71,6 +71,32 @@ export default function AdminCampaignsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [autoRefresh, setAutoRefresh] = useState(true);
+  const [retryingId, setRetryingId] = useState<string | null>(null);
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
+
+  const handleResend = async (blastId: string) => {
+    try {
+      setRetryingId(blastId);
+      setActionMessage("Initiating campaign resend via Autonomous MTA...");
+      const res = await fetch("/api/admin/campaigns/retry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ blastId }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setActionMessage(`🚀 Dispatched! ${data.message || "Sending live..."}`);
+        fetchCampaignsData(false);
+      } else {
+        setActionMessage(`❌ Error: ${data.error || "Failed to resend"}`);
+      }
+    } catch (err: any) {
+      setActionMessage(`❌ Network error: ${err.message}`);
+    } finally {
+      setRetryingId(null);
+      setTimeout(() => setActionMessage(null), 8000);
+    }
+  };
 
   const fetchCampaignsData = async (isManual = false) => {
     try {
@@ -249,6 +275,22 @@ export default function AdminCampaignsPage() {
         </div>
       </div>
 
+      {/* Action Notification Banner */}
+      {actionMessage && (
+        <div className="p-3.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 text-xs font-medium flex items-center justify-between shadow-lg shadow-emerald-500/5">
+          <div className="flex items-center gap-2">
+            <Zap className="w-4 h-4 text-emerald-400 shrink-0 animate-bounce" />
+            <span>{actionMessage}</span>
+          </div>
+          <button
+            onClick={() => setActionMessage(null)}
+            className="text-zinc-400 hover:text-white px-2 py-0.5 rounded text-xs transition-colors"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Filter and Search Bar */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-zinc-900/50 p-3 rounded-xl border border-white/10 backdrop-blur-sm">
         {/* Search */}
@@ -329,6 +371,7 @@ export default function AdminCampaignsPage() {
                   <th className="py-3.5 px-4 font-semibold">Remaining</th>
                   <th className="py-3.5 px-4 font-semibold">Status</th>
                   <th className="py-3.5 px-4 font-semibold text-right">Launched</th>
+                  <th className="py-3.5 px-4 font-semibold text-center">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5 text-zinc-300">
@@ -449,6 +492,28 @@ export default function AdminCampaignsPage() {
                             minute: "2-digit",
                           })}
                         </span>
+                      </td>
+
+                      {/* Action */}
+                      <td className="py-4 px-4 text-center">
+                        <button
+                          onClick={() => handleResend(c.id)}
+                          disabled={retryingId === c.id || c.status === "SENDING"}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 disabled:opacity-50 hover:scale-105 active:scale-95 shadow-sm"
+                          title="Resend this campaign over live Autonomous MTA"
+                        >
+                          {retryingId === c.id || c.status === "SENDING" ? (
+                            <>
+                              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                              <span>Sending...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Send className="w-3.5 h-3.5" />
+                              <span>Resend</span>
+                            </>
+                          )}
+                        </button>
                       </td>
                     </tr>
                   );
