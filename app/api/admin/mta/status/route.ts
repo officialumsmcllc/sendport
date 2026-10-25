@@ -55,13 +55,13 @@ export async function GET() {
       online: true,
       latencyMs: latencyMs || 15,
       version: "v2.4",
-      node: "NYC1 Droplet",
-      ip: "142.93.120.58",
+      node: "AlphaVPS Ryzen (LAX)",
+      ip: "45.59.103.242",
       hostname: "mail.getsendport.com",
       status: "OPERATIONAL",
       queueSize: 0,
       activeRelays: 2,
-      message: "NYC1 Droplet Node is active, listening on 587/465 with 2048-bit RSA DKIM signer.",
+      message: "AlphaVPS Ryzen KVM is active on 45.59.103.242 with 2048-bit RSA DKIM signer and unblocked Port 25.",
     });
   } catch (error: any) {
     return NextResponse.json(

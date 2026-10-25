@@ -422,10 +422,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
               <div className="min-w-0">
                 <p className="text-[10px] font-mono font-bold text-emerald-400 truncate">
-                  NYC1 Droplet • Active
+                  AlphaVPS Ryzen • Active
                 </p>
                 <p className="text-[9px] font-mono text-slate-400 truncate">
-                  142.93.120.58 (MTA Node)
+                  45.59.103.242 (MTA Node)
                 </p>
               </div>
             </div>

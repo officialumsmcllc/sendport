@@ -223,13 +223,13 @@ export default function AdminDashboardClient({ initialData }: { initialData: Adm
                 Primary Outbound Mail Engine (FastAPI)
               </span>
               <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-white/5 border border-white/10 text-slate-300">
-                Droplet NYC1
+                AlphaVPS Ryzen LAX
               </span>
             </div>
             <h3 className="text-lg font-black text-white flex items-center gap-2">
               <span className="font-mono text-amber-400">mail.getsendport.com</span>
               <span className="text-slate-500 text-sm font-normal">→</span>
-              <span className="font-mono text-slate-300 text-sm">142.93.120.58</span>
+              <span className="font-mono text-slate-300 text-sm">45.59.103.242</span>
             </h3>
             <p className="text-xs text-slate-400 max-w-2xl leading-relaxed">
               Autonomous Python MTA daemon active with 2048-bit DKIM cryptographic signing, direct recipient MX resolution, and opportunistic STARTTLS handshakes.

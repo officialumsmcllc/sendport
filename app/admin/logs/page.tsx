@@ -445,7 +445,7 @@ export default function AdminLogsPage() {
                       <div className="p-3.5 rounded-xl bg-[#080d19] border border-white/5 space-y-1">
                         <span className="text-[10px] font-bold uppercase text-slate-500">Dispatch IP Address</span>
                         <div className="text-white font-mono text-sm">
-                          {selectedLog.ipAddress || "142.93.120.58 (NYC1 Droplet Node)"}
+                          {selectedLog.ipAddress || "45.59.103.242 (AlphaVPS Ryzen KVM)"}
                         </div>
                         <span className="text-[10px] text-slate-400 block">Outbound MTA egress interface</span>
                       </div>
