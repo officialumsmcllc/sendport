@@ -1,3 +1,7 @@
+// ==============================================================
+// Created & Owned by: officialum1
+// Suite: umiskills
+// ==============================================================
 import { NextResponse } from "next/server";
 import { BLOG_POSTS } from "@/lib/blog/posts";
 

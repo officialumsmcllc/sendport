@@ -1,3 +1,7 @@
+// ==============================================================
+// Created & Owned by: officialum1
+// Suite: umiskills
+// ==============================================================
 import React from "react";
 import Link from "next/link";
 import { SendportLogo } from "@/components/brand/Logo";

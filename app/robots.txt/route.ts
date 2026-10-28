@@ -1,3 +1,7 @@
+// ==============================================================
+// Created & Owned by: officialum1
+// Suite: umiskills
+// ==============================================================
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-static";
@@ -8,6 +12,11 @@ Allow: /
 Disallow: /api/
 Disallow: /admin/
 Disallow: /dashboard/
+Disallow: /login
+Disallow: /signup
+Disallow: /register
+Disallow: /redeem
+Disallow: /forgot-password
 
 Sitemap: https://getsendport.com/sitemap.xml
 `;

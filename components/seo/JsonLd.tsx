@@ -1,3 +1,7 @@
+// ==============================================================
+// Created & Owned by: officialum1
+// Suite: umiskills
+// ==============================================================
 import React from "react";
 import { siteConfig } from "@/lib/config/site";
 
@@ -13,6 +17,11 @@ export function SendportJsonLd() {
     legalName: siteConfig.legalName,
     url: siteConfig.url,
     logo: `${siteConfig.url}/icon.svg`,
+    brand: {
+      "@type": "Brand",
+      name: "GetSendport",
+      logo: `${siteConfig.url}/icon.svg`,
+    },
     founder: {
       "@type": "Person",
       name: siteConfig.founder.name,
@@ -23,6 +32,9 @@ export function SendportJsonLd() {
       siteConfig.social.github,
       siteConfig.social.linkedin,
       siteConfig.social.facebook,
+      "https://www.crunchbase.com/organization/getsendport",
+      "https://www.producthunt.com/products/getsendport",
+      "https://alternativeto.net/software/getsendport",
     ],
     contactPoint: {
       "@type": "ContactPoint",

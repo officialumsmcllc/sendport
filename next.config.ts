@@ -1,3 +1,7 @@
+// ==============================================================
+// Created & Owned by: officialum1
+// Suite: umiskills
+// ==============================================================
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
@@ -24,6 +28,40 @@ const nextConfig: NextConfig = {
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
           { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
         ],
+      },
+    ];
+  },
+  async redirects() {
+    return [
+      {
+        source: "/resend-alternative",
+        destination: "/vs/resend-alternative",
+        permanent: true,
+      },
+      {
+        source: "/sendgrid-alternative",
+        destination: "/vs/sendgrid-alternative",
+        permanent: true,
+      },
+      {
+        source: "/postmark-alternative",
+        destination: "/vs/postmark-alternative",
+        permanent: true,
+      },
+      {
+        source: "/mailgun-alternative",
+        destination: "/vs/mailgun-alternative",
+        permanent: true,
+      },
+      {
+        source: "/aws-ses-alternative",
+        destination: "/vs/aws-ses-alternative",
+        permanent: true,
+      },
+      {
+        source: "/brevo-alternative",
+        destination: "/vs/brevo-alternative",
+        permanent: true,
       },
     ];
   },
