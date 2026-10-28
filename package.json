@@ -16,6 +16,7 @@
   "dependencies": {
     "@prisma/client": "^6.4.1",
     "clsx": "^2.1.1",
+    "googleapis": "^188.0.0",
     "lucide-react": "^1.16.0",
     "mailparser": "^3.9.36",
     "next": "15.2.1",

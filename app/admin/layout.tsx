@@ -89,6 +89,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       ],
     },
     {
+      title: "GROWTH & SEARCH ENGINE",
+      items: [
+        { label: "Google Search Console & SEO Hub", href: "/admin/seo", icon: Globe2, description: "Live GSC keyword rankings, Googlebot indexing & AI Rank Doctor", category: "Growth" },
+      ],
+    },
+    {
       title: "BILLING & GOVERNANCE",
       items: [
         { label: "Manual Subscriptions", href: "/admin/subscriptions", icon: Sparkles, description: "Active recurring subscriptions ledger", category: "Billing" },
