@@ -24,6 +24,9 @@ import {
   FileText,
   Filter,
   Layers,
+  ChevronLeft,
+  ChevronRight,
+  Zap,
 } from "lucide-react";
 
 interface Audience {
@@ -81,14 +84,25 @@ export default function AudiencesPage() {
   const [audienceName, setAudienceName] = useState("");
   const [audienceDescription, setAudienceDescription] = useState("");
 
-  // CSV Import State
+  // CSV Import State (High-Throughput Chunked Engine)
   const [importTab, setImportTab] = useState<"UPLOAD" | "PASTE">("UPLOAD");
   const [csvText, setCsvText] = useState("");
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [parsedRows, setParsedRows] = useState<ParsedRow[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState<{
+    current: number;
+    total: number;
+    percent: number;
+    currentBatch: number;
+    totalBatches: number;
+  } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Pagination State for Instant High-Volume Contacts Browsing
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
 
   // Broadcast Campaign Modal State
   const [showBroadcastModal, setShowBroadcastModal] = useState(false);
@@ -266,35 +280,66 @@ export default function AudiencesPage() {
 
     try {
       setImporting(true);
-      const res = await fetch(`/api/v1/audiences/${selectedAudience}/contacts`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contacts: validRows.map((r) => ({
-            email: r.email,
-            firstName: r.firstName,
-            lastName: r.lastName,
-            tags: r.tags,
-          })),
-        }),
-      });
+      const BATCH_SIZE = 2500;
+      const total = validRows.length;
+      const totalBatches = Math.ceil(total / BATCH_SIZE);
+      let totalImportedCount = 0;
 
-      const json = await res.json();
-      if (res.ok) {
-        showToast(`Successfully imported ${validRows.length} contacts!`);
-        setShowCsvImport(false);
-        setUploadedFile(null);
-        setCsvText("");
-        setParsedRows([]);
-        fetchContacts(selectedAudience);
-        fetchAudiences();
-      } else {
-        showToast(json.error || "Failed to import contacts.", "error");
+      for (let b = 0; b < totalBatches; b++) {
+        const batch = validRows.slice(b * BATCH_SIZE, (b + 1) * BATCH_SIZE);
+        const percent = Math.min(100, Math.round(((b * BATCH_SIZE) / total) * 100));
+
+        setImportProgress({
+          current: b * BATCH_SIZE,
+          total,
+          percent,
+          currentBatch: b + 1,
+          totalBatches,
+        });
+
+        const res = await fetch(`/api/v1/audiences/${selectedAudience}/contacts`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contacts: batch.map((r) => ({
+              email: r.email,
+              firstName: r.firstName,
+              lastName: r.lastName,
+              tags: r.tags,
+            })),
+          }),
+        });
+
+        if (!res.ok) {
+          const errJson = await res.json().catch(() => ({}));
+          throw new Error(errJson.error || `Batch ${b + 1} of ${totalBatches} failed.`);
+        }
+
+        const json = await res.json();
+        totalImportedCount += (json.count ?? batch.length);
+
+        setImportProgress({
+          current: Math.min(total, (b + 1) * BATCH_SIZE),
+          total,
+          percent: Math.min(100, Math.round((Math.min(total, (b + 1) * BATCH_SIZE) / total) * 100)),
+          currentBatch: b + 1,
+          totalBatches,
+        });
       }
+
+      showToast(`🎉 Successfully imported ${total.toLocaleString()} contacts into audience!`);
+      setShowCsvImport(false);
+      setUploadedFile(null);
+      setCsvText("");
+      setParsedRows([]);
+      setImportProgress(null);
+      fetchContacts(selectedAudience);
+      fetchAudiences();
     } catch (e: any) {
-      showToast("Network error importing contacts.", "error");
+      showToast(e.message || "Network error importing contacts.", "error");
     } finally {
       setImporting(false);
+      setImportProgress(null);
     }
   };
 
@@ -413,7 +458,7 @@ export default function AudiencesPage() {
   // --- BATCH ACTIONS ---
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedContactIds(filteredContacts.map((c) => c.id));
+      setSelectedContactIds(paginatedContacts.map((c) => c.id));
     } else {
       setSelectedContactIds([]);
     }
@@ -606,7 +651,7 @@ export default function AudiencesPage() {
     }
   };
 
-  // --- FILTERED CONTACTS ---
+  // --- FILTERED CONTACTS & HIGH-PERFORMANCE PAGINATION ---
   const filteredContacts = contacts.filter((c) => {
     const matchesSearch =
       c.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -620,6 +665,17 @@ export default function AudiencesPage() {
     if (statusFilter === "UNSUBSCRIBED") return c.unsubscribed;
     return true;
   });
+
+  // Reset to page 1 whenever filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, selectedAudience]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredContacts.length / pageSize));
+  const paginatedContacts = filteredContacts.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
   const activeAudienceObj = audiences.find((a) => a.id === selectedAudience);
   const totalSubscribed = contacts.filter((c) => !c.unsubscribed).length;
@@ -919,8 +975,8 @@ export default function AudiencesPage() {
                   <input
                     type="checkbox"
                     checked={
-                      filteredContacts.length > 0 &&
-                      selectedContactIds.length === filteredContacts.length
+                      paginatedContacts.length > 0 &&
+                      paginatedContacts.every((c) => selectedContactIds.includes(c.id))
                     }
                     onChange={(e) => handleSelectAll(e.target.checked)}
                     className="rounded border-slate-300 text-primary-600 focus:ring-primary-500 h-3.5 w-3.5"
@@ -993,7 +1049,7 @@ export default function AudiencesPage() {
                   </td>
                 </tr>
               ) : (
-                filteredContacts.map((contact) => {
+                paginatedContacts.map((contact) => {
                   const isSelected = selectedContactIds.includes(contact.id);
                   let parsedTagsList: string[] = [];
                   if (contact.tags) {
@@ -1111,6 +1167,67 @@ export default function AudiencesPage() {
             </tbody>
           </table>
         </div>
+
+        {/* HIGH-PERFORMANCE PAGINATION BAR */}
+        {filteredContacts.length > 0 && (
+          <div className="p-4 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs text-slate-600">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span>
+                Showing <strong className="text-slate-900">{((currentPage - 1) * pageSize) + 1}</strong> to{" "}
+                <strong className="text-slate-900">
+                  {Math.min(currentPage * pageSize, filteredContacts.length)}
+                </strong>{" "}
+                of <strong className="text-slate-900">{filteredContacts.length.toLocaleString()}</strong> contacts
+              </span>
+              <span className="text-slate-300">|</span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-slate-500">Per page:</span>
+                <select
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                >
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                  <option value={250}>250</option>
+                  <option value={500}>500</option>
+                </select>
+              </div>
+            </div>
+
+            {totalPages > 1 && (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  title="Previous page"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+
+                <span className="font-semibold text-slate-800">
+                  Page {currentPage} of {totalPages}
+                </span>
+
+                <button
+                  type="button"
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  title="Next page"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* DUAL-MODE MODAL: BULK CSV CONTACT IMPORT */}
@@ -1310,14 +1427,41 @@ export default function AudiencesPage() {
                   )}
                 </div>
               )}
+
+              {/* HIGH-THROUGHPUT CHUNKED INGESTION PROGRESS BAR */}
+              {importProgress && (
+                <div className="p-4 rounded-xl bg-slate-900 text-white space-y-2.5 animate-in fade-in">
+                  <div className="flex items-center justify-between text-xs font-bold">
+                    <span className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
+                      Importing ({importProgress.current.toLocaleString()} / {importProgress.total.toLocaleString()})
+                    </span>
+                    <span className="font-mono text-emerald-400 font-bold">{importProgress.percent}%</span>
+                  </div>
+                  <div className="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden border border-slate-700">
+                    <div
+                      className="bg-gradient-to-r from-emerald-500 to-cyan-400 h-full rounded-full transition-all duration-300"
+                      style={{ width: `${importProgress.percent}%` }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono">
+                    <span>Batch {importProgress.currentBatch} of {importProgress.totalBatches} (2,500/chunk)</span>
+                    <span className="text-emerald-400 flex items-center gap-1">
+                      <Zap className="w-3 h-3" />
+                      High-Throughput Streaming Active
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Modal Footer */}
             <div className="p-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/50">
               <button
                 type="button"
+                disabled={importing}
                 onClick={() => setShowCsvImport(false)}
-                className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors"
+                className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors disabled:opacity-40"
               >
                 Cancel
               </button>
@@ -1328,12 +1472,15 @@ export default function AudiencesPage() {
                 className="rounded-xl bg-slate-900 px-5 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50 shadow-sm transition-all flex items-center gap-2"
               >
                 {importing ? (
-                  "Importing Contacts..."
+                  <>
+                    <Zap className="w-3.5 h-3.5 text-cyan-400 animate-bounce" />
+                    <span>Importing {importProgress ? `${importProgress.percent}%` : "Contacts..."}</span>
+                  </>
                 ) : (
                   <>
                     <Upload className="w-3.5 h-3.5" />
                     <span>
-                      Import {parsedRows.filter((r) => r.isValid).length} Valid Contacts
+                      Import {parsedRows.filter((r) => r.isValid).length.toLocaleString()} Valid Contacts
                     </span>
                   </>
                 )}
