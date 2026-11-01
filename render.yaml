@@ -2,14 +2,12 @@ services:
   - type: web
     name: sendport
     runtime: node
-    plan: starter
+    plan: standard
     buildCommand: npm install && npx prisma db push --accept-data-loss && npm run build
     startCommand: npm run start
     envVars:
       - key: NODE_VERSION
         value: 20.18.0
-      - key: NODE_OPTIONS
-        value: "--max-old-space-size=384"
       - key: HOSTNAME
         value: 0.0.0.0
       - key: PORT
