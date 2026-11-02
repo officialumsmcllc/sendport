@@ -45,6 +45,10 @@ class AttachmentItem(BaseModel):
     content: str  # Base64 encoded
     contentType: Optional[str] = "application/octet-stream"
 
+class VerifyMailboxPayload(BaseModel):
+    email: str
+    from_domain: Optional[str] = "getsendport.com"
+
 class SendEmailPayload(BaseModel):
     from_address: str
     to_addresses: List[str]
@@ -221,6 +225,88 @@ async def deliver_email_direct(payload: SendEmailPayload):
     except Exception as smtp_err:
         logger.error(f"❌ Transmission failed: {smtp_err}")
         raise HTTPException(status_code=502, detail=f"Transmission failed via {RELAY_HOST or mx_host}: {str(smtp_err)}")
+
+@app.post("/v1/verify-mailbox", dependencies=[Depends(verify_auth_token)])
+async def verify_mailbox(payload: VerifyMailboxPayload):
+    """
+    Performs real-time zero-delivery SMTP Port 25 RCPT TO handshake
+    to verify if recipient mailbox exists on destination server.
+    """
+    start_time = time.time()
+    clean_email = payload.email.strip().lower()
+    if "@" not in clean_email:
+        return {"deliverable": False, "code": 400, "reason": "Invalid email syntax format."}
+
+    recipient_domain = clean_email.split("@")[-1].strip()
+
+    try:
+        mx_host = await resolve_best_mx(recipient_domain)
+    except Exception as e:
+        return {"deliverable": False, "code": 550, "reason": f"Domain '{recipient_domain}' has no valid MX records."}
+
+    try:
+        smtp_client = aiosmtplib.SMTP(
+            hostname=mx_host,
+            port=25,
+            timeout=10,
+            start_tls=True,
+            validate_certs=False,
+            local_hostname=DEFAULT_HELO_HOST
+        )
+        await smtp_client.connect()
+        from_address = f"verify@{payload.from_domain or 'getsendport.com'}"
+        await smtp_client.mail(from_address)
+        code, message = await smtp_client.rcpt(clean_email)
+        try:
+            await smtp_client.rset()
+            await smtp_client.quit()
+        except Exception:
+            pass
+
+        latency_ms = round((time.time() - start_time) * 1000, 2)
+        if 200 <= code < 300:
+            return {
+                "deliverable": True,
+                "code": code,
+                "mx_host": mx_host,
+                "latency_ms": latency_ms,
+                "reason": "Recipient mailbox exists and accepts incoming mail."
+            }
+        else:
+            return {
+                "deliverable": False,
+                "code": code,
+                "mx_host": mx_host,
+                "latency_ms": latency_ms,
+                "reason": f"Mailbox rejected by {mx_host}: {message}"
+            }
+    except aiosmtplib.errors.SMTPRecipientRefused as rec_err:
+        latency_ms = round((time.time() - start_time) * 1000, 2)
+        return {
+            "deliverable": False,
+            "code": rec_err.code,
+            "mx_host": mx_host,
+            "latency_ms": latency_ms,
+            "reason": f"Mailbox does not exist (550 Hard Bounce): {rec_err.message}"
+        }
+    except Exception as err:
+        latency_ms = round((time.time() - start_time) * 1000, 2)
+        err_str = str(err)
+        if "550" in err_str or "nosuchuser" in err_str.lower() or "not exist" in err_str.lower():
+            return {
+                "deliverable": False,
+                "code": 550,
+                "mx_host": mx_host,
+                "latency_ms": latency_ms,
+                "reason": "Recipient mailbox does not exist (550 NoSuchUser)."
+            }
+        return {
+            "deliverable": None,
+            "code": 451,
+            "mx_host": mx_host,
+            "latency_ms": latency_ms,
+            "reason": f"Verification inconclusive or throttled by remote server: {err_str}"
+        }
 
 if __name__ == "__main__":
     import uvicorn

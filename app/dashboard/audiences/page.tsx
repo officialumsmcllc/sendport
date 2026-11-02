@@ -27,6 +27,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Zap,
+  ShieldCheck,
 } from "lucide-react";
 
 interface Audience {
@@ -66,6 +67,7 @@ export default function AudiencesPage() {
   // Selection for Batch Actions
   const [selectedContactIds, setSelectedContactIds] = useState<string[]>([]);
   const [batchActionLoading, setBatchActionLoading] = useState(false);
+  const [cleaningAudience, setCleaningAudience] = useState(false);
 
   // Modals
   const [showAddContact, setShowAddContact] = useState(false);
@@ -470,6 +472,37 @@ export default function AudiencesPage() {
     );
   };
 
+  const handleCleanAudience = async () => {
+    if (!selectedAudience) return;
+    if (!confirm("This will scan active contacts in this audience, perform deliverability & MX validation, and neutralize dead/invalid mailboxes to protect your sender score. Proceed?")) {
+      return;
+    }
+
+    setCleaningAudience(true);
+    try {
+      const res = await fetch(`/api/v1/audiences/${selectedAudience}/clean`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        if (data.upgradeRequired) {
+          if (confirm(`${data.error}\n\nWould you like to view our Growth and Scale Pro plans now?`)) {
+            window.location.href = "/dashboard/billing";
+          }
+          return;
+        }
+        throw new Error(data.error || "Failed to clean audience.");
+      }
+      alert(data.message || `Audience cleaned! ${data.cleanedCount} dead mailboxes removed.`);
+      fetchContacts(selectedAudience);
+      fetchAudiences();
+    } catch (err: any) {
+      alert(err.message || "Failed to clean audience.");
+    } finally {
+      setCleaningAudience(false);
+    }
+  };
+
   const handleBulkDelete = async () => {
     if (!selectedAudience || selectedContactIds.length === 0) return;
     if (!confirm(`Permanently delete ${selectedContactIds.length} selected contacts?`)) return;
@@ -727,6 +760,15 @@ export default function AudiencesPage() {
             className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 transition-colors"
           >
             <Upload className="w-3.5 h-3.5 text-primary-600" /> Bulk CSV Import
+          </button>
+          <button
+            onClick={handleCleanAudience}
+            disabled={cleaningAudience || contacts.length === 0}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-2 text-xs font-semibold text-emerald-800 shadow-xs hover:bg-emerald-100 transition-colors disabled:opacity-50"
+            title="Clean dead or unreachable email addresses"
+          >
+            <ShieldCheck className={`w-3.5 h-3.5 text-emerald-600 ${cleaningAudience ? "animate-spin" : ""}`} />
+            {cleaningAudience ? "Cleaning Dead Emails..." : "Verify & Clean Bounces"}
           </button>
           <button
             onClick={() => {

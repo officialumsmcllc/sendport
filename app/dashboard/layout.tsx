@@ -30,6 +30,7 @@ import {
   UserCheck,
   Gift,
   RotateCw,
+  CheckCircle2,
 } from "lucide-react";
 
 export default function DashboardLayout({
@@ -112,6 +113,7 @@ export default function DashboardLayout({
   const navItems = [
     { label: "Overview", href: "/dashboard", icon: LayoutDashboard },
     { label: "Audiences & Contacts", href: "/dashboard/audiences", icon: Activity },
+    { label: "Bounce & Mailbox Verifier", href: "/dashboard/verifier", icon: CheckCircle2 },
     { label: "Domains & DKIM", href: "/dashboard/domains", icon: Globe },
     { label: "Email Templates", href: "/dashboard/templates", icon: FileCode },
     { label: "Pre-Flight Link Checker", href: "/dashboard/link-checker", icon: Sparkles },
