@@ -1,4 +1,27 @@
 
+/**
+ * Detects whether a delivery rejection is a permanent hard bounce (e.g. non-existent mailbox)
+ */
+function detectHardBounce(errText: string): string | null {
+  if (!errText) return null;
+  const lower = errText.toLowerCase();
+
+  if (lower.includes('nosuchuser') || lower.includes('5.1.1') || lower.includes('does not exist')) {
+    return 'Recipient mailbox does not exist (550 5.1.1 NoSuchUser)';
+  }
+  if (lower.includes('user unknown') || lower.includes('mailbox not found') || lower.includes('recipient not found')) {
+    return 'Recipient address unknown / not found by destination mail server';
+  }
+  if (lower.includes('smtprecipientrefused') || lower.includes('550') || lower.includes('551') || lower.includes('553')) {
+    if (lower.includes('spamhaus') || lower.includes('blocked') || lower.includes('reputation')) {
+      return 'Destination server rejected IP/Domain reputation (550 Policy)';
+    }
+    return 'Recipient mailbox refused or unavailable (550 Hard Bounce)';
+  }
+  return null;
+}
+
+
 import crypto from "crypto";
 import nodemailer from "nodemailer";
 import { prisma } from "@/lib/db/prisma";
@@ -276,8 +299,10 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
     })
     .catch(() => {});
 
-  let deliveryStatus: "DELIVERED" | "FAILED" = "FAILED";
+  let deliveryStatus: "DELIVERED" | "BOUNCED" | "FAILED" = "FAILED";
+  let bounceType: "HARD" | "SOFT" | null = null;
   let deliveryError: string | null = null;
+  let dispatchIp: string = "45.59.103.242";
 
   // 6. Real-time Internet Delivery Cascade:
   // Priority 1: Dedicated Autonomous MTA Server (AlphaVPS mail.getsendport.com Direct Port 25 Engine)
@@ -315,8 +340,16 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
         console.log(`[AUTONOMOUS MTA DISPATCH] Direct MX Delivery Success via AlphaVPS MTA Daemon (${mtaServerUrl})`);
       } else {
         const mtaErr = await mtaRes.text();
-        deliveryError = `AlphaVPS MTA Error: ${mtaErr || mtaRes.statusText}`;
-        console.warn(`[MTA WARN] ${deliveryError}, falling back to Hostinger/Relay`);
+        const hardBounce = detectHardBounce(mtaErr);
+        if (hardBounce) {
+          deliveryStatus = "BOUNCED";
+          bounceType = "HARD";
+          deliveryError = hardBounce;
+          console.warn(`[MTA HARD BOUNCE] Destination MX rejected recipient: ${hardBounce}`);
+        } else {
+          deliveryError = `AlphaVPS MTA Error: ${mtaErr || mtaRes.statusText}`;
+          console.warn(`[MTA WARN] ${deliveryError}, falling back to Hostinger/Relay`);
+        }
       }
     } catch (mtaErr: any) {
       deliveryError = `AlphaVPS MTA connection error: ${mtaErr.message}`;
@@ -328,7 +361,7 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
   const hostingerEngineUrl = process.env.HOSTINGER_ENGINE_URL || "https://engine.getsendport.com/sendport_engine.php";
   const sendportSecret = process.env.SENDPORT_SECRET || "sendport_enterprise_jwt_secret_key_2026";
 
-  if (deliveryStatus !== "DELIVERED" && process.env.USE_HOSTINGER_ENGINE !== "false") {
+  if (deliveryStatus !== "DELIVERED" && deliveryStatus !== "BOUNCED" && process.env.USE_HOSTINGER_ENGINE !== "false") {
     try {
       const hRes = await fetch(hostingerEngineUrl, {
         method: "POST",
@@ -372,7 +405,7 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
   }
 
   // Priority 3: High-Speed SMTP / SES Relay (Port 465 SSL / 587 TLS)
-  if (deliveryStatus !== "DELIVERED" && process.env.SMTP_USER && process.env.SMTP_PASS && process.env.SMTP_HOST) {
+  if (deliveryStatus !== "DELIVERED" && deliveryStatus !== "BOUNCED" && process.env.SMTP_USER && process.env.SMTP_PASS && process.env.SMTP_HOST) {
     try {
       const port = parseInt(process.env.SMTP_PORT || "465", 10);
       const isSecure = process.env.SMTP_SECURE === "true" || port === 465;
@@ -417,7 +450,7 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
   }
 
   // Priority 4: Cloudflare Edge Worker Layer
-  if (deliveryStatus !== "DELIVERED" && process.env.CLOUDFLARE_WORKER_URL) {
+  if (deliveryStatus !== "DELIVERED" && deliveryStatus !== "BOUNCED" && process.env.CLOUDFLARE_WORKER_URL) {
     try {
       const cfRes = await fetch(process.env.CLOUDFLARE_WORKER_URL, {
         method: "POST",
@@ -458,7 +491,7 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
   }
 
   // Priority 5: Direct MX Handshake (Opportunistic)
-  if (deliveryStatus !== "DELIVERED") {
+  if (deliveryStatus === "FAILED" && process.env.ENABLE_RENDER_DIRECT_MX === "true") {
     const directResult = await dispatchDirectToMx({
       from: options.from,
       to: recipients,
@@ -491,7 +524,9 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
     where: { id: emailLog.id },
     data: {
       status: deliveryStatus,
+      bounceType,
       bounceReason: deliveryError || null,
+      ipAddress: dispatchIp,
       latencyMs: Date.now() - startTime,
     },
   });

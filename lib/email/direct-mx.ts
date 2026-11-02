@@ -77,9 +77,9 @@ export async function dispatchDirectToMx(options: DirectMxOptions): Promise<{ su
             rejectUnauthorized: false,
             minVersion: "TLSv1.2",
           },
-          connectionTimeout: 15000,
-          greetingTimeout: 15000,
-          socketTimeout: 20000,
+          connectionTimeout: 4000,
+          greetingTimeout: 4000,
+          socketTimeout: 5000,
           debug: true,
           logger: true,
         } as any);
