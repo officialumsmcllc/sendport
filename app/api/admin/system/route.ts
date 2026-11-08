@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
 import { isSuperAdminUser } from "@/lib/auth/admin-guard";
 import { logSecurityAudit } from "@/lib/security/audit";
+import { getSetting, setManySettings } from "@/lib/settings/system-settings";
 
 // Global system config in memory / state cache
 let systemConfig = {
@@ -63,9 +64,22 @@ export async function GET() {
       },
     ];
 
+    const dbRateLimit = await getSetting("global_rate_limit_per_sec", String(systemConfig.globalRateLimitPerSec));
+    const dbMaintenance = await getSetting("maintenance_mode", String(systemConfig.maintenanceMode));
+    const dbStrictDkim = await getSetting("strict_dkim_enforcement", String(systemConfig.strictDkimEnforcement));
+    const dbInbound = await getSetting("inbound_processing", String(systemConfig.inboundProcessing));
+
+    const activeConfig = {
+      ...systemConfig,
+      globalRateLimitPerSec: Number(dbRateLimit) || 250,
+      maintenanceMode: dbMaintenance === "true",
+      strictDkimEnforcement: dbStrictDkim !== "false",
+      inboundProcessing: dbInbound !== "false",
+    };
+
     return NextResponse.json({
       success: true,
-      config: systemConfig,
+      config: activeConfig,
       relays,
       uptimeSeconds: process.uptime(),
       nodeVersion: process.version,
@@ -88,6 +102,14 @@ export async function POST(req: NextRequest) {
       ...systemConfig,
       ...body,
     };
+
+    // Auto-save to PostgreSQL database
+    await setManySettings({
+      global_rate_limit_per_sec: String(body.globalRateLimitPerSec || 250),
+      maintenance_mode: String(body.maintenanceMode || false),
+      strict_dkim_enforcement: String(body.strictDkimEnforcement ?? true),
+      inbound_processing: String(body.inboundProcessing ?? true),
+    }, "SYSTEM");
 
     logSecurityAudit("ADMIN_SYSTEM_CONFIG_UPDATED", session.userId, {
       updatedFields: Object.keys(body),

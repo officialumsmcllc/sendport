@@ -5,14 +5,14 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
-import { verifyCryptomusWebhookSignature } from "@/lib/payments/cryptomus";
+import { verifyCryptomusWebhookSignature, getCryptomusCredentials } from "@/lib/payments/cryptomus";
 import { activatePaymentOrder } from "@/lib/payments/activation";
 
 export async function POST(req: NextRequest) {
   try {
     const rawBody = await req.text();
     const incomingSignature = req.headers.get("sign");
-    const apiKey = process.env.CRYPTOMUS_API_KEY?.trim();
+    const { apiKey } = await getCryptomusCredentials();
 
     // 1. Signature Verification
     if (apiKey) {

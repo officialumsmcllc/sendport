@@ -33,7 +33,8 @@ import {
   Sparkles,
   Receipt,
   Layers,
-  ArrowRight
+  ArrowRight,
+  Coins
 } from "lucide-react";
 
 interface PaymentMethod {
@@ -400,6 +401,13 @@ export default function AdminPaymentsPage() {
             <Wallet className="w-3.5 h-3.5" />
             <span>Manage Gateways ({gateways.length})</span>
           </button>
+          <a
+            href="/admin/settings"
+            className="px-4 py-2 rounded-lg flex items-center gap-1.5 text-slate-400 hover:text-amber-400 hover:bg-white/5 transition-all"
+          >
+            <Coins className="w-3.5 h-3.5 text-amber-400" />
+            <span>Cryptomus Web3 Keys &rarr;</span>
+          </a>
         </div>
       </div>
 

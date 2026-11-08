@@ -34,6 +34,7 @@ import {
   Layers,
   ChevronDown,
   Send,
+  Sliders,
 } from "lucide-react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -97,6 +98,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     {
       title: "BILLING & GOVERNANCE",
       items: [
+        { label: "Gateway & Settings", href: "/admin/settings", icon: Sliders, description: "Cryptomus crypto keys, database settings & cluster rules", category: "Billing" },
         { label: "Manual Subscriptions", href: "/admin/subscriptions", icon: Sparkles, description: "Active recurring subscriptions ledger", category: "Billing" },
         { label: "Promo Codes & Discounts", href: "/admin/coupons", icon: Tag, description: "Promotional credit codes & vouchers", category: "Billing" },
         { label: "Security & Audit Logs", href: "/admin/audit", icon: ShieldCheck, description: "Immutable root access & login journal", category: "Security" },

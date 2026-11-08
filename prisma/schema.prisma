@@ -395,3 +395,12 @@ model SupportTicket {
   updatedAt     DateTime  @updatedAt
 }
 
+model SystemSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String   @db.Text
+  category  String   @default("GENERAL") // PAYMENT, CRYPTOMUS, EMAIL, SYSTEM
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+

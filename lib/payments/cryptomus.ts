@@ -4,8 +4,36 @@
 // ==============================================================
 
 import crypto from "crypto";
+import { getSetting } from "@/lib/settings/system-settings";
 
 const CRYPTOMUS_API_BASE = "https://api.cryptomus.com/v1";
+
+/**
+ * Resolves Cryptomus credentials from Database (SystemSetting) with fallback to process.env
+ */
+export async function getCryptomusCredentials(): Promise<{
+  merchantId: string;
+  apiKey: string;
+  isActive: boolean;
+}> {
+  try {
+    const dbMerchantId = await getSetting("cryptomus_merchant_id", "");
+    const dbApiKey = await getSetting("cryptomus_api_key", "");
+    const dbIsActive = await getSetting("cryptomus_is_active", "true");
+
+    const merchantId = (dbMerchantId || process.env.CRYPTOMUS_MERCHANT_ID || "").trim();
+    const apiKey = (dbApiKey || process.env.CRYPTOMUS_API_KEY || "").trim();
+    const isActive = dbIsActive !== "false";
+
+    return { merchantId, apiKey, isActive };
+  } catch (_) {
+    return {
+      merchantId: (process.env.CRYPTOMUS_MERCHANT_ID || "").trim(),
+      apiKey: (process.env.CRYPTOMUS_API_KEY || "").trim(),
+      isActive: true,
+    };
+  }
+}
 
 export interface CreateInvoiceParams {
   orderId: string;
@@ -91,8 +119,14 @@ export function verifyCryptomusWebhookSignature(
 export async function createCryptomusInvoice(
   params: CreateInvoiceParams
 ): Promise<CryptomusInvoiceResult> {
-  const merchantId = process.env.CRYPTOMUS_MERCHANT_ID?.trim();
-  const apiKey = process.env.CRYPTOMUS_API_KEY?.trim();
+  const { merchantId, apiKey, isActive } = await getCryptomusCredentials();
+
+  if (!isActive) {
+    return {
+      success: false,
+      error: "Cryptomus payment gateway is temporarily disabled by platform administrator.",
+    };
+  }
 
   // If credentials are not configured yet, return a safe sandbox invoice URL
   if (!merchantId || !apiKey) {
