@@ -13,7 +13,8 @@ import {
   Copy,
   Sparkles,
   Layers,
-  AlertCircle
+  AlertCircle,
+  Coins
 } from "lucide-react";
 import { CURRENCIES, SupportedCurrency, formatPrice } from "@/lib/payments/currencies";
 
@@ -32,7 +33,9 @@ function BillingContent() {
   const [mounted, setMounted] = useState(false);
   const [loadingStats, setLoadingStats] = useState(true);
   const [currency, setCurrency] = useState<SupportedCurrency>("USD");
-  const [paymentMethod, setPaymentMethod] = useState<"STRIPE" | "MANUAL">("STRIPE");
+  const [paymentMethod, setPaymentMethod] = useState<"CRYPTOMUS" | "STRIPE" | "MANUAL">("CRYPTOMUS");
+  const [cryptoLoading, setCryptoLoading] = useState(false);
+  const [cryptoError, setCryptoError] = useState("");
 
   // Dynamic admin-configured gateways
   const [availableGateways, setAvailableGateways] = useState<PaymentGateway[]>([]);
@@ -229,6 +232,36 @@ function BillingContent() {
     }
   };
 
+  const handleCryptomusCheckout = async () => {
+    const isCredit = purchaseMode === "CREDITS";
+    const targetPlan = selectedUpgradePlan || "GROWTH";
+
+    try {
+      setCryptoLoading(true);
+      setCryptoError("");
+
+      const res = await fetch("/api/payments/cryptomus/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          plan: isCredit ? undefined : targetPlan,
+          creditPackId: isCredit ? selectedCreditPack.id : undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success || !data.paymentUrl) {
+        throw new Error(data.error || "Failed to initialize Cryptomus crypto checkout.");
+      }
+
+      window.location.href = data.paymentUrl;
+    } catch (err: any) {
+      setCryptoError(err.message || "Failed to connect to Cryptomus payment gateway.");
+    } finally {
+      setCryptoLoading(false);
+    }
+  };
+
   const usagePercent = Math.min(
     100,
     Math.round((workspaceStats.usedToday / (workspaceStats.dailyQuota || 1)) * 100)
@@ -279,6 +312,31 @@ function BillingContent() {
           </select>
         </div>
       </div>
+
+      {/* Cryptomus Checkout Return Banner */}
+      {searchParams.get("payment") === "completed" && (
+        <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-transparent border border-emerald-500/30 flex items-start sm:items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-700 flex items-center justify-center shrink-0">
+              <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+            </div>
+            <div>
+              <h4 className="text-xs font-bold text-emerald-950">
+                Cryptomus Order Submitted — Awaiting Blockchain Confirmation
+              </h4>
+              <p className="text-[11px] text-emerald-800">
+                Your payment order has been submitted. SendPort's automated Cryptomus webhook will activate your plan/credits as soon as blockchain confirmation arrives (typically 1-3 minutes).
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => window.location.href = "/dashboard/billing"}
+            className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shrink-0 transition-colors cursor-pointer"
+          >
+            Refresh Status
+          </button>
+        </div>
+      )}
 
       {/* CURRENT USAGE SUMMARY */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -648,7 +706,22 @@ function BillingContent() {
           <div className="space-y-4">
             <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Select Payment Method</h4>
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setPaymentMethod("CRYPTOMUS")}
+                className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold border transition-all cursor-pointer ${
+                  paymentMethod === "CRYPTOMUS"
+                    ? "bg-slate-900 text-white border-slate-900 shadow-xs ring-2 ring-indigo-500/20"
+                    : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+                }`}
+              >
+                <Coins className="w-4 h-4 text-amber-400" />
+                <span>Crypto Checkout (Instant)</span>
+                <span className="text-[10px] font-bold bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded-md border border-indigo-400/30">
+                  Cryptomus
+                </span>
+              </button>
               <button
                 type="button"
                 onClick={() => setPaymentMethod("STRIPE")}
@@ -673,7 +746,109 @@ function BillingContent() {
               </button>
             </div>
 
-            {paymentMethod === "STRIPE" ? (
+            {paymentMethod === "CRYPTOMUS" ? (
+              <div className="p-6 rounded-2xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white border border-indigo-800/50 shadow-lg space-y-5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-indigo-800/40 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center shrink-0">
+                      <Coins className="w-5 h-5 text-amber-400" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                        Cryptomus Web3 Payment Gateway
+                        <span className="text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                          Instant Auto-Activation
+                        </span>
+                      </h4>
+                      <p className="text-xs text-indigo-200/80">
+                        Pay with USDT, Bitcoin, Ethereum, TON, Solana, TRON, or Polygon with zero friction.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[11px] text-indigo-300 block">Total Due</span>
+                    <span className="text-2xl font-black text-white font-mono">
+                      ${(purchaseMode === "CREDITS" ? selectedCreditPack.usdPrice : (targetPlanObj?.usdPrice || 0)).toFixed(2)} USD
+                    </span>
+                  </div>
+                </div>
+
+                {/* Supported crypto badges */}
+                <div className="flex flex-wrap items-center gap-2 text-xs">
+                  <span className="text-[11px] text-indigo-300 font-semibold mr-1">Accepted Coins:</span>
+                  {[
+                    "USDT (TRC20)",
+                    "USDT (BEP20)",
+                    "USDT (Polygon)",
+                    "Bitcoin (BTC)",
+                    "Ethereum (ETH)",
+                    "TON",
+                    "Solana (SOL)",
+                    "USDC",
+                  ].map((coin) => (
+                    <span
+                      key={coin}
+                      className="px-2.5 py-1 rounded-lg bg-indigo-900/60 border border-indigo-700/50 text-[11px] font-mono text-indigo-100"
+                    >
+                      {coin}
+                    </span>
+                  ))}
+                </div>
+
+                {/* Benefit pills */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-indigo-200/90 pt-1">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>Instant Blockchain Webhook</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>No KYC / International Freedom</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>Lowest Network Gas Fees</span>
+                  </div>
+                </div>
+
+                {cryptoError && (
+                  <div className="p-3.5 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-200 text-xs font-semibold flex items-center gap-2.5">
+                    <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                    <span>{cryptoError}</span>
+                  </div>
+                )}
+
+                <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleCryptomusCheckout}
+                    disabled={cryptoLoading}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-500 hover:from-indigo-600 hover:to-pink-600 px-6 py-3.5 text-xs font-black text-white shadow-lg hover:shadow-indigo-500/25 transition-all duration-200 cursor-pointer disabled:opacity-50"
+                  >
+                    {cryptoLoading ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <span>Generating Secure Cryptomus Invoice...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>
+                          Proceed to Cryptomus Secure Checkout ($
+                          {(purchaseMode === "CREDITS" ? selectedCreditPack.usdPrice : (targetPlanObj?.usdPrice || 0)).toFixed(2)}
+                          )
+                        </span>
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
+                  </button>
+
+                  <span className="text-[11px] text-indigo-300/80 flex items-center justify-center sm:justify-start gap-1">
+                    <ShieldCheck className="w-3.5 h-3.5 text-indigo-400" />
+                    Encrypted via Cryptomus Merchant Protocol
+                  </span>
+                </div>
+              </div>
+            ) : paymentMethod === "STRIPE" ? (
               <div className="p-6 rounded-2xl bg-slate-50/80 border border-slate-200 space-y-4">
                 <p className="text-xs text-slate-600 leading-relaxed">
                   Instant activation via encrypted Stripe checkout. Supports Visa, Mastercard, Apple Pay, and Google Pay worldwide.

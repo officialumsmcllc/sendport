@@ -1,8 +1,13 @@
+// ==============================================================
+// Created & Owned by: officialum1
+// Suite: umiskills
+// ==============================================================
+
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
-import { logSecurityAudit } from "@/lib/security/audit";
 import { getCurrentUser } from "@/lib/auth/session";
 import { isSuperAdminUser } from "@/lib/auth/admin-guard";
+import { activatePaymentOrder } from "@/lib/payments/activation";
 
 export async function GET() {
   try {
@@ -41,111 +46,18 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === "APPROVE") {
-      const updated = await prisma.paymentTransaction.update({
+      const result = await activatePaymentOrder(tx.id, adminNotes || "Payment verified by administrator.");
+      if (!result.success) {
+        return NextResponse.json({ error: result.error || "Failed to activate order." }, { status: 500 });
+      }
+
+      const updated = await prisma.paymentTransaction.findUnique({
         where: { id: tx.id },
-        data: {
-          status: "APPROVED",
-          approvedAt: new Date(),
-          adminNotes: adminNotes || "Payment verified by administrator.",
-        },
       });
-
-      const members = await prisma.workspaceMember.findMany({
-        where: { userId: tx.userId },
-        select: { workspaceId: true },
-      });
-
-      let workspaceIds: string[] = members.map((m) => m.workspaceId);
-
-      const quota = tx.plan === "SCALE_PRO" ? 25000 : tx.plan === "GROWTH" ? 3000 : 100;
-
-      if (workspaceIds.length === 0) {
-        const u = await prisma.user.findUnique({
-          where: { id: tx.userId },
-          include: { workspaces: true },
-        });
-        if (u?.workspaces && u.workspaces.length > 0) {
-          workspaceIds = u.workspaces.map((w: any) => w.workspaceId);
-        } else if (u) {
-          const slug = `ws-${(u.email.split("@")[0] || "user").replace(/[^a-zA-Z0-9]/g, "").toLowerCase()}-${Date.now().toString(36)}`;
-          const newWs = await prisma.workspace.create({
-            data: {
-              name: `${u.name || u.email.split("@")[0]}'s Workspace`,
-              slug,
-              plan: tx.isCreditTopup ? "STARTER" : tx.plan,
-              dailyQuota: tx.isCreditTopup ? 100 : quota,
-              credits: tx.isCreditTopup && tx.creditsPurchased ? tx.creditsPurchased : 0,
-              members: {
-                create: {
-                  userId: u.id,
-                  role: "OWNER",
-                },
-              },
-            },
-          });
-          workspaceIds = [newWs.id];
-        }
-      }
-
-      if (tx.isCreditTopup && tx.creditsPurchased) {
-        // Automatically add top-up credits to user's workspaces
-        for (const wsId of workspaceIds) {
-          await prisma.workspace.update({
-            where: { id: wsId },
-            data: {
-              credits: { increment: tx.creditsPurchased },
-            },
-          });
-        }
-      } else {
-        // Automatically upgrade user's workspace daily quota based on plan
-        for (const wsId of workspaceIds) {
-          await prisma.workspace.update({
-            where: { id: wsId },
-            data: {
-              plan: tx.plan,
-              dailyQuota: quota,
-            },
-          });
-        }
-
-        // Keep Subscription table in sync
-        try {
-          const existingSub = await prisma.subscription.findFirst({ where: { userId: tx.userId } });
-          if (existingSub) {
-            await prisma.subscription.update({
-              where: { id: existingSub.id },
-              data: { plan: tx.plan, dailyLimit: quota, status: "ACTIVE" },
-            });
-          } else {
-            await prisma.subscription.create({
-              data: { userId: tx.userId, plan: tx.plan, dailyLimit: quota, status: "ACTIVE" },
-            });
-          }
-        } catch (_) {}
-      }
-
-      logSecurityAudit("PAYMENT_APPROVED", tx.userId, {
-        transactionId: tx.id,
-        plan: tx.plan,
-        isCreditTopup: tx.isCreditTopup,
-        creditsPurchased: tx.creditsPurchased,
-      });
-
-      // Send Plan Upgrade Confirmation Email from no-reply@getsendport.com
-      prisma.user.findUnique({ where: { id: tx.userId }, select: { email: true, name: true } })
-        .then((user) => {
-          if (user?.email) {
-            import("@/lib/email/system-mailer")
-              .then(({ sendPlanUpgradeEmail }) => sendPlanUpgradeEmail(user, tx.plan, quota))
-              .catch((err) => console.warn("Async upgrade email error:", err));
-          }
-        })
-        .catch(() => {});
 
       const successMsg = tx.isCreditTopup && tx.creditsPurchased
         ? `Transaction approved! Added ${tx.creditsPurchased.toLocaleString()} non-expiring credits to workspace.`
-        : `Transaction approved! Workspace upgraded to ${tx.plan} (${quota.toLocaleString()} emails/day).`;
+        : `Transaction approved! Workspace upgraded to ${tx.plan}.`;
 
       return NextResponse.json({
         success: true,
