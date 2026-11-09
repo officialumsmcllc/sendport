@@ -114,6 +114,8 @@ export function Footer({ dark = true }: { dark?: boolean }) {
             <ul className="space-y-2.5 text-xs text-slate-400">
               <li><Link href="/about" className="hover:text-white transition-colors">About Us</Link></li>
               <li><Link href="/contact" className="hover:text-white transition-colors">Developer Support</Link></li>
+              <li><Link href="/pricing" className="hover:text-white transition-colors">Pricing & Plans</Link></li>
+              <li><Link href="/refund" className="hover:text-white transition-colors">Refund & Cancellation</Link></li>
               <li><Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
               <li><Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link></li>
               <li><Link href="/security" className="hover:text-white transition-colors">Security & 2FA</Link></li>

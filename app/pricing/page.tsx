@@ -221,6 +221,40 @@ export default function PricingPage() {
             ))}
           </div>
 
+          {/* Payment Trust & Accepted Methods Bar */}
+          <div className="max-w-5xl mx-auto p-5 rounded-2xl border border-slate-800 bg-slate-950/60 flex flex-col md:flex-row items-center justify-between gap-4 text-xs">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="font-bold text-white">14-Day Money-Back Guarantee</h4>
+                <p className="text-slate-400">
+                  Try Growth or Scale Pro risk-free. If not completely satisfied, request a full refund via our{" "}
+                  <Link href="/refund" className="text-emerald-400 underline hover:text-emerald-300">
+                    Refund Policy
+                  </Link>.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-slate-500 text-[11px] font-semibold mr-1">Accepted Payment Rails:</span>
+              <span className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 font-mono text-[11px] text-amber-300">
+                ⚡ Cryptomus Web3
+              </span>
+              <span className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 font-mono text-[11px] text-slate-300">
+                USDT (TRC20 / BEP20)
+              </span>
+              <span className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 font-mono text-[11px] text-slate-300">
+                BTC / ETH / SOL
+              </span>
+              <span className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-[11px] text-slate-300">
+                Credit / Debit Cards
+              </span>
+            </div>
+          </div>
+
           {/* Pay-As-You-Go Credits Section */}
           <div className="rounded-3xl border border-slate-800 bg-slate-950/80 p-8 sm:p-12 max-w-5xl mx-auto shadow-2xl relative overflow-hidden">
             <div className="absolute top-0 right-0 w-96 h-96 bg-primary-600/10 rounded-full blur-3xl pointer-events-none" />
