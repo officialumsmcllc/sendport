@@ -1,3 +1,8 @@
+// ==============================================================
+// Created & Owned by: officialum1
+// Suite: umiskills
+// ==============================================================
+
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -7,6 +12,8 @@ import {
   Plus,
   CheckCircle2,
   AlertTriangle,
+  AlertCircle,
+  Info,
   RefreshCw,
   Copy,
   Check,
@@ -49,6 +56,7 @@ export default function DomainsPage() {
   const [scanAllVerifying, setScanAllVerifying] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [bannerNotice, setBannerNotice] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [spfConflictAlert, setSpfConflictAlert] = useState<{ domain: string; warning: string; mergedSpf?: string } | null>(null);
 
   const fetchDomains = async () => {
     try {
@@ -116,7 +124,16 @@ export default function DomainsPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        const isNowVerified = data.status === "VERIFIED" || (data.spfValid && data.dkimValid);
+        if (data.multipleSpfDetected) {
+          setSpfConflictAlert({
+            domain: dom.name,
+            warning: data.spfWarning || "Multiple SPF records detected. Google will block your emails with SPF PermError.",
+            mergedSpf: data.suggestedMergedSpf,
+          });
+        } else {
+          setSpfConflictAlert(null);
+        }
+        const isNowVerified = data.status === "VERIFIED" || (data.isSpfValid && data.isDkimValid);
         setBannerNotice({
           type: isNowVerified ? "success" : "error",
           message: data.message || (isNowVerified ? `Domain '${dom.name}' verified successfully!` : "DNS records are still propagating or incomplete."),
@@ -586,6 +603,57 @@ export default function DomainsPage() {
                       {spfVal}
                     </div>
                   </div>
+
+                  {/* RFC 7208 SPF INSTRUCTIONS & MERGE GUIDE */}
+                  <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-3.5 text-xs text-amber-900 space-y-2 mt-2">
+                    <div className="flex items-center gap-1.5 font-bold text-amber-900">
+                      <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                      <span>RFC 7208 Mandatory Rule: Exactly ONE SPF Record Allowed</span>
+                    </div>
+                    <p className="text-[11px] leading-relaxed text-amber-800">
+                      If your domain already has an existing SPF record (e.g. for <strong>Zoho, Google Workspace, Microsoft 365, Outlook, or Shopify</strong>), 
+                      <strong className="text-amber-950 font-black"> DO NOT add a second TXT record!</strong> Having 2 SPF records triggers an RFC 7208 PermError, causing <strong>Gmail & Yahoo to immediately block your emails</strong>.
+                    </p>
+                    <div className="text-[11px] font-mono bg-white p-2.5 rounded-lg border border-amber-200 text-slate-800 space-y-1">
+                      <div className="text-rose-600 font-sans font-bold text-[10px]">❌ Wrong (2 Separate Records Will Fail):</div>
+                      <div className="text-slate-500 pl-2">Record 1: v=spf1 include:zohomail.com ~all</div>
+                      <div className="text-slate-500 pl-2">Record 2: v=spf1 include:mail.getsendport.com ~all</div>
+                      <div className="text-emerald-700 font-sans font-bold text-[10px] pt-1">✅ Correct (Merge Both Into 1 Record):</div>
+                      <div className="text-emerald-900 font-bold pl-2 bg-emerald-50 py-1 px-2 rounded border border-emerald-200">
+                        v=spf1 include:mail.getsendport.com include:zohomail.com ~all
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* LIVE SPF CONFLICT BANNER (IF DETECTED) */}
+                  {spfConflictAlert && spfConflictAlert.domain === selectedDomain.name && (
+                    <div className="rounded-xl border border-rose-300 bg-rose-50 p-3.5 text-xs text-rose-900 space-y-2.5">
+                      <div className="flex items-center gap-2 font-bold text-rose-800">
+                        <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+                        <span>Action Required: Multiple SPF Records Detected in Live DNS!</span>
+                      </div>
+                      <p className="text-[11px] text-rose-700 leading-relaxed">
+                        {spfConflictAlert.warning}
+                      </p>
+                      {spfConflictAlert.mergedSpf && (
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between text-[11px] font-bold text-rose-900">
+                            <span>Ready-to-Paste Single Merged SPF Record:</span>
+                            <button
+                              onClick={() => handleCopy(spfConflictAlert.mergedSpf!, "merged-spf-val")}
+                              className="text-primary-600 hover:text-primary-700 font-bold flex items-center gap-1 text-[11px]"
+                            >
+                              {copiedKey === "merged-spf-val" ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                              Copy Merged Record
+                            </button>
+                          </div>
+                          <div className="font-mono text-[11px] bg-white p-2.5 rounded-lg border border-rose-200 text-slate-900 break-all select-all font-bold">
+                            {spfConflictAlert.mergedSpf}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* 3. DMARC RECORD */}
@@ -764,6 +832,14 @@ export default function DomainsPage() {
                 style={{ color: "#0f172a", backgroundColor: "#ffffff" }}
                 className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 font-bold focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 focus:outline-none shadow-sm"
               />
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-[11px] text-slate-600 space-y-1">
+              <span className="font-bold text-slate-800 flex items-center gap-1">
+                <Info className="w-3.5 h-3.5 text-primary-600" /> DNS Setup Note:
+              </span>
+              <p>
+                After adding your domain, you will receive DKIM, SPF, and DMARC TXT records. If your domain already uses Google Workspace, Zoho, or Outlook, you will merge SendPort into your existing SPF record without creating duplicates.
+              </p>
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <button

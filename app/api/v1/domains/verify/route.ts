@@ -1,3 +1,8 @@
+// ==============================================================
+// Created & Owned by: officialum1
+// Suite: umiskills
+// ==============================================================
+
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { verifyDomainDns } from "@/lib/dns/verifier";
@@ -46,7 +51,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Domain not found in your workspace" }, { status: 404 });
     }
 
-    // Run real DNS resolution check
+    // Run deep DNS resolution check with RFC 7208 SPF conflict detection
     const dnsResult = await verifyDomainDns(
       domain.name,
       domain.dkimSelector || "sendport",
@@ -75,10 +80,13 @@ export async function POST(req: NextRequest) {
       isSpfValid: dnsResult.isSpfValid,
       isDmarcValid: dnsResult.isDmarcValid,
       isMxValid: dnsResult.isMxValid,
+      multipleSpfDetected: dnsResult.multipleSpfDetected,
+      spfWarning: dnsResult.spfWarning,
+      suggestedMergedSpf: dnsResult.suggestedMergedSpf,
       recordsFound: dnsResult.recordsFound,
       message: isNowVerified
         ? "Domain DNS verified successfully! You can now send emails from this domain."
-        : "DNS records are still propagating or missing. Please ensure you have added the TXT records to your DNS provider (Cloudflare, Namecheap, GoDaddy).",
+        : dnsResult.spfWarning || "DNS records are still propagating or missing. Please ensure you have added the TXT records to your DNS provider (Cloudflare, Namecheap, GoDaddy).",
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
