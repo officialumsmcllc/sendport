@@ -198,7 +198,28 @@ export async function verifyEmailDeliverability(email: string): Promise<EmailVer
       smtpCode = probeData.code;
       smtpRawMessage = probeData.reason;
       mailboxExists = probeData.deliverable === true;
-      isHardBounce = probeData.deliverable === false;
+
+      const rawReason = (probeData.reason || "").toLowerCase();
+      // If destination MX returned a policy block (SPF, DMARC, PTR, Spamhaus, reputation, 5.7.x)
+      // Google and Microsoft systematically block unauthenticated RCPT probes.
+      // This is an anti-scraping policy, NOT an invalid or dead mailbox!
+      const isPolicyOrAuthBlock =
+        rawReason.includes("5.7.") ||
+        rawReason.includes("spf") ||
+        rawReason.includes("dkim") ||
+        rawReason.includes("dmarc") ||
+        rawReason.includes("ptr") ||
+        rawReason.includes("reputation") ||
+        rawReason.includes("spamhaus") ||
+        rawReason.includes("blocked") ||
+        rawReason.includes("unsolicited");
+
+      if (isPolicyOrAuthBlock) {
+        isHardBounce = false;
+        mailboxExists = true;
+      } else {
+        isHardBounce = probeData.deliverable === false;
+      }
     } else if (probeRes.status === 404) {
       // Fallback: If dedicated /v1/verify-mailbox is not yet added on remote daemon,
       // we check via simulated dry-run probe or standard MX heuristic

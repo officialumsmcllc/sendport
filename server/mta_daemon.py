@@ -1,3 +1,7 @@
+# ==============================================================
+# Created & Owned by: officialum1
+# Suite: umiskills
+# ==============================================================
 """
 Sendport Autonomous Mail Transfer Agent (MTA) & Direct Delivery Daemon
 Built with FastAPI, aiosmtplib, dnspython, and dkimpy for 100% independent direct mail delivery.
@@ -282,6 +286,15 @@ async def verify_mailbox(payload: VerifyMailboxPayload):
             }
     except aiosmtplib.errors.SMTPRecipientRefused as rec_err:
         latency_ms = round((time.time() - start_time) * 1000, 2)
+        rec_msg = (str(rec_err.message) if rec_err.message else "").lower()
+        if "5.7." in rec_msg or "spf" in rec_msg or "dkim" in rec_msg or "dmarc" in rec_msg or "ptr" in rec_msg or "reputation" in rec_msg or "blocked" in rec_msg:
+            return {
+                "deliverable": None,
+                "code": rec_err.code,
+                "mx_host": mx_host,
+                "latency_ms": latency_ms,
+                "reason": f"Destination MX restricted probe by policy ({rec_err.message})"
+            }
         return {
             "deliverable": False,
             "code": rec_err.code,
@@ -291,8 +304,16 @@ async def verify_mailbox(payload: VerifyMailboxPayload):
         }
     except Exception as err:
         latency_ms = round((time.time() - start_time) * 1000, 2)
-        err_str = str(err)
-        if "550" in err_str or "nosuchuser" in err_str.lower() or "not exist" in err_str.lower():
+        err_str = str(err).lower()
+        if "5.7." in err_str or "spf" in err_str or "dkim" in err_str or "dmarc" in err_str or "ptr" in err_str or "reputation" in err_str or "blocked" in err_str:
+            return {
+                "deliverable": None,
+                "code": 451,
+                "mx_host": mx_host,
+                "latency_ms": latency_ms,
+                "reason": f"Destination MX restricted probe by policy: {str(err)}"
+            }
+        if "5.1.1" in err_str or "nosuchuser" in err_str or "no such user" in err_str or "user unknown" in err_str:
             return {
                 "deliverable": False,
                 "code": 550,

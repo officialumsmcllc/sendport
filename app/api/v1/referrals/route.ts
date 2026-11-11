@@ -1,3 +1,8 @@
+// ==============================================================
+// Created & Owned by: officialum1
+// Suite: umiskills
+// ==============================================================
+
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { getAuthContext } from "@/lib/auth/workspace-auth";
@@ -72,8 +77,19 @@ export async function GET(req: NextRequest) {
       .reduce((sum, r) => sum + (r.amountEarned || 0), 0);
     const payingCustomers = rewards.filter((r) => (r.amountEarned || 0) > 0).length;
 
-    const origin = req.nextUrl.origin || "https://getsendport.com";
-    const referralLink = `${origin}?ref=${referralCode}`;
+    // Resolve true public origin (avoiding Docker / Render container internal 0.0.0.0:10000 binding)
+    const forwardedHost = req.headers.get("x-forwarded-host") || req.headers.get("host");
+    const forwardedProto = req.headers.get("x-forwarded-proto") || "https";
+    let appOrigin = (process.env.NEXT_PUBLIC_APP_URL || "https://getsendport.com").replace(/\/$/, "");
+    if (
+      forwardedHost &&
+      !forwardedHost.includes("0.0.0.0") &&
+      !forwardedHost.includes("127.0.0.1") &&
+      !forwardedHost.includes("localhost")
+    ) {
+      appOrigin = `${forwardedProto}://${forwardedHost}`.replace(/\/$/, "");
+    }
+    const referralLink = `${appOrigin}?ref=${referralCode}`;
 
     return NextResponse.json({
       referralCode,

@@ -1,23 +1,57 @@
 
+// ==============================================================
+// Created & Owned by: officialum1
+// Suite: umiskills
+// ==============================================================
+
 /**
- * Detects whether a delivery rejection is a permanent hard bounce (e.g. non-existent mailbox)
+ * Detects whether a delivery rejection is a true permanent hard bounce (e.g. non-existent mailbox).
+ * Policy, SPF/DKIM/DMARC, PTR, or reputation errors must NEVER be treated as hard bounces,
+ * because the recipient's mailbox is completely active and legitimate.
  */
 function detectHardBounce(errText: string): string | null {
   if (!errText) return null;
   const lower = errText.toLowerCase();
 
-  if (lower.includes('nosuchuser') || lower.includes('5.1.1') || lower.includes('does not exist')) {
-    return 'Recipient mailbox does not exist (550 5.1.1 NoSuchUser)';
+  // 1. Policy, authentication, PTR/rDNS, IP reputation, or spam blocks are NOT recipient hard bounces!
+  // Allowing these through enables fallback cascade (Hostinger Enterprise Engine / SMTP Relay)
+  const isPolicyOrAuth =
+    lower.includes("5.7.") ||
+    lower.includes("5.7.1") ||
+    lower.includes("5.7.26") ||
+    lower.includes("spf") ||
+    lower.includes("dkim") ||
+    lower.includes("dmarc") ||
+    lower.includes("ptr") ||
+    lower.includes("reverse dns") ||
+    lower.includes("reputation") ||
+    lower.includes("spamhaus") ||
+    lower.includes("unsolicited") ||
+    lower.includes("blocked") ||
+    lower.includes("blacklist") ||
+    lower.includes("rate limit") ||
+    lower.includes("throttled") ||
+    lower.includes("greylist");
+
+  if (isPolicyOrAuth) {
+    return null; // Do NOT stop cascade! Allow fallback engines to attempt delivery.
   }
-  if (lower.includes('user unknown') || lower.includes('mailbox not found') || lower.includes('recipient not found')) {
-    return 'Recipient address unknown / not found by destination mail server';
+
+  // 2. Genuine non-existent recipient mailboxes (RFC 3463 5.1.1)
+  if (
+    lower.includes("5.1.1") ||
+    lower.includes("nosuchuser") ||
+    lower.includes("no such user") ||
+    lower.includes("user unknown") ||
+    lower.includes("mailbox not found") ||
+    lower.includes("recipient not found") ||
+    lower.includes("invalid recipient") ||
+    lower.includes("recipient address rejected: user unknown") ||
+    lower.includes("does not exist")
+  ) {
+    return "Recipient mailbox does not exist (550 5.1.1 NoSuchUser)";
   }
-  if (lower.includes('smtprecipientrefused') || lower.includes('550') || lower.includes('551') || lower.includes('553')) {
-    if (lower.includes('spamhaus') || lower.includes('blocked') || lower.includes('reputation')) {
-      return 'Destination server rejected IP/Domain reputation (550 Policy)';
-    }
-    return 'Recipient mailbox refused or unavailable (550 Hard Bounce)';
-  }
+
   return null;
 }
 
@@ -540,7 +574,7 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
       subject: options.subject,
       created_at: new Date().toISOString(),
     });
-  } else {
+  } else if (deliveryStatus === "BOUNCED") {
     dispatchWebhookEvents(options.workspaceId, "email.bounced", {
       id: messageId,
       from: options.from,
@@ -549,7 +583,6 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
       bounce_reason: deliveryError || undefined,
       created_at: new Date().toISOString(),
     });
-
   }
 
   return {

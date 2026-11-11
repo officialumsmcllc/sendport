@@ -1,3 +1,8 @@
+// ==============================================================
+// Created & Owned by: officialum1
+// Suite: umiskills
+// ==============================================================
+
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -76,8 +81,19 @@ export default function ReferralsPage() {
       const res = await fetch("/api/v1/referrals");
       if (res.ok) {
         const data = await res.json();
-        setReferralCode(data.referralCode || "PORT-USER");
-        setReferralLink(data.referralLink || `https://getsendport.com?ref=${data.referralCode}`);
+        const code = data.referralCode || "PORT-USER";
+        setReferralCode(code);
+
+        // Guarantee public getsendport.com URL (sanitizes against internal container 0.0.0.0 bindings)
+        const browserOrigin = (typeof window !== "undefined" && window.location.origin && !window.location.origin.includes("0.0.0.0") && !window.location.origin.includes("localhost") && !window.location.origin.includes("127.0.0.1"))
+          ? window.location.origin
+          : "https://getsendport.com";
+
+        let safeLink = data.referralLink || "";
+        if (!safeLink || safeLink.includes("0.0.0.0") || safeLink.includes("localhost") || safeLink.includes("127.0.0.1")) {
+          safeLink = `${browserOrigin}?ref=${code}`;
+        }
+        setReferralLink(safeLink);
         setStats(data.stats || {
           totalReferrals: 0,
           payingCustomers: 0,
