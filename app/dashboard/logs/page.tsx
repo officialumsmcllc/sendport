@@ -1,7 +1,12 @@
+// ==============================================================
+// Created & Owned by: officialum1
+// Suite: umiskills
+// ==============================================================
+
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { ShieldCheck, Search, RefreshCw, Mail, Globe, CheckCircle2, AlertCircle } from "lucide-react";
+import { ShieldCheck, Search, RefreshCw, Mail, Globe, CheckCircle2, AlertCircle, RotateCw, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 
 interface DomainItem {
@@ -18,6 +23,14 @@ export default function LogsPage() {
   const [domains, setDomains] = useState<DomainItem[]>([]);
   const [workspaceName, setWorkspaceName] = useState("");
   const [loading, setLoading] = useState(true);
+  const [retryingId, setRetryingId] = useState<string | null>(null);
+  const [retryingAll, setRetryingAll] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
+
+  const showToast = (message: string, type: "success" | "error" | "info" = "success") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 5000);
+  };
 
   const fetchLogs = async (dom?: string) => {
     try {
@@ -56,6 +69,55 @@ export default function LogsPage() {
     fetchLogs(dom);
   };
 
+  const handleRetrySingle = async (emailId: string) => {
+    try {
+      setRetryingId(emailId);
+      const res = await fetch("/api/v1/emails/retry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emailId }),
+      });
+      const data = await res.json();
+      if (res.ok && data.deliveredCount > 0) {
+        showToast("Email re-delivered successfully in real-time!", "success");
+      } else if (res.ok) {
+        showToast("Retry attempted: Destination server still enforcing policy check.", "info");
+      } else {
+        showToast(data.error || "Retry failed", "error");
+      }
+      await fetchLogs();
+    } catch (err: any) {
+      showToast("Network error retrying email", "error");
+    } finally {
+      setRetryingId(null);
+    }
+  };
+
+  const handleRetryAllBounced = async () => {
+    try {
+      setRetryingAll(true);
+      const res = await fetch("/api/v1/emails/retry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ allBounced: true }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast(
+          `Processed ${data.retriedCount} emails: ${data.deliveredCount} delivered successfully!`,
+          data.deliveredCount > 0 ? "success" : "info"
+        );
+      } else {
+        showToast(data.error || "Bulk retry failed", "error");
+      }
+      await fetchLogs();
+    } catch {
+      showToast("Network error executing bulk retry", "error");
+    } finally {
+      setRetryingAll(false);
+    }
+  };
+
   const filteredLogs = logs.filter((l) => {
     const matchStatus = filter === "ALL" || l.status === filter;
     const matchDomain =
@@ -69,8 +131,30 @@ export default function LogsPage() {
     return matchStatus && matchDomain && matchSearch;
   });
 
+  const bouncedCount = logs.filter((l) => l.status === "BOUNCED").length;
+
   return (
     <div className="space-y-6">
+      {/* TOAST ALERT */}
+      {toast && (
+        <div
+          className={`fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-xl px-4 py-3 text-xs font-semibold text-white shadow-xl transition-all ${
+            toast.type === "success"
+              ? "bg-emerald-600"
+              : toast.type === "error"
+              ? "bg-rose-600"
+              : "bg-slate-800"
+          }`}
+        >
+          {toast.type === "success" ? (
+            <CheckCircle2 className="w-4 h-4" />
+          ) : (
+            <AlertCircle className="w-4 h-4" />
+          )}
+          {toast.message}
+        </div>
+      )}
+
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -102,6 +186,33 @@ export default function LogsPage() {
           </button>
         </div>
       </div>
+
+      {/* BOUNCE RETRY BANNER */}
+      {bouncedCount > 0 && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl border border-rose-200 bg-rose-50/70 text-rose-900">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-rose-100 text-rose-600">
+              <AlertTriangle className="w-5 h-5" />
+            </div>
+            <div>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-rose-800">
+                {bouncedCount} Bounced Email{bouncedCount > 1 ? "s" : ""} Recorded
+              </h4>
+              <p className="text-xs text-rose-600 mt-0.5">
+                Sendport Engine has been updated with Hostinger Enterprise cascade and DoH fallback. Re-dispatch them now.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={handleRetryAllBounced}
+            disabled={retryingAll}
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-rose-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm hover:bg-rose-700 transition-all disabled:opacity-50 whitespace-nowrap"
+          >
+            <RotateCw className={`w-3.5 h-3.5 ${retryingAll ? "animate-spin" : ""}`} />
+            {retryingAll ? "Retrying..." : `Retry All Bounced (${bouncedCount})`}
+          </button>
+        </div>
+      )}
 
       {/* FILTER BAR */}
       <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
@@ -137,7 +248,7 @@ export default function LogsPage() {
 
         {/* STATUS FILTER TABS */}
         <div className="flex items-center gap-1 overflow-x-auto w-full md:w-auto pb-1 md:pb-0">
-          {["ALL", "DELIVERED", "OPENED", "CLICKED", "BOUNCED"].map((st) => (
+          {["ALL", "DELIVERED", "OPENED", "CLICKED", "BOUNCED", "FAILED"].map((st) => (
             <button
               key={st}
               onClick={() => setFilter(st)}
@@ -188,6 +299,7 @@ export default function LogsPage() {
                   <th className="px-5 py-3">Status</th>
                   <th className="px-5 py-3">DKIM</th>
                   <th className="px-5 py-3 text-right">Time</th>
+                  <th className="px-5 py-3 text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
@@ -203,6 +315,7 @@ export default function LogsPage() {
                     <td className="px-5 py-4 text-slate-600 max-w-xs truncate">{log.subject}</td>
                     <td className="px-5 py-4">
                       <span
+                        title={log.bounceReason || undefined}
                         className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold ${
                           log.status === "DELIVERED"
                             ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
@@ -229,6 +342,21 @@ export default function LogsPage() {
                     </td>
                     <td className="px-5 py-4 text-slate-400 text-right font-mono">
                       {log.date ? `${log.date} ${log.time}` : log.time}
+                    </td>
+                    <td className="px-5 py-4 text-right">
+                      {(log.status === "BOUNCED" || log.status === "FAILED") ? (
+                        <button
+                          onClick={() => handleRetrySingle(log.id)}
+                          disabled={retryingId === log.id}
+                          title="Retry delivery in real-time"
+                          className="inline-flex items-center gap-1 rounded-md bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 px-2 py-1 text-[11px] font-bold transition-all disabled:opacity-50"
+                        >
+                          <RotateCw className={`w-3 h-3 ${retryingId === log.id ? "animate-spin" : ""}`} />
+                          {retryingId === log.id ? "Sending..." : "Retry"}
+                        </button>
+                      ) : (
+                        <span className="text-slate-300">-</span>
+                      )}
                     </td>
                   </tr>
                 ))}
