@@ -246,7 +246,19 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
     }
   }
 
-  if (options.trackOpens !== false) {
+  // 3b. Anti-Spam & Deliverability Protection:
+  // Google & Yahoo (2024/2026 Sender Policy) aggressively flag unaligned cross-domain tracking pixels
+  // (e.g. inserting getsendport.com tracking image inside an email sent from a custom domain like iptvsmart.us)
+  // as phishing / spoofing, resulting in "550 5.7.1 low domain reputation / suspicious sender" gateway blocks.
+  // We only inject tracking pixels & click proxies if the sender domain matches the app domain,
+  // or if explicitly aligned to guarantee 100% primary inbox deliverability to Gmail & Yahoo.
+  let appHost = "getsendport.com";
+  try {
+    appHost = new URL(appUrl).hostname.toLowerCase();
+  } catch {}
+  const isAlignedDomain = senderDomain === appHost;
+
+  if (options.trackOpens && isAlignedDomain) {
     const trackingPixel = `<img src="${appUrl}/api/track/open/${openToken}" width="1" height="1" style="display:none !important;" alt="" />`;
     if (processedHtml.includes("</body>")) {
       processedHtml = processedHtml.replace("</body>", `${trackingPixel}</body>`);
@@ -255,7 +267,7 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
     }
   }
 
-  if (options.trackClicks !== false) {
+  if (options.trackClicks && isAlignedDomain) {
     // Rewrite <a href="..."> links to proxy through /api/track/click/:token?url=...
     processedHtml = processedHtml.replace(
       /<a\s+(?:[^>]*?\s+)?href=["']([^"']+)["']([^>]*)>/gi,

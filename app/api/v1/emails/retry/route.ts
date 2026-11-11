@@ -113,13 +113,18 @@ export async function POST(req: NextRequest) {
           },
         }).catch(() => {});
 
-        // 2. Re-dispatch via sendEmailEngine (cascades: AlphaVPS MTA -> Hostinger Engine -> SMTP Relay)
+        // 2. Sanitize HTML body: strip any legacy unaligned tracking pixels that trigger Google 5.7.1 spam heuristics
+        const sanitizedHtml = email.htmlBody
+          ? email.htmlBody.replace(/<img[^>]*\/api\/track\/open\/[^>]*>/gi, "")
+          : undefined;
+
+        // 3. Re-dispatch via sendEmailEngine (100% Dedicated VPS MTA)
         const sendResult = await sendEmailEngine({
           workspaceId: email.workspaceId,
           from: email.from,
           to: email.to,
           subject: email.subject,
-          html: email.htmlBody || undefined,
+          html: sanitizedHtml,
           text: email.textBody || undefined,
         });
 
