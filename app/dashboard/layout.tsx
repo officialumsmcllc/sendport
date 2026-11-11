@@ -71,18 +71,7 @@ export default function DashboardLayout({
         isPlanExpired?: boolean;
       };
     }[];
-  } | null>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const cached = localStorage.getItem("sendport_user");
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (parsed?.email) return parsed;
-        }
-      } catch (_) {}
-    }
-    return null;
-  });
+  } | null>(null);
 
   React.useEffect(() => {
     // Background fresh telemetry fetch

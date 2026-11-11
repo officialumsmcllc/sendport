@@ -21,18 +21,18 @@ export function Navbar({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [currencyDropdownOpen, setCurrencyDropdownOpen] = useState(false);
   const currencyMenuRef = React.useRef<HTMLDivElement>(null);
-  const [user, setUser] = useState<{ id?: string; email: string; name?: string; role: string } | null>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const cached = localStorage.getItem("sendport_user");
-        if (cached) return JSON.parse(cached);
-      } catch (_) {}
-    }
-    return null;
-  });
+  const [user, setUser] = useState<{ id?: string; email: string; name?: string; role: string } | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
+    // Read cached user safely after client hydration to prevent React hydration mismatch crash
+    try {
+      const cached = localStorage.getItem("sendport_user");
+      if (cached) {
+        setUser(JSON.parse(cached));
+      }
+    } catch (_) {}
+
     // Verify with server session in background silently
     fetch("/api/auth/me")
       .then((res) => (res.ok ? res.json() : null))

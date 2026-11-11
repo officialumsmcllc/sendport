@@ -26,7 +26,7 @@ import {
   Sparkles,
   ExternalLink,
 } from "lucide-react";
-import type { DnsDiagnosticReport } from "@/lib/dns/verifier";
+import type { DnsDiagnosticReport } from "@/types/dns";
 
 interface DomainItem {
   id: string;
@@ -580,10 +580,10 @@ export default function DomainsPage() {
                     <div className="flex items-center gap-2">
                       <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
                         <Globe className="w-3 h-3 text-slate-500" />
-                        Managed on {diagnosticReport.dnsProvider.name}
+                        Managed on {diagnosticReport.dnsProvider?.name || "Your DNS Provider"}
                       </span>
                       <button
-                        onClick={() => fetchLiveDiagnostics(selectedDomain.id)}
+                        onClick={() => selectedDomain && fetchLiveDiagnostics(selectedDomain.id)}
                         disabled={inspectingReport}
                         className="inline-flex items-center gap-1 text-[11px] font-bold text-primary-600 hover:text-primary-700 bg-primary-50 hover:bg-primary-100 px-2.5 py-1 rounded-md border border-primary-200 transition-all disabled:opacity-50"
                         title="Re-query global DNS servers in real time"
@@ -598,51 +598,51 @@ export default function DomainsPage() {
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
                     <div
                       className={`p-2 rounded-lg border ${
-                        diagnosticReport.spf.status === "PASS"
+                        diagnosticReport.spf?.status === "PASS"
                           ? "bg-emerald-50/60 border-emerald-200 text-emerald-800"
-                          : diagnosticReport.spf.status === "CONFLICT_MULTIPLE"
+                          : diagnosticReport.spf?.status === "CONFLICT_MULTIPLE"
                           ? "bg-rose-50 border-rose-300 text-rose-800 font-bold"
                           : "bg-amber-50/60 border-amber-200 text-amber-800"
                       }`}
                     >
                       <div className="text-[10px] uppercase font-bold text-slate-500 mb-0.5">SPF Status</div>
                       <div className="font-semibold text-[11px]">
-                        {diagnosticReport.spf.status === "PASS"
+                        {diagnosticReport.spf?.status === "PASS"
                           ? "✅ Valid"
-                          : diagnosticReport.spf.status === "CONFLICT_MULTIPLE"
-                          ? `🚨 Conflict (${diagnosticReport.spf.recordsFound.length})`
+                          : diagnosticReport.spf?.status === "CONFLICT_MULTIPLE"
+                          ? `🚨 Conflict (${diagnosticReport.spf?.recordsFound?.length || 0})`
                           : "⚠️ Incomplete"}
                       </div>
                     </div>
 
                     <div
                       className={`p-2 rounded-lg border ${
-                        diagnosticReport.dkim.status === "PASS"
+                        diagnosticReport.dkim?.status === "PASS"
                           ? "bg-emerald-50/60 border-emerald-200 text-emerald-800"
                           : "bg-amber-50/60 border-amber-200 text-amber-800"
                       }`}
                     >
                       <div className="text-[10px] uppercase font-bold text-slate-500 mb-0.5">DKIM (2048-bit)</div>
                       <div className="font-semibold text-[11px]">
-                        {diagnosticReport.dkim.status === "PASS" ? "✅ Active" : "⚠️ Missing"}
+                        {diagnosticReport.dkim?.status === "PASS" ? "✅ Active" : "⚠️ Missing"}
                       </div>
                     </div>
 
                     <div
                       className={`p-2 rounded-lg border ${
-                        diagnosticReport.dmarc.status === "PASS"
+                        diagnosticReport.dmarc?.status === "PASS"
                           ? "bg-emerald-50/60 border-emerald-200 text-emerald-800"
-                          : diagnosticReport.dmarc.status === "CONFLICT_MULTIPLE"
+                          : diagnosticReport.dmarc?.status === "CONFLICT_MULTIPLE"
                           ? "bg-rose-50 border-rose-300 text-rose-800 font-bold"
                           : "bg-amber-50/60 border-amber-200 text-amber-800"
                       }`}
                     >
                       <div className="text-[10px] uppercase font-bold text-slate-500 mb-0.5">DMARC Status</div>
                       <div className="font-semibold text-[11px]">
-                        {diagnosticReport.dmarc.status === "PASS"
+                        {diagnosticReport.dmarc?.status === "PASS"
                           ? "✅ Active"
-                          : diagnosticReport.dmarc.status === "CONFLICT_MULTIPLE"
-                          ? `🚨 Conflict (${diagnosticReport.dmarc.recordsFound.length})`
+                          : diagnosticReport.dmarc?.status === "CONFLICT_MULTIPLE"
+                          ? `🚨 Conflict (${diagnosticReport.dmarc?.recordsFound?.length || 0})`
                           : "⚠️ Incomplete"}
                       </div>
                     </div>
@@ -650,7 +650,7 @@ export default function DomainsPage() {
                     <div className="p-2 rounded-lg border bg-purple-50/60 border-purple-200 text-purple-800">
                       <div className="text-[10px] uppercase font-bold text-slate-500 mb-0.5">Inbound MX</div>
                       <div className="font-semibold text-[11px]">
-                        {diagnosticReport.mx.status === "CONFIGURED" ? "✅ Configured" : "Optional"}
+                        {diagnosticReport.mx?.status === "CONFIGURED" ? "✅ Configured" : "Optional"}
                       </div>
                     </div>
                   </div>
@@ -660,12 +660,12 @@ export default function DomainsPage() {
                     <div className="rounded-xl border border-rose-300 bg-rose-50/80 p-4 space-y-3">
                       <div className="flex items-center gap-2 text-rose-900 font-bold text-xs">
                         <ShieldAlert className="w-4 h-4 text-rose-600 shrink-0" />
-                        <span>Action Required: Multiple Records Conflict in {diagnosticReport.dnsProvider.name} DNS</span>
+                        <span>Action Required: Multiple Records Conflict in {diagnosticReport.dnsProvider?.name || "DNS"}</span>
                       </div>
                       <p className="text-[11px] text-rose-800 leading-relaxed">
-                        {diagnosticReport.spf.multipleDetected
-                          ? diagnosticReport.spf.warningMessage
-                          : diagnosticReport.dmarc.warningMessage}
+                        {diagnosticReport.spf?.multipleDetected
+                          ? diagnosticReport.spf?.warningMessage
+                          : diagnosticReport.dmarc?.warningMessage}
                       </p>
 
                       {/* Side by side / Stacked: Live Found vs Required Fix */}
@@ -675,9 +675,9 @@ export default function DomainsPage() {
                             ❌ Conflicting Records Found in your DNS:
                           </div>
                           <div className="space-y-1 font-mono text-[10px] text-slate-700 bg-rose-50/40 p-2 rounded border border-rose-100">
-                            {(diagnosticReport.spf.multipleDetected
-                              ? diagnosticReport.spf.recordsFound
-                              : diagnosticReport.dmarc.recordsFound
+                            {(diagnosticReport.spf?.multipleDetected
+                              ? diagnosticReport.spf?.recordsFound || []
+                              : diagnosticReport.dmarc?.recordsFound || []
                             ).map((rec, i) => (
                               <div key={i} className="break-all font-semibold">
                                 • {rec}
@@ -691,10 +691,10 @@ export default function DomainsPage() {
                             <span>✅ Replace With Single Clean Record:</span>
                             <button
                               onClick={() => {
-                                const val = diagnosticReport.spf.multipleDetected
-                                  ? diagnosticReport.spf.suggestedMergedRecord
-                                  : diagnosticReport.dmarc.suggestedMergedRecord;
-                                handleCopy(val, "conflict-fix-val");
+                                const val = diagnosticReport.spf?.multipleDetected
+                                  ? diagnosticReport.spf?.suggestedMergedRecord
+                                  : diagnosticReport.dmarc?.suggestedMergedRecord;
+                                if (val) handleCopy(val, "conflict-fix-val");
                               }}
                               className="text-emerald-700 hover:text-emerald-800 font-bold flex items-center gap-1 text-[10px] lowercase"
                             >
@@ -707,9 +707,9 @@ export default function DomainsPage() {
                             </button>
                           </div>
                           <div className="font-mono text-[10px] text-emerald-900 bg-white p-2 rounded border border-emerald-200 break-all select-all font-bold">
-                            {diagnosticReport.spf.multipleDetected
-                              ? diagnosticReport.spf.suggestedMergedRecord
-                              : diagnosticReport.dmarc.suggestedMergedRecord}
+                            {diagnosticReport.spf?.multipleDetected
+                              ? diagnosticReport.spf?.suggestedMergedRecord
+                              : diagnosticReport.dmarc?.suggestedMergedRecord}
                           </div>
                         </div>
                       </div>
@@ -717,12 +717,12 @@ export default function DomainsPage() {
                       {/* Step by Step Fix Instructions */}
                       <div className="pt-1 border-t border-rose-200/80">
                         <div className="text-[11px] font-bold text-rose-950 mb-1">
-                          How to fix in {diagnosticReport.dnsProvider.name} (Takes 1 Minute):
+                          How to fix in {diagnosticReport.dnsProvider?.name || "your DNS provider"} (Takes 1 Minute):
                         </div>
                         <ol className="list-decimal list-inside text-[11px] text-rose-900 space-y-0.5">
-                          {(diagnosticReport.spf.multipleDetected
-                            ? diagnosticReport.spf.stepByStepFix
-                            : diagnosticReport.dmarc.stepByStepFix
+                          {(diagnosticReport.spf?.multipleDetected
+                            ? diagnosticReport.spf?.stepByStepFix || []
+                            : diagnosticReport.dmarc?.stepByStepFix || []
                           ).map((step, idx) => (
                             <li key={idx} className="font-medium">
                               {step}
