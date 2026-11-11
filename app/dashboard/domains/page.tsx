@@ -57,6 +57,7 @@ export default function DomainsPage() {
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [bannerNotice, setBannerNotice] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [spfConflictAlert, setSpfConflictAlert] = useState<{ domain: string; warning: string; mergedSpf?: string } | null>(null);
+  const [dmarcConflictAlert, setDmarcConflictAlert] = useState<{ domain: string; warning: string; mergedDmarc?: string } | null>(null);
 
   const fetchDomains = async () => {
     try {
@@ -132,6 +133,16 @@ export default function DomainsPage() {
           });
         } else {
           setSpfConflictAlert(null);
+        }
+
+        if (data.multipleDmarcDetected) {
+          setDmarcConflictAlert({
+            domain: dom.name,
+            warning: data.dmarcWarning || "Multiple DMARC records detected. Google and Yahoo will fail DMARC and send your emails to Spam.",
+            mergedDmarc: data.suggestedMergedDmarc,
+          });
+        } else {
+          setDmarcConflictAlert(null);
         }
         const isNowVerified = data.status === "VERIFIED" || (data.isSpfValid && data.isDkimValid);
         setBannerNotice({
@@ -719,6 +730,36 @@ export default function DomainsPage() {
                       {dmarcVal}
                     </div>
                   </div>
+
+                  {/* LIVE DMARC CONFLICT BANNER (IF DETECTED) */}
+                  {dmarcConflictAlert && dmarcConflictAlert.domain === selectedDomain.name && (
+                    <div className="rounded-xl border border-rose-300 bg-rose-50 p-3.5 text-xs text-rose-900 space-y-2.5">
+                      <div className="flex items-center gap-2 font-bold text-rose-800">
+                        <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+                        <span>Action Required: Multiple DMARC Records Detected in Live DNS!</span>
+                      </div>
+                      <p className="text-[11px] text-rose-700 leading-relaxed">
+                        {dmarcConflictAlert.warning}
+                      </p>
+                      {dmarcConflictAlert.mergedDmarc && (
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between text-[11px] font-bold text-rose-900">
+                            <span>Keep Only This Single Valid DMARC Record:</span>
+                            <button
+                              onClick={() => handleCopy(dmarcConflictAlert.mergedDmarc!, "merged-dmarc-val")}
+                              className="text-primary-600 hover:text-primary-700 font-bold flex items-center gap-1 text-[11px]"
+                            >
+                              {copiedKey === "merged-dmarc-val" ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                              Copy Valid Record
+                            </button>
+                          </div>
+                          <div className="font-mono text-[11px] bg-white p-2.5 rounded-lg border border-rose-200 text-slate-900 break-all select-all font-bold">
+                            {dmarcConflictAlert.mergedDmarc}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* 4. MX RECORD (OPTIONAL) */}

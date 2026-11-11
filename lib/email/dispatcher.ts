@@ -355,6 +355,9 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
   const mtaServerUrl = process.env.MTA_SERVER_URL || "http://mail.getsendport.com";
   const mtaSecretKey = process.env.MTA_SECRET_KEY || "sendport_mta_master_secret_key_2026";
 
+  const parsedFrom = parseFromHeader(options.from);
+  const cleanFromAddress = parsedFrom.address;
+
   try {
     const mtaRes = await fetch(`${mtaServerUrl}/v1/deliver`, {
       method: "POST",
@@ -363,7 +366,8 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
         "X-MTA-Key": mtaSecretKey,
       },
       body: JSON.stringify({
-        from_address: options.from,
+        from_address: cleanFromAddress,
+        from_header: options.from,
         to_addresses: recipients,
         subject: options.subject,
         html: processedHtml,
@@ -372,6 +376,8 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
         headers: {
           "List-Unsubscribe": listUnsubscribeHeader,
           "List-Unsubscribe-Post": listUnsubscribePostHeader,
+          "Feedback-ID": `sendport:${options.workspaceId || "direct"}:${domainRecord?.name || senderDomain}:blast`,
+          "X-Entity-Ref-ID": messageId,
           ...options.headers,
         },
         dkim_selector: domainRecord?.dkimSelector || "sendport",

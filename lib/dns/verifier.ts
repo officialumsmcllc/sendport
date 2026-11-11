@@ -15,6 +15,9 @@ export interface DnsVerificationResult {
   multipleSpfDetected?: boolean;
   spfWarning?: string;
   suggestedMergedSpf?: string;
+  multipleDmarcDetected?: boolean;
+  dmarcWarning?: string;
+  suggestedMergedDmarc?: string;
   recordsFound: {
     dkim?: string[];
     spf?: string[];
@@ -188,14 +191,19 @@ export async function verifyDomainDns(
       result.spfWarning = "No SPF record found on domain. Add the TXT record to authorize outbound sending.";
     }
 
-    // 3. Verify DMARC TXT Record on _dmarc.domain.com
+    // 3. Verify DMARC TXT Record on _dmarc.domain.com (RFC 7489 Single Record Compliance)
     const dmarcRecords = await resolveTxtWithFallback(dmarcHostname);
     result.recordsFound.dmarc = dmarcRecords;
-    for (const record of dmarcRecords) {
-      if (record.includes("v=DMARC1")) {
-        result.isDmarcValid = true;
-        break;
-      }
+
+    const dmarcMatches = dmarcRecords.filter((record) => record.includes("v=DMARC1"));
+
+    if (dmarcMatches.length > 1) {
+      result.multipleDmarcDetected = true;
+      result.isDmarcValid = false;
+      result.dmarcWarning = `CRITICAL DELIVERABILITY ALERT: Multiple DMARC records detected on ${dmarcHostname} (${dmarcMatches.length} records found). RFC 7489 Section 6.6.3 strictly dictates that having more than 1 DMARC record causes Google, Yahoo, and Microsoft to treat DMARC as failed (PermError), which immediately routes ALL your emails to the recipient's Spam folder! You must remove the duplicate records from your DNS provider and leave only ONE.`;
+      result.suggestedMergedDmarc = "v=DMARC1; p=none; sp=none; rua=mailto:dmarc@getsendport.com; aspf=r; adkim=r";
+    } else if (dmarcMatches.length === 1) {
+      result.isDmarcValid = true;
     }
 
     // 4. Check MX record (optional or inbound)
@@ -207,7 +215,11 @@ export async function verifyDomainDns(
       result.isMxValid = true; // Not strictly blocking if user only sends
     }
 
-    result.allValid = result.isDkimValid && result.isSpfValid && !result.multipleSpfDetected;
+    result.allValid =
+      result.isDkimValid &&
+      result.isSpfValid &&
+      !result.multipleSpfDetected &&
+      !result.multipleDmarcDetected;
   } catch (error: any) {
     result.errors?.push(error.message || "DNS check failed");
   }

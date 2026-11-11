@@ -83,10 +83,13 @@ export async function POST(req: NextRequest) {
       multipleSpfDetected: dnsResult.multipleSpfDetected,
       spfWarning: dnsResult.spfWarning,
       suggestedMergedSpf: dnsResult.suggestedMergedSpf,
+      multipleDmarcDetected: dnsResult.multipleDmarcDetected,
+      dmarcWarning: dnsResult.dmarcWarning,
+      suggestedMergedDmarc: dnsResult.suggestedMergedDmarc,
       recordsFound: dnsResult.recordsFound,
       message: isNowVerified
         ? "Domain DNS verified successfully! You can now send emails from this domain."
-        : dnsResult.spfWarning || "DNS records are still propagating or missing. Please ensure you have added the TXT records to your DNS provider (Cloudflare, Namecheap, GoDaddy).",
+        : dnsResult.dmarcWarning || dnsResult.spfWarning || "DNS records are still propagating or incomplete. Please ensure you have added the TXT records to your DNS provider (Cloudflare, Namecheap, GoDaddy).",
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

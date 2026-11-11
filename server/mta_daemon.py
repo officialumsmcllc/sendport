@@ -55,6 +55,7 @@ class VerifyMailboxPayload(BaseModel):
 
 class SendEmailPayload(BaseModel):
     from_address: str
+    from_header: Optional[str] = None
     to_addresses: List[str]
     subject: str
     html: Optional[str] = None
@@ -103,16 +104,21 @@ async def deliver_email_direct(payload: SendEmailPayload):
     mx_host = await resolve_best_mx(recipient_domain)
     logger.info(f"🚀 Direct Routing to MX [{mx_host}] for recipient [{first_recipient}]")
 
-    # 2. Extract Sender Domain
-    sender_domain = payload.from_address.split("@")[-1].rstrip(">").strip().lower()
+    # 2. Clean envelope sender strictly for SMTP MAIL FROM (RFC 5321)
+    import re
+    sender_match = re.search(r'<([^>]+)>', payload.from_address)
+    envelope_sender = sender_match.group(1).strip() if sender_match else payload.from_address.strip()
+    sender_domain = envelope_sender.split("@")[-1].strip().lower()
 
-    # 3. Construct RFC5322 MIME Message
+    # 3. Construct RFC5322 MIME Message with Enterprise Headers
     msg = MIMEMultipart("alternative")
     msg["Subject"] = payload.subject
-    msg["From"] = payload.from_address
+    msg["From"] = payload.from_header or payload.from_address
     msg["To"] = ", ".join(payload.to_addresses)
     msg["Date"] = time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime())
     msg["Message-ID"] = f"<msg_{os.urandom(8).hex()}@{sender_domain}>"
+    msg["MIME-Version"] = "1.0"
+    msg["X-Mailer"] = "Sendport Enterprise Delivery Engine"
 
     if payload.reply_to:
         msg["Reply-To"] = payload.reply_to
@@ -154,11 +160,21 @@ async def deliver_email_direct(payload: SendEmailPayload):
 
     if dkim_priv:
         try:
-            headers_to_sign = [b"from", b"to", b"subject", b"date", b"message-id"]
+            headers_to_sign = [
+                b"from",
+                b"to",
+                b"subject",
+                b"date",
+                b"message-id",
+                b"mime-version",
+                b"content-type"
+            ]
             if "List-Unsubscribe" in msg:
                 headers_to_sign.append(b"list-unsubscribe")
             if "List-Unsubscribe-Post" in msg:
                 headers_to_sign.append(b"list-unsubscribe-post")
+            if "Feedback-ID" in msg:
+                headers_to_sign.append(b"feedback-id")
 
             dkim_header = dkim.sign(
                 message=raw_email_bytes,
@@ -190,7 +206,7 @@ async def deliver_email_direct(payload: SendEmailPayload):
                 await smtp_client.login(RELAY_USER, RELAY_PASS)
 
             response = await smtp_client.sendmail(
-                payload.from_address,
+                envelope_sender,
                 payload.to_addresses,
                 raw_email_bytes
             )
@@ -208,7 +224,7 @@ async def deliver_email_direct(payload: SendEmailPayload):
             await smtp_client.connect()
 
             response = await smtp_client.sendmail(
-                payload.from_address,
+                envelope_sender,
                 payload.to_addresses,
                 raw_email_bytes
             )
