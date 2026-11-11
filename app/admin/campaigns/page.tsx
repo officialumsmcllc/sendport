@@ -1,5 +1,10 @@
 "use client";
 
+// ==============================================================
+// Created & Owned by: officialum1
+// Suite: umiskills
+// ==============================================================
+
 import React, { useState, useEffect } from "react";
 import {
   Send,
@@ -67,7 +72,32 @@ export default function AdminCampaignsPage() {
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [retryingId, setRetryingId] = useState<string | null>(null);
+  const [stoppingId, setStoppingId] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
+
+  const handleStop = async (blastId: string) => {
+    try {
+      setStoppingId(blastId);
+      setActionMessage("Aborting campaign dispatch...");
+      const res = await fetch("/api/admin/campaigns/stop", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ blastId }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setActionMessage(`🛑 ${data.message || "Campaign safely stopped."}`);
+        fetchCampaignsData(false);
+      } else {
+        setActionMessage(`❌ Error: ${data.error || "Failed to stop campaign"}`);
+      }
+    } catch (err: any) {
+      setActionMessage(`❌ Network error: ${err.message}`);
+    } finally {
+      setStoppingId(null);
+      setTimeout(() => setActionMessage(null), 8000);
+    }
+  };
 
   const handleResend = async (blastId: string) => {
     try {
@@ -461,6 +491,11 @@ export default function AdminCampaignsPage() {
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
                             Sending Live
                           </span>
+                        ) : c.status === "STOPPED" || c.status === "CANCELLED" ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                            <AlertCircle className="w-3 h-3" />
+                            Stopped
+                          </span>
                         ) : c.status === "FAILED" ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-500/15 text-rose-400 border border-rose-500/30">
                             <AlertTriangle className="w-3 h-3" />
@@ -491,24 +526,42 @@ export default function AdminCampaignsPage() {
 
                       {/* Action */}
                       <td className="py-4 px-4 text-center">
-                        <button
-                          onClick={() => handleResend(c.id)}
-                          disabled={retryingId === c.id || c.status === "SENDING"}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 disabled:opacity-50 hover:scale-105 active:scale-95 shadow-sm"
-                          title="Resend this campaign over live Autonomous MTA"
-                        >
-                          {retryingId === c.id || c.status === "SENDING" ? (
-                            <>
-                              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                              <span>Sending...</span>
-                            </>
+                        <div className="flex items-center justify-center gap-2">
+                          {c.status === "SENDING" ? (
+                            <button
+                              onClick={() => handleStop(c.id)}
+                              disabled={stoppingId === c.id}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 disabled:opacity-50 hover:scale-105 active:scale-95 shadow-sm"
+                              title="Stop this running campaign immediately"
+                            >
+                              {stoppingId === c.id ? (
+                                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <AlertCircle className="w-3.5 h-3.5" />
+                              )}
+                              <span>Stop</span>
+                            </button>
                           ) : (
-                            <>
-                              <Send className="w-3.5 h-3.5" />
-                              <span>Resend</span>
-                            </>
+                            <button
+                              onClick={() => handleResend(c.id)}
+                              disabled={retryingId === c.id}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 disabled:opacity-50 hover:scale-105 active:scale-95 shadow-sm"
+                              title="Resend this campaign using the new clean deliverability engine"
+                            >
+                              {retryingId === c.id ? (
+                                <>
+                                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                  <span>Sending...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Send className="w-3.5 h-3.5" />
+                                  <span>Resend</span>
+                                </>
+                              )}
+                            </button>
                           )}
-                        </button>
+                        </div>
                       </td>
                     </tr>
                   );

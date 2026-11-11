@@ -1,3 +1,8 @@
+// ==============================================================
+// Created & Owned by: officialum1
+// Suite: umiskills
+// ==============================================================
+
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -70,12 +75,24 @@ export async function POST(req: NextRequest) {
         : blast.fromEmail;
 
       for (let i = 0; i < contacts.length; i += batchSize) {
+        // Check if blast was stopped by admin during processing
+        const currentBlastState = await prisma.broadcastBlast.findUnique({
+          where: { id: blastId },
+          select: { status: true },
+        });
+        if (currentBlastState?.status === "STOPPED" || currentBlastState?.status === "CANCELLED") {
+          console.log(`[CAMPAIGN ABORTED] Blast ${blastId} was manually stopped by admin.`);
+          break;
+        }
+
         const batch = contacts.slice(i, i + batchSize);
 
         await Promise.all(
           batch.map(async (contact) => {
             try {
-              const personalizedHtml = blast.htmlContent
+              // Strip legacy unaligned tracking pixels that trigger Google 5.7.1 spam heuristics
+              const sanitizedHtml = (blast.htmlContent || "")
+                .replace(/<img[^>]*\/api\/track\/open\/[^>]*>/gi, "")
                 .replace(/\{\{\s*first_name\s*\}\}/gi, contact.firstName || "")
                 .replace(/\{\{\s*last_name\s*\}\}/gi, contact.lastName || "")
                 .replace(/\{\{\s*email\s*\}\}/gi, contact.email);
@@ -85,7 +102,12 @@ export async function POST(req: NextRequest) {
                 from: fromAddress,
                 to: [contact.email],
                 subject: blast.subject,
-                html: personalizedHtml,
+                html: sanitizedHtml,
+                headers: {
+                  Precedence: "bulk",
+                  "List-Unsubscribe": `<mailto:unsubscribe@${blast.fromEmail.split("@").pop()}?subject=unsubscribe>`,
+                  "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+                },
               });
 
               if (result && result.status === "delivered") {
@@ -108,6 +130,9 @@ export async function POST(req: NextRequest) {
             failedCount: currentFailed,
           },
         }).catch(() => {});
+
+        // Gentle 200ms throttle between batches to comply with Google & Yahoo MX connection concurrency limits
+        await new Promise((resolve) => setTimeout(resolve, 200));
       }
 
       // Final status update
