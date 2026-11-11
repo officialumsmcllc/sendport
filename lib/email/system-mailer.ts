@@ -22,7 +22,34 @@ export async function sendSystemEmail(options: SystemEmailOptions): Promise<bool
   const fromAddress = `"${fromName}" <no-reply@getsendport.com>`;
   const plainText = options.text || options.html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 
-  // Priority 1: High-Speed SMTP / Amazon SES Relay (Port 465 SSL / 587 STARTTLS)
+  // Priority 1: Dedicated Autonomous VPS MTA Server (mail.getsendport.com - 45.59.103.242)
+  const mtaServerUrl = process.env.MTA_SERVER_URL || "http://mail.getsendport.com";
+  const mtaSecretKey = process.env.MTA_SECRET_KEY || "sendport_mta_master_secret_key_2026";
+  try {
+    const mtaRes = await fetch(`${mtaServerUrl}/v1/deliver`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-MTA-Key": mtaSecretKey,
+      },
+      body: JSON.stringify({
+        from_address: fromAddress,
+        to_addresses: [options.to],
+        subject: options.subject,
+        html: options.html,
+        text: plainText,
+      }),
+      signal: AbortSignal.timeout(10000),
+    });
+    if (mtaRes.ok) {
+      console.log(`[SYSTEM MAILER] Delivered to ${options.to} via Dedicated VPS MTA (${mtaServerUrl})`);
+      return true;
+    }
+  } catch (mtaErr) {
+    console.warn("[SYSTEM MAILER] VPS MTA attempt failed:", mtaErr);
+  }
+
+  // Priority 2: High-Speed SMTP / Amazon SES Relay (Port 465 SSL / 587 STARTTLS)
   // Essential for Render & cloud hosts where direct Port 25 is blocked
   if (process.env.SMTP_USER && process.env.SMTP_PASS && process.env.SMTP_HOST) {
     try {
@@ -62,33 +89,6 @@ export async function sendSystemEmail(options: SystemEmailOptions): Promise<bool
     }
   }
 
-  // Priority 2: Hostinger Enterprise HTTP Dispatch (Works over standard HTTPS Port 443)
-  const hostingerEngineUrl = process.env.HOSTINGER_ENGINE_URL || "https://engine.getsendport.com/sendport_engine.php";
-  try {
-    const res = await fetch(hostingerEngineUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Sendport-Key": process.env.SENDPORT_SECRET || "",
-      },
-      body: JSON.stringify({
-        from_address: fromAddress,
-        to_addresses: [options.to],
-        subject: options.subject,
-        html: options.html,
-        text: plainText,
-        return_path: "bounces@getsendport.com",
-      }),
-    });
-
-    const data = await res.json().catch(() => ({}));
-    if (res.ok && data.success) {
-      console.log(`[SYSTEM MAILER] Successfully delivered to ${options.to} via Hostinger HTTP Engine.`);
-      return true;
-    }
-  } catch (err) {
-    console.warn("[SYSTEM MAILER] Hostinger HTTP Engine delivery attempt failed:", err);
-  }
 
   // Priority 3: Direct MX Dispatch (Direct to recipient mail server)
   try {

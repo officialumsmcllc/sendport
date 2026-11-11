@@ -338,107 +338,68 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
   let deliveryError: string | null = null;
   let dispatchIp: string = "45.59.103.242";
 
-  // 6. Real-time Internet Delivery Cascade:
-  // Priority 1: Dedicated Autonomous MTA Server (AlphaVPS mail.getsendport.com Direct Port 25 Engine)
+  // 6. Direct Outbound Email Delivery via Dedicated Autonomous VPS MTA Server
+  // Host: mail.getsendport.com (Dedicated IP: 45.59.103.242)
   const mtaServerUrl = process.env.MTA_SERVER_URL || "http://mail.getsendport.com";
   const mtaSecretKey = process.env.MTA_SECRET_KEY || "sendport_mta_master_secret_key_2026";
 
-  if (mtaServerUrl && process.env.USE_MTA_SERVER !== "false") {
-    try {
-      const mtaRes = await fetch(`${mtaServerUrl}/v1/deliver`, {
-        method: "POST",
+  try {
+    const mtaRes = await fetch(`${mtaServerUrl}/v1/deliver`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-MTA-Key": mtaSecretKey,
+      },
+      body: JSON.stringify({
+        from_address: options.from,
+        to_addresses: recipients,
+        subject: options.subject,
+        html: processedHtml,
+        text: plainTextBody,
+        reply_to: options.replyTo,
         headers: {
-          "Content-Type": "application/json",
-          "X-MTA-Key": mtaSecretKey,
+          "List-Unsubscribe": listUnsubscribeHeader,
+          "List-Unsubscribe-Post": listUnsubscribePostHeader,
+          ...options.headers,
         },
-        body: JSON.stringify({
-          from_address: options.from,
-          to_addresses: recipients,
-          subject: options.subject,
-          html: processedHtml,
-          text: plainTextBody,
-          reply_to: options.replyTo,
-          headers: {
-            "List-Unsubscribe": listUnsubscribeHeader,
-            "List-Unsubscribe-Post": listUnsubscribePostHeader,
-            ...options.headers,
-          },
-          dkim_selector: domainRecord?.dkimSelector || "sendport",
-          dkim_private_key: domainRecord?.dkimPrivateKey || undefined,
-        }),
-        signal: AbortSignal.timeout(12000),
-      });
+        dkim_selector: domainRecord?.dkimSelector || "sendport",
+        dkim_private_key: domainRecord?.dkimPrivateKey || undefined,
+      }),
+      signal: AbortSignal.timeout(15000),
+    });
 
-      if (mtaRes.ok) {
-        deliveryStatus = "DELIVERED";
-        console.log(`[AUTONOMOUS MTA DISPATCH] Direct MX Delivery Success via AlphaVPS MTA Daemon (${mtaServerUrl})`);
+    if (mtaRes.ok) {
+      deliveryStatus = "DELIVERED";
+      deliveryError = null;
+      console.log(`[AUTONOMOUS MTA DISPATCH] Direct Delivery Success via Dedicated VPS MTA (${mtaServerUrl})`);
+    } else {
+      const mtaErr = await mtaRes.text();
+      let parsedDetail = mtaErr;
+      try {
+        const json = JSON.parse(mtaErr);
+        if (json.detail) parsedDetail = json.detail;
+      } catch (_) {}
+
+      const hardBounce = detectHardBounce(parsedDetail);
+      if (hardBounce) {
+        deliveryStatus = "BOUNCED";
+        bounceType = "HARD";
+        deliveryError = hardBounce;
+        console.warn(`[MTA HARD BOUNCE] Destination MX rejected recipient: ${hardBounce}`);
       } else {
-        const mtaErr = await mtaRes.text();
-        const hardBounce = detectHardBounce(mtaErr);
-        if (hardBounce) {
-          deliveryStatus = "BOUNCED";
-          bounceType = "HARD";
-          deliveryError = hardBounce;
-          console.warn(`[MTA HARD BOUNCE] Destination MX rejected recipient: ${hardBounce}`);
-        } else {
-          deliveryError = `AlphaVPS MTA Error: ${mtaErr || mtaRes.statusText}`;
-          console.warn(`[MTA WARN] ${deliveryError}, falling back to Hostinger/Relay`);
-        }
+        deliveryStatus = "FAILED";
+        bounceType = null;
+        deliveryError = `Dedicated VPS MTA: ${parsedDetail || mtaRes.statusText}`;
+        console.warn(`[MTA DELIVERY FAILURE] ${deliveryError}`);
       }
-    } catch (mtaErr: any) {
-      deliveryError = `AlphaVPS MTA connection error: ${mtaErr.message}`;
-      console.warn(`[MTA WARN] ${deliveryError}, falling back to Hostinger/Relay`);
     }
+  } catch (mtaErr: any) {
+    deliveryStatus = "FAILED";
+    deliveryError = `Dedicated VPS MTA connection error: ${mtaErr.message}`;
+    console.warn(`[MTA CONNECTION ERROR] ${deliveryError}`);
   }
 
-  // Priority 2: Hostinger Enterprise Engine (Native HTTPS Port 443 with Full DKIM & Custom Envelope Sender)
-  const hostingerEngineUrl = process.env.HOSTINGER_ENGINE_URL || "https://engine.getsendport.com/sendport_engine.php";
-  const sendportSecret = process.env.SENDPORT_SECRET || "sendport_enterprise_jwt_secret_key_2026";
-
-  if (deliveryStatus !== "DELIVERED" && deliveryStatus !== "BOUNCED" && process.env.USE_HOSTINGER_ENGINE !== "false") {
-    try {
-      const hRes = await fetch(hostingerEngineUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Sendport-Key": sendportSecret,
-        },
-        body: JSON.stringify({
-          from_address: options.from,
-          to_addresses: recipients,
-          subject: options.subject,
-          html: processedHtml,
-          text: plainTextBody,
-          return_path: `bounces@${senderDomain}`,
-          dkim_private_key: domainRecord?.dkimPrivateKey || undefined,
-          dkim_selector: domainRecord?.dkimSelector || "sendport",
-          dkim_domain: domainRecord?.name || senderDomain,
-          headers: {
-            "Message-ID": `<${messageId}@${senderDomain}>`,
-            "List-Unsubscribe": listUnsubscribeHeader,
-            "List-Unsubscribe-Post": listUnsubscribePostHeader,
-            "Return-Path": `<bounces@${senderDomain}>`,
-            "X-Entity-Ref-ID": messageId,
-            "X-Sendport-Node": assignedSubdomain,
-            ...(dkimSignatureHeader ? { "DKIM-Signature": dkimSignatureHeader } : {}),
-            ...options.headers,
-          },
-        }),
-        signal: AbortSignal.timeout(8000),
-      });
-      const hData = await hRes.json().catch(() => ({}));
-      if (hRes.ok && hData.success) {
-        deliveryStatus = "DELIVERED";
-        console.log(`[HOSTINGER ENTERPRISE DISPATCH] Delivered with full DKIM signature and custom Envelope Sender`);
-      } else {
-        deliveryError = `Hostinger Engine Error: ${hData.error || hRes.statusText}`;
-      }
-    } catch (hErr: any) {
-      deliveryError = `Hostinger Engine Connection Error: ${hErr.message}`;
-    }
-  }
-
-  // Priority 3: High-Speed SMTP / SES Relay (Port 465 SSL / 587 TLS)
+  // Optional: User-configured custom SMTP Relay (Port 465 / 587) ONLY if explicitly provided in environment
   if (deliveryStatus !== "DELIVERED" && deliveryStatus !== "BOUNCED" && process.env.SMTP_USER && process.env.SMTP_PASS && process.env.SMTP_HOST) {
     try {
       const port = parseInt(process.env.SMTP_PORT || "465", 10);
@@ -477,50 +438,10 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
         },
       });
       deliveryStatus = "DELIVERED";
+      deliveryError = null;
       console.log(`[SMTP RELAY DISPATCH] Successfully delivered via ${process.env.SMTP_HOST}`);
     } catch (smtpError: any) {
       deliveryError = `Outbound Relay Error: ${smtpError.message}`;
-    }
-  }
-
-  // Priority 4: Cloudflare Edge Worker Layer
-  if (deliveryStatus !== "DELIVERED" && deliveryStatus !== "BOUNCED" && process.env.CLOUDFLARE_WORKER_URL) {
-    try {
-      const cfRes = await fetch(process.env.CLOUDFLARE_WORKER_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Sendport-Key": process.env.SENDPORT_SECRET || "sendport_edge_master_key_2026",
-        },
-        body: JSON.stringify({
-          from_address: options.from,
-          to_addresses: recipients,
-          subject: options.subject,
-          html: processedHtml,
-          text: plainTextBody,
-          reply_to: options.replyTo,
-          return_path: `bounces@${assignedSubdomain}`,
-          headers: {
-            "Message-ID": `<${messageId}@${senderDomain}>`,
-            "List-Unsubscribe": listUnsubscribeHeader,
-            "List-Unsubscribe-Post": listUnsubscribePostHeader,
-            "Return-Path": `<bounces@${assignedSubdomain}>`,
-            "X-Sendport-Node": assignedSubdomain,
-            ...(dkimSignatureHeader ? { "DKIM-Signature": dkimSignatureHeader } : {}),
-            ...options.headers,
-          },
-        }),
-        signal: AbortSignal.timeout(8000),
-      });
-      const cfData = await cfRes.json().catch(() => ({}));
-      if (cfRes.ok && cfData.success) {
-        deliveryStatus = "DELIVERED";
-        console.log(`[CLOUDFLARE EDGE DISPATCH] Delivered directly via Cloudflare Edge Worker`);
-      } else {
-        deliveryError = `Cloudflare Worker Error: ${cfData.error || cfRes.statusText}`;
-      }
-    } catch (cfErr: any) {
-      deliveryError = `Cloudflare Worker Connection Error: ${cfErr.message}`;
     }
   }
 
