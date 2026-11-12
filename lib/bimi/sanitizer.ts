@@ -148,3 +148,4 @@ export function sanitizeAndValidateBimiSvg(rawSvg: string): BimiValidationResult
     dimensions: { width: vbWidth, height: vbHeight },
   };
 }
+
