@@ -38,7 +38,7 @@ const DEFAULT_METHODS = [
   {
     code: "BANK_TRANSFER",
     name: "Meezan Bank Ltd (Direct Wire)",
-    accountTitle: "Official UM1 LLC",
+    accountTitle: "Sendport Technologies LLC",
     accountNumber: "01020304050607 / IBAN: PK92MEZN0001020304050607",
     currency: "PKR",
     instructions: "Transfer to Meezan Bank. Please attach transaction screenshot or enter Reference number.",
@@ -48,7 +48,7 @@ const DEFAULT_METHODS = [
   {
     code: "SADAPAY",
     name: "SadaPay Personal / Business",
-    accountTitle: "Muhammad Umar",
+    accountTitle: "Sendport Settlements",
     accountNumber: "0300-1234567 / IBAN: PK00SADA...",
     currency: "PKR",
     instructions: "Send via SadaPay App or IBAN transfer. Enter the SadaPay transaction ID in the field.",
@@ -58,7 +58,7 @@ const DEFAULT_METHODS = [
   {
     code: "NAYAPAY",
     name: "NayaPay Digital Wallet",
-    accountTitle: "Muhammad Umar",
+    accountTitle: "Sendport Settlements",
     accountNumber: "0300-1234567 / @nayapay_id",
     currency: "PKR",
     instructions: "Transfer to NayaPay wallet or IBAN. Enter your NayaPay Reference ID below.",
@@ -68,7 +68,7 @@ const DEFAULT_METHODS = [
   {
     code: "USDT_TRC20",
     name: "Binance / Crypto USDT (TRC-20)",
-    accountTitle: "Official TRC20 Treasury",
+    accountTitle: "Sendport Treasury",
     accountNumber: "TXYZ9876543210AbCdEfGhIjKlMnOpQrStUv",
     currency: "USD",
     instructions: "Send only TRC-20 USDT. Minimum equivalent amount. Enter your 64-character TxHash.",
@@ -78,7 +78,7 @@ const DEFAULT_METHODS = [
   {
     code: "WISE_PAYONEER",
     name: "Wise / Payoneer Transfer (USD/EUR/GBP)",
-    accountTitle: "Official UM1 LLC",
+    accountTitle: "Sendport Technologies LLC",
     accountNumber: "billing@getsendport.com / Wise Account",
     currency: "USD",
     instructions: "Transfer via Wise or Payoneer directly. Enter Wise transfer reference number.",

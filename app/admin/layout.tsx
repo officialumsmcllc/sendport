@@ -52,45 +52,40 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const navSections = [
     {
-      title: "OPERATIONS & CONTROL",
+      title: "OPERATIONS",
       items: [
-        { label: "Executive Mission Control", href: "/admin", icon: ShieldAlert, description: "Live cluster throughput, KPIs & real-time telemetry", category: "Operations" },
-        { label: "Support Tickets & Inbox", href: "/admin/support", icon: MessageSquare, badge: newTicketsCount, description: "Customer inquiries & direct DKIM email replies", category: "Action Required" },
-        { label: "Payment Slip Approvals", href: "/admin/payments", icon: CreditCard, badge: pendingSlipsCount, description: "Review manual bank & crypto transfers", category: "Action Required" },
-        { label: "Global Analytics & Revenue", href: "/admin/analytics", icon: BarChart3, description: "Platform revenue & volume projections", category: "Operations" },
+        { label: "Overview", href: "/admin", icon: Activity, description: "Live cluster throughput, KPIs & real-time telemetry", category: "Operations" },
+        { label: "Campaigns", href: "/admin/campaigns", icon: Send, description: "Bulk campaigns, delivery progress & queue telemetry", category: "Delivery" },
+        { label: "Email Logs", href: "/admin/logs", icon: Mail, description: "Inspect message IDs, latency & bounces", category: "Delivery" },
+        { label: "Support Tickets", href: "/admin/support", icon: MessageSquare, badge: newTicketsCount, description: "Customer inquiries & direct DKIM email replies", category: "Support" },
       ],
     },
     {
-      title: "TENANTS & AUDIENCES",
+      title: "AUDIENCE & USERS",
       items: [
-        { label: "User Accounts & Quotas", href: "/admin/users", icon: Users, description: "Plan switches, RBAC & custom send limits", category: "Tenants" },
-        { label: "Customer Contacts & Lists", href: "/admin/contacts", icon: BookUser, description: "Global directory of customer audiences & leads", category: "Audience" },
-        { label: "Customer Domains & DKIM", href: "/admin/domains", icon: Globe2, description: "DKIM, SPF and DoH verification records", category: "Infrastructure" },
-        { label: "User Email Templates", href: "/admin/templates", icon: FileText, description: "Audit & inspect customer HTML templates", category: "Content" },
+        { label: "Users & Quotas", href: "/admin/users", icon: Users, description: "Plan switches, RBAC & custom send limits", category: "Tenants" },
+        { label: "Domains & DKIM", href: "/admin/domains", icon: Globe2, description: "DKIM, SPF, BIMI and DoH verification records", category: "Infrastructure" },
+        { label: "Contacts & Lists", href: "/admin/contacts", icon: BookUser, description: "Global directory of customer audiences & leads", category: "Audience" },
+        { label: "Email Templates", href: "/admin/templates", icon: FileText, description: "Audit & inspect customer HTML templates", category: "Content" },
       ],
     },
     {
-      title: "DELIVERY & INFRASTRUCTURE",
+      title: "FINANCE & BILLING",
       items: [
-        { label: "Global Campaigns & Blasts", href: "/admin/campaigns", icon: Send, description: "Bulk campaigns, sent & remaining telemetry", category: "Delivery" },
-        { label: "Global Email Logs", href: "/admin/logs", icon: Mail, description: "Inspect message IDs, latency & bounces", category: "Delivery" },
-        { label: "Infrastructure & SMTP", href: "/admin/system", icon: Server, description: "SMTP relay daemon & node diagnostics", category: "Infrastructure" },
-        { label: "Platform Broadcasts", href: "/admin/broadcasts", icon: Megaphone, description: "Announcements & system notifications", category: "Delivery" },
+        { label: "Payments & Slips", href: "/admin/payments", icon: CreditCard, badge: pendingSlipsCount, description: "Review manual bank & crypto transfers", category: "Billing" },
+        { label: "Subscriptions", href: "/admin/subscriptions", icon: Sparkles, description: "Active recurring subscriptions ledger", category: "Billing" },
+        { label: "Promo Codes", href: "/admin/coupons", icon: Tag, description: "Promotional credit codes & vouchers", category: "Billing" },
+        { label: "Revenue Analytics", href: "/admin/analytics", icon: BarChart3, description: "Platform revenue & volume projections", category: "Finance" },
       ],
     },
     {
-      title: "GROWTH & SEARCH ENGINE",
+      title: "SYSTEM & SETTINGS",
       items: [
-        { label: "Google Search Console & SEO Hub", href: "/admin/seo", icon: Globe2, description: "Live GSC keyword rankings, Googlebot indexing & AI Rank Doctor", category: "Growth" },
-      ],
-    },
-    {
-      title: "BILLING & GOVERNANCE",
-      items: [
-        { label: "Gateway & Settings", href: "/admin/settings", icon: Sliders, description: "Cryptomus crypto keys, database settings & cluster rules", category: "Billing" },
-        { label: "Manual Subscriptions", href: "/admin/subscriptions", icon: Sparkles, description: "Active recurring subscriptions ledger", category: "Billing" },
-        { label: "Promo Codes & Discounts", href: "/admin/coupons", icon: Tag, description: "Promotional credit codes & vouchers", category: "Billing" },
-        { label: "Security & Audit Logs", href: "/admin/audit", icon: ShieldCheck, description: "Immutable root access & login journal", category: "Security" },
+        { label: "Infrastructure & MTA", href: "/admin/system", icon: Server, description: "SMTP relay daemon & node diagnostics", category: "System" },
+        { label: "SEO & Rankings", href: "/admin/seo", icon: Globe2, description: "Live GSC keyword rankings, Googlebot indexing & AI Rank Doctor", category: "Growth" },
+        { label: "System Broadcasts", href: "/admin/broadcasts", icon: Megaphone, description: "Announcements & system notifications", category: "System" },
+        { label: "Security & Audit", href: "/admin/audit", icon: ShieldCheck, description: "Immutable root access & login journal", category: "Security" },
+        { label: "System Settings", href: "/admin/settings", icon: Sliders, description: "Cryptomus crypto keys, database settings & cluster rules", category: "Settings" },
       ],
     },
   ];
@@ -368,10 +363,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
 
         {/* Scrollable Navigation Sections */}
-        <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-4">
+        <nav className="flex-1 overflow-y-auto px-2.5 py-2.5 space-y-3 scrollbar-thin scrollbar-thumb-white/10">
           {navSections.map((section) => (
-            <div key={section.title} className="space-y-1">
-              <p className="px-2.5 text-[9px] font-mono font-bold tracking-widest text-slate-500 uppercase">
+            <div key={section.title} className="space-y-0.5">
+              <p className="px-2 pt-1 pb-0.5 text-[9px] font-mono font-bold tracking-widest text-slate-500 uppercase">
                 {section.title}
               </p>
               {section.items.map((item) => {
@@ -381,15 +376,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`group flex items-center justify-between rounded-xl px-2.5 py-2 text-xs font-semibold transition-all ${
+                    className={`group flex items-center justify-between rounded-lg px-2 py-1.5 text-xs font-semibold transition-all ${
                       isActive
                         ? "bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent border-l-2 border-amber-400 text-white shadow-sm"
-                        : "text-slate-400 hover:text-slate-100 hover:bg-white/[0.03]"
+                        : "text-slate-400 hover:text-slate-100 hover:bg-white/[0.04]"
                     }`}
                   >
-                    <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="flex items-center gap-2 min-w-0">
                       <div
-                        className={`p-1.5 rounded-lg transition-colors ${
+                        className={`p-1 rounded-md transition-colors ${
                           isActive
                             ? "bg-amber-400/20 text-amber-300 border border-amber-400/30 shadow-xs"
                             : "text-slate-400 group-hover:text-amber-400 group-hover:bg-[#0e1629]"

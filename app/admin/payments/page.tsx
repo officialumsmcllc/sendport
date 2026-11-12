@@ -406,21 +406,21 @@ export default function AdminPaymentsPage() {
       )}
 
       {/* HEADER SECTION */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-2 border-b border-white/5">
         <div>
           <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-black tracking-wider uppercase bg-amber-500/10 text-amber-400 border border-amber-500/20">
-              Treasury & Settlements
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold tracking-wider uppercase bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              Finance & Settlements
             </span>
             <span className="text-xs text-slate-500">•</span>
-            <span className="text-xs text-slate-400 font-mono">Realtime Manual & Gateway Ledger</span>
+            <span className="text-xs text-slate-400 font-mono">Ledger & Gateway Management</span>
           </div>
           <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-2.5 mt-1.5">
             <CreditCard className="w-6 h-6 text-amber-400" />
-            Financial Management & Payment Controls
+            Payments & Gateways
           </h1>
           <p className="text-xs text-slate-400 mt-1">
-            Audit manual customer transfer receipts, activate automated plan quotas, and manage bank/wallet deposit rails.
+            Review customer payment slips, manage deposit bank accounts, and configure automated crypto gateways.
           </p>
         </div>
 
@@ -428,9 +428,9 @@ export default function AdminPaymentsPage() {
         <div className="flex items-center bg-[#0d1424] border border-white/10 p-1 rounded-xl text-xs font-bold shadow-lg">
           <button
             onClick={() => setActiveTab("SLIPS")}
-            className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all ${
+            className={`px-3.5 py-2 rounded-lg flex items-center gap-2 transition-all cursor-pointer ${
               activeTab === "SLIPS"
-                ? "bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 shadow-md shadow-amber-500/20 font-black"
+                ? "bg-amber-400 text-slate-950 font-black shadow-sm"
                 : "text-slate-400 hover:text-white"
             }`}
           >
@@ -446,25 +446,25 @@ export default function AdminPaymentsPage() {
           </button>
           <button
             onClick={() => setActiveTab("GATEWAYS")}
-            className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all ${
+            className={`px-3.5 py-2 rounded-lg flex items-center gap-2 transition-all cursor-pointer ${
               activeTab === "GATEWAYS"
-                ? "bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 shadow-md shadow-amber-500/20 font-black"
+                ? "bg-amber-400 text-slate-950 font-black shadow-sm"
                 : "text-slate-400 hover:text-white"
             }`}
           >
             <Wallet className="w-3.5 h-3.5" />
-            <span>Manual Gateways ({gateways.length})</span>
+            <span>Deposit Accounts ({gateways.length})</span>
           </button>
           <button
             onClick={() => setActiveTab("CRYPTOMUS")}
-            className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all cursor-pointer ${
+            className={`px-3.5 py-2 rounded-lg flex items-center gap-2 transition-all cursor-pointer ${
               activeTab === "CRYPTOMUS"
-                ? "bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white shadow-md shadow-indigo-500/30 font-black"
-                : "text-slate-400 hover:text-amber-400 hover:bg-white/5"
+                ? "bg-indigo-600 text-white font-black shadow-sm"
+                : "text-slate-400 hover:text-indigo-300"
             }`}
           >
-            <Coins className="w-3.5 h-3.5 text-amber-400" />
-            <span>⚡ Cryptomus Web3 Gateway</span>
+            <Coins className="w-3.5 h-3.5" />
+            <span>Cryptomus Web3</span>
           </button>
         </div>
       </div>
@@ -692,40 +692,6 @@ export default function AdminPaymentsPage() {
             >
               <Plus className="w-4 h-4" />
               <span>Add New Payment Gateway</span>
-            </button>
-          </div>
-
-          {/* Automated Web3 Cryptomus Gateway Card */}
-          <div className="p-5 rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border border-indigo-500/40 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3.5">
-              <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-amber-400 shadow-md shrink-0">
-                <Coins className="w-6 h-6" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-black text-white">Cryptomus Web3 Gateway (Automated)</h3>
-                  <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
-                    cryptomusMerchantId ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : "bg-amber-500/20 text-amber-400 border border-amber-500/30"
-                  }`}>
-                    {cryptomusMerchantId ? "Connected & Automated" : "Setup Required"}
-                  </span>
-                </div>
-                <p className="text-xs text-indigo-200/80 mt-0.5">
-                  Zero-admin automated plan activation on blockchain confirmation. Supports USDT, BTC, ETH, TON, SOL.
-                </p>
-                <p className="text-[11px] font-mono text-slate-400 mt-1">
-                  Merchant ID: <span className="text-indigo-300 font-bold">{cryptomusMerchantId || "Not set yet"}</span>
-                </p>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab("CRYPTOMUS")}
-              className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black shadow-lg transition-all flex items-center justify-center gap-1.5 shrink-0 cursor-pointer"
-            >
-              <span>Configure Cryptomus Keys</span>
-              <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
 
@@ -1119,7 +1085,7 @@ export default function AdminPaymentsPage() {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Muhammad Umar or Official UM1 LLC"
+                  placeholder="e.g. Sendport Technologies LLC or Account Title"
                   value={formAccountTitle}
                   onChange={(e) => setFormAccountTitle(e.target.value)}
                   className="w-full bg-[#080d19] border border-white/10 rounded-xl px-3 py-2 text-white outline-none focus:border-amber-400"
