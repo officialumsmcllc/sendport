@@ -103,13 +103,13 @@ export async function GET(req: NextRequest) {
             ? Math.min(100, Math.round((verifiedSent / b.totalRecipients) * 100))
             : 100;
 
-        totalTargeted += b.totalRecipients || 0;
-        totalSent += verifiedSent;
-        totalFailed += verifiedFailed;
-        totalRemaining += verifiedRemaining;
-
         let verifiedStatus = b.status || "COMPLETED";
-        if (hasRealLogs) {
+        let displayRemaining = verifiedRemaining;
+
+        if (b.status === "STOPPED" || b.status === "CANCELLED") {
+          verifiedStatus = "STOPPED";
+          displayRemaining = 0;
+        } else if (hasRealLogs) {
           if (actualPending > 0) {
             verifiedStatus = "SENDING";
           } else if (verifiedSent > 0 && verifiedFailed === 0) {
@@ -120,6 +120,11 @@ export async function GET(req: NextRequest) {
             verifiedStatus = "FAILED";
           }
         }
+
+        totalTargeted += b.totalRecipients || 0;
+        totalSent += verifiedSent;
+        totalFailed += verifiedFailed;
+        totalRemaining += displayRemaining;
 
         if (verifiedStatus === "SENDING") {
           activeSendingCount += 1;
@@ -135,7 +140,7 @@ export async function GET(req: NextRequest) {
           totalRecipients: b.totalRecipients,
           sentCount: verifiedSent,
           failedCount: verifiedFailed,
-          remainingCount: verifiedRemaining,
+          remainingCount: displayRemaining,
           progressPercent,
           status: verifiedStatus,
           workspaceId: b.workspaceId,

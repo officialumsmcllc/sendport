@@ -30,6 +30,16 @@ export async function POST(req: NextRequest) {
       data: { status: "STOPPED" },
     });
 
+    // Immediately cancel any pending or queued email logs for this blast
+    await prisma.emailLog.updateMany({
+      where: {
+        workspaceId: updated.workspaceId,
+        subject: updated.subject,
+        status: { in: ["PENDING", "QUEUED", "SENDING"] },
+      },
+      data: { status: "CANCELLED" },
+    }).catch(() => {});
+
     return NextResponse.json({
       success: true,
       message: `Campaign '${updated.subject}' has been safely stopped.`,

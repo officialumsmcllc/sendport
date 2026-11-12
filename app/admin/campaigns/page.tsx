@@ -390,14 +390,13 @@ export default function AdminCampaignsPage() {
             <table className="w-full text-left text-xs">
               <thead className="bg-zinc-950/60 text-zinc-400 border-b border-white/5 uppercase font-mono tracking-wider text-[11px]">
                 <tr>
-                  <th className="py-3.5 px-4 font-semibold">Campaign Subject & Sender</th>
-                  <th className="py-3.5 px-4 font-semibold">Workspace & Owner</th>
-                  <th className="py-3.5 px-4 font-semibold">Audience List</th>
-                  <th className="py-3.5 px-4 font-semibold min-w-[200px]">Live Progress & Counters</th>
-                  <th className="py-3.5 px-4 font-semibold">Remaining</th>
-                  <th className="py-3.5 px-4 font-semibold">Status</th>
-                  <th className="py-3.5 px-4 font-semibold text-right">Launched</th>
-                  <th className="py-3.5 px-4 font-semibold text-center">Action</th>
+                  <th className="py-3 px-3 font-semibold">Campaign & Sender</th>
+                  <th className="py-3 px-3 font-semibold">Workspace & Owner</th>
+                  <th className="py-3 px-3 font-semibold w-48">Delivery Progress</th>
+                  <th className="py-3 px-3 font-semibold">Remaining</th>
+                  <th className="py-3 px-3 font-semibold">Status</th>
+                  <th className="py-3 px-3 font-semibold text-right">Launched</th>
+                  <th className="py-3 px-3 font-semibold text-center">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5 text-zinc-300">
@@ -405,57 +404,56 @@ export default function AdminCampaignsPage() {
                   return (
                     <tr key={c.id} className="hover:bg-white/[0.02] transition-colors">
                       {/* Campaign Subject & Sender */}
-                      <td className="py-4 px-4">
-                        <div className="flex items-start gap-2.5">
-                          <div className="p-2 rounded-lg bg-zinc-800/80 border border-white/10 text-emerald-400 shrink-0 mt-0.5">
+                      <td className="py-3 px-3 max-w-xs">
+                        <div className="flex items-start gap-2">
+                          <div className="p-1.5 rounded-lg bg-zinc-800/80 border border-white/10 text-emerald-400 shrink-0 mt-0.5">
                             <Mail className="w-3.5 h-3.5" />
                           </div>
-                          <div>
-                            <div className="font-semibold text-white text-sm line-clamp-1">{c.subject}</div>
-                            <div className="text-[11px] text-zinc-400 font-mono flex items-center gap-1.5 mt-0.5">
-                              <span>From:</span>
-                              <span className="text-zinc-300">{c.fromName ? `${c.fromName} <${c.fromEmail}>` : c.fromEmail}</span>
+                          <div className="min-w-0">
+                            <div className="font-semibold text-white text-xs sm:text-sm line-clamp-1">{c.subject}</div>
+                            <div className="text-[11px] text-zinc-400 font-mono truncate mt-0.5">
+                              {c.fromName ? `${c.fromName} <${c.fromEmail}>` : c.fromEmail}
+                            </div>
+                            <div className="flex items-center gap-1.5 mt-1">
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-zinc-800/90 text-[10px] text-zinc-300 font-medium">
+                                <Users className="w-2.5 h-2.5 text-zinc-400" />
+                                {c.audienceName}
+                              </span>
                             </div>
                           </div>
                         </div>
                       </td>
 
                       {/* Workspace & Owner */}
-                      <td className="py-4 px-4">
-                        <div className="flex items-center gap-2">
-                          <Building className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
-                          <div>
-                            <div className="font-medium text-white">{c.workspaceName}</div>
-                            <div className="text-[11px] text-zinc-400">{c.ownerEmail}</div>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Audience List */}
-                      <td className="py-4 px-4">
+                      <td className="py-3 px-3">
                         <div className="flex items-center gap-1.5">
-                          <Users className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
-                          <span className="font-medium text-zinc-200">{c.audienceName}</span>
+                          <Building className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                          <div className="min-w-0">
+                            <div className="font-medium text-white text-xs truncate max-w-[150px]">{c.workspaceName}</div>
+                            <div className="text-[11px] text-zinc-400 truncate max-w-[150px]">{c.ownerEmail}</div>
+                          </div>
                         </div>
                       </td>
 
                       {/* Live Progress & Counters */}
-                      <td className="py-4 px-4">
-                        <div className="space-y-1.5">
+                      <td className="py-3 px-3">
+                        <div className="space-y-1">
                           <div className="flex items-center justify-between text-[11px]">
                             <span className="font-semibold text-white">
-                              {c.sentCount.toLocaleString()} <span className="text-zinc-500">/ {c.totalRecipients.toLocaleString()} sent</span>
+                              {c.sentCount.toLocaleString()} <span className="text-zinc-500">/ {c.totalRecipients.toLocaleString()}</span>
                             </span>
                             <span className="font-mono text-emerald-400 font-bold">{c.progressPercent}%</span>
                           </div>
                           {/* Progress bar track */}
-                          <div className="w-full h-2 rounded-full bg-zinc-800 overflow-hidden border border-white/5">
+                          <div className="w-full h-1.5 rounded-full bg-zinc-800 overflow-hidden border border-white/5">
                             <div
                               className={`h-full transition-all duration-500 rounded-full ${
                                 c.status === "SENDING"
                                   ? "bg-gradient-to-r from-amber-500 to-emerald-400 animate-pulse"
                                   : c.status === "FAILED"
                                   ? "bg-rose-500"
+                                  : c.status === "STOPPED" || c.status === "CANCELLED"
+                                  ? "bg-amber-500"
                                   : "bg-emerald-500"
                               }`}
                               style={{ width: `${Math.max(5, c.progressPercent)}%` }}
@@ -464,29 +462,33 @@ export default function AdminCampaignsPage() {
                           {c.failedCount > 0 && (
                             <div className="text-[10px] text-rose-400 flex items-center gap-1 font-mono">
                               <AlertTriangle className="w-3 h-3" />
-                              {c.failedCount} failed delivery attempts
+                              {c.failedCount.toLocaleString()} failed
                             </div>
                           )}
                         </div>
                       </td>
 
                       {/* Remaining Count */}
-                      <td className="py-4 px-4">
-                        {c.remainingCount > 0 ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono">
+                      <td className="py-3 px-3 whitespace-nowrap">
+                        {c.status === "STOPPED" || c.status === "CANCELLED" ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-zinc-800 text-zinc-400 font-mono">
+                            Stopped
+                          </span>
+                        ) : c.remainingCount > 0 ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono">
                             <Clock className="w-3 h-3 animate-spin" />
                             {c.remainingCount.toLocaleString()} left
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
                             <CheckCircle2 className="w-3 h-3" />
-                            Completed
+                            Done
                           </span>
                         )}
                       </td>
 
                       {/* Status */}
-                      <td className="py-4 px-4">
+                      <td className="py-3 px-3 whitespace-nowrap">
                         {c.status === "SENDING" ? (
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
@@ -511,11 +513,10 @@ export default function AdminCampaignsPage() {
                       </td>
 
                       {/* Timestamp */}
-                      <td className="py-4 px-4 text-right font-mono text-zinc-400 text-[11px]">
+                      <td className="py-3 px-3 text-right font-mono text-zinc-400 text-[11px] whitespace-nowrap">
                         {new Date(c.createdAt).toLocaleDateString("en-US", {
                           month: "short",
                           day: "numeric",
-                          year: "numeric",
                         })}{" "}
                         <span className="text-zinc-500">
                           {new Date(c.createdAt).toLocaleTimeString("en-US", {
@@ -526,19 +527,19 @@ export default function AdminCampaignsPage() {
                       </td>
 
                       {/* Action */}
-                      <td className="py-4 px-4 text-center">
-                        <div className="flex items-center justify-center gap-2">
+                      <td className="py-3 px-3 text-center whitespace-nowrap">
+                        <div className="flex items-center justify-center gap-1.5">
                           {c.status === "SENDING" ? (
                             <button
                               onClick={() => handleStop(c.id)}
                               disabled={stoppingId === c.id}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 disabled:opacity-50 hover:scale-105 active:scale-95 shadow-sm"
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 disabled:opacity-50 shadow-sm"
                               title="Stop this running campaign immediately"
                             >
                               {stoppingId === c.id ? (
-                                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                <RefreshCw className="w-3 h-3 animate-spin" />
                               ) : (
-                                <AlertCircle className="w-3.5 h-3.5" />
+                                <AlertCircle className="w-3 h-3" />
                               )}
                               <span>Stop</span>
                             </button>
@@ -546,17 +547,17 @@ export default function AdminCampaignsPage() {
                             <button
                               onClick={() => handleResend(c.id)}
                               disabled={retryingId === c.id}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 disabled:opacity-50 hover:scale-105 active:scale-95 shadow-sm"
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 disabled:opacity-50 shadow-sm"
                               title="Resend this campaign using the new clean deliverability engine"
                             >
                               {retryingId === c.id ? (
                                 <>
-                                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                  <RefreshCw className="w-3 h-3 animate-spin" />
                                   <span>Sending...</span>
                                 </>
                               ) : (
                                 <>
-                                  <Send className="w-3.5 h-3.5" />
+                                  <Send className="w-3 h-3" />
                                   <span>Resend</span>
                                 </>
                               )}
