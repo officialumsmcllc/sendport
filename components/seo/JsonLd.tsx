@@ -1,7 +1,3 @@
-// ==============================================================
-// Created & Owned by: officialum1
-// Suite: umiskills
-// ==============================================================
 import React from "react";
 import { siteConfig } from "@/lib/config/site";
 

@@ -1,8 +1,4 @@
 
-// ==============================================================
-// Created & Owned by: officialum1
-// Suite: umiskills
-// ==============================================================
 
 /**
  * Detects whether a delivery rejection is a true permanent hard bounce (e.g. non-existent mailbox).
@@ -345,7 +341,7 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
     })
     .catch(() => {});
 
-  let deliveryStatus: "DELIVERED" | "BOUNCED" | "FAILED" = "FAILED";
+  let deliveryStatus: "DELIVERED" | "BOUNCED" | "FAILED" | "QUEUED" = "FAILED";
   let bounceType: "HARD" | "SOFT" | null = null;
   let deliveryError: string | null = null;
   let dispatchIp: string = "45.59.103.242";
@@ -398,17 +394,32 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
         if (json.detail) parsedDetail = json.detail;
       } catch (_) {}
 
-      const hardBounce = detectHardBounce(parsedDetail);
-      if (hardBounce) {
-        deliveryStatus = "BOUNCED";
-        bounceType = "HARD";
-        deliveryError = hardBounce;
-        console.warn(`[MTA HARD BOUNCE] Destination MX rejected recipient: ${hardBounce}`);
+      const isSoftThrottle =
+        mtaRes.status === 429 ||
+        parsedDetail.toLowerCase().includes("adaptive throttle") ||
+        parsedDetail.toLowerCase().includes("421") ||
+        parsedDetail.toLowerCase().includes("451") ||
+        parsedDetail.toLowerCase().includes("rate limit") ||
+        parsedDetail.toLowerCase().includes("try again later");
+
+      if (isSoftThrottle) {
+        deliveryStatus = "QUEUED";
+        bounceType = "SOFT";
+        deliveryError = `Adaptive Throttle Pacing (421): ${parsedDetail}`;
+        console.warn(`[ADAPTIVE THROTTLE SOFT DEFERRAL] ${deliveryError}`);
       } else {
-        deliveryStatus = "FAILED";
-        bounceType = null;
-        deliveryError = `Dedicated VPS MTA: ${parsedDetail || mtaRes.statusText}`;
-        console.warn(`[MTA DELIVERY FAILURE] ${deliveryError}`);
+        const hardBounce = detectHardBounce(parsedDetail);
+        if (hardBounce) {
+          deliveryStatus = "BOUNCED";
+          bounceType = "HARD";
+          deliveryError = hardBounce;
+          console.warn(`[MTA HARD BOUNCE] Destination MX rejected recipient: ${hardBounce}`);
+        } else {
+          deliveryStatus = "FAILED";
+          bounceType = null;
+          deliveryError = `Dedicated VPS MTA: ${parsedDetail || mtaRes.statusText}`;
+          console.warn(`[MTA DELIVERY FAILURE] ${deliveryError}`);
+        }
       }
     }
   } catch (mtaErr: any) {
@@ -528,7 +539,7 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
     id: messageId,
     from: options.from,
     to: recipients,
-    status: deliveryStatus === "DELIVERED" ? "delivered" : "failed",
+    status: deliveryStatus === "DELIVERED" ? "delivered" : deliveryStatus === "QUEUED" ? "queued" : "failed",
     error: deliveryError || undefined,
     createdAt: new Date().toISOString(),
   };

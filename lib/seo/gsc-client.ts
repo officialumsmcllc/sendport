@@ -1,7 +1,3 @@
-// ==============================================================
-// Created & Owned by: officialum1
-// Suite: umiskills
-// ==============================================================
 
 /**
  * Google Search Console & Indexing API Client

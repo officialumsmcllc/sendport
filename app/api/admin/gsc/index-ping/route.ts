@@ -1,7 +1,3 @@
-// ==============================================================
-// Created & Owned by: officialum1
-// Suite: umiskills
-// ==============================================================
 
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";

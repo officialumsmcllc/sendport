@@ -1,7 +1,3 @@
-// ==============================================================
-// Created & Owned by: officialum1
-// Suite: umiskills
-// ==============================================================
 
 import crypto from "crypto";
 import { getSetting } from "@/lib/settings/system-settings";

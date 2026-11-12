@@ -1,7 +1,3 @@
-// ==============================================================
-// Created & Owned by: officialum1
-// Suite: umiskills
-// ==============================================================
 
 import { prisma } from "@/lib/db/prisma";
 import { logSecurityAudit } from "@/lib/security/audit";

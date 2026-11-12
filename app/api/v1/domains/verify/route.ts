@@ -1,7 +1,3 @@
-// ==============================================================
-// Created & Owned by: officialum1
-// Suite: umiskills
-// ==============================================================
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
@@ -67,8 +63,10 @@ export async function POST(req: NextRequest) {
         isSpfValid: dnsResult.isSpfValid,
         isDmarcValid: dnsResult.isDmarcValid,
         isMxValid: dnsResult.isMxValid,
+        isBimiValid: Boolean(dnsResult.isBimiValid),
+        bimiStatus: dnsResult.isBimiValid ? "VERIFIED" : dnsResult.recordsFound.bimi?.length ? "DMARC_INSUFFICIENT" : (domain.bimiRecord ? "READY_FOR_DNS" : "NOT_CONFIGURED"),
         status: isNowVerified ? "VERIFIED" : "PENDING",
-        verifiedAt: isNowVerified ? new Date() : domain.verifiedAt,
+        verifiedAt: isNowVerified ? (domain.verifiedAt || new Date()) : domain.verifiedAt,
         lastCheckedAt: new Date(),
       },
     });
@@ -80,6 +78,8 @@ export async function POST(req: NextRequest) {
       isSpfValid: dnsResult.isSpfValid,
       isDmarcValid: dnsResult.isDmarcValid,
       isMxValid: dnsResult.isMxValid,
+      isBimiValid: dnsResult.isBimiValid,
+      bimiWarning: dnsResult.bimiWarning,
       multipleSpfDetected: dnsResult.multipleSpfDetected,
       spfWarning: dnsResult.spfWarning,
       suggestedMergedSpf: dnsResult.suggestedMergedSpf,

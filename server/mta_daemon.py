@@ -1,7 +1,3 @@
-# ==============================================================
-# Created & Owned by: officialum1
-# Suite: umiskills
-# ==============================================================
 """
 Sendport Autonomous Mail Transfer Agent (MTA) & Direct Delivery Daemon
 Built with FastAPI, aiosmtplib, dnspython, and dkimpy for 100% independent direct mail delivery.
@@ -43,6 +39,109 @@ RELAY_HOST = os.getenv("RELAY_HOST", "").strip() or None
 RELAY_PORT = int(os.getenv("RELAY_PORT", "2525"))
 RELAY_USER = os.getenv("RELAY_USER", "").strip() or None
 RELAY_PASS = os.getenv("RELAY_PASS", "").strip() or None
+
+# ==============================================================
+# Adaptive Real-Time Speed Throttle & Circuit Breaker Governor
+# Prevents IP reputation burn on Gmail, Outlook, Yahoo (421 -> 550)
+# ==============================================================
+class MXHealthState:
+    def __init__(self, mx_host: str):
+        self.mx_host = mx_host
+        self.state = "HEALTHY"  # "HEALTHY", "THROTTLED", "CIRCUIT_BROKEN"
+        self.consecutive_4xx = 0
+        self.consecutive_250 = 0
+        self.total_delivered = 0
+        self.total_throttled = 0
+        self.total_failed = 0
+        self.cooldown_until = 0.0
+        self.min_delay_seconds = 0.05  # 50ms default in healthy mode
+        self.last_dispatch_ts = 0.0
+        self.active_concurrency = 0
+        self.max_concurrency = 10
+        self.lock = asyncio.Lock()
+
+    def get_status_dict(self):
+        now = time.time()
+        remaining_cooldown = max(0, int(self.cooldown_until - now))
+        return {
+            "mx_host": self.mx_host,
+            "state": self.state,
+            "is_cooling_down": remaining_cooldown > 0,
+            "remaining_cooldown_seconds": remaining_cooldown,
+            "min_delay_ms": int(self.min_delay_seconds * 1000),
+            "active_concurrency": self.active_concurrency,
+            "max_concurrency": self.max_concurrency,
+            "consecutive_4xx": self.consecutive_4xx,
+            "consecutive_250": self.consecutive_250,
+            "total_delivered": self.total_delivered,
+            "total_throttled": self.total_throttled,
+        }
+
+    async def acquire_slot(self):
+        async with self.lock:
+            now = time.time()
+            if self.state == "CIRCUIT_BROKEN":
+                if now < self.cooldown_until:
+                    wait_sec = max(1, int(self.cooldown_until - now))
+                    raise HTTPException(
+                        status_code=429,
+                        detail=f"Adaptive Throttle Circuit Breaker active for [{self.mx_host}]. Cooldown remaining: {wait_sec}s. Mail queued for safe retry."
+                    )
+                else:
+                    # Transition to THROTTLED probe mode
+                    self.state = "THROTTLED"
+                    self.min_delay_seconds = 1.5
+                    self.max_concurrency = 1
+                    self.consecutive_4xx = 0
+                    logger.info(f"🔄 MX [{self.mx_host}] cooldown elapsed. Transitioning to THROTTLED probe mode (1 msg/1.5s).")
+
+            # Enforce pacing delay between dispatches
+            elapsed = now - self.last_dispatch_ts
+            if elapsed < self.min_delay_seconds:
+                sleep_sec = self.min_delay_seconds - elapsed
+                await asyncio.sleep(sleep_sec)
+
+            self.last_dispatch_ts = time.time()
+            self.active_concurrency += 1
+
+    def release_slot(self):
+        if self.active_concurrency > 0:
+            self.active_concurrency -= 1
+
+    def record_success(self):
+        self.total_delivered += 1
+        self.consecutive_250 += 1
+        self.consecutive_4xx = 0
+        if self.state == "THROTTLED" and self.consecutive_250 >= 15:
+            self.state = "HEALTHY"
+            self.min_delay_seconds = 0.05
+            self.max_concurrency = 10
+            logger.info(f"🟢 MX [{self.mx_host}] fully recovered to HEALTHY speed after {self.consecutive_250} successful dispatches.")
+
+    def record_throttle(self, error_str: str):
+        self.total_throttled += 1
+        self.consecutive_4xx += 1
+        self.consecutive_250 = 0
+        now = time.time()
+
+        if self.consecutive_4xx >= 3:
+            self.state = "CIRCUIT_BROKEN"
+            self.cooldown_until = now + 45.0  # 45-second cooldown
+            self.max_concurrency = 0
+            logger.warning(f"🚨 Circuit Breaker TRIPPED for MX [{self.mx_host}]. 3+ consecutive 4xx rate-limits. Pausing sends for 45s to avoid IP burn.")
+        else:
+            self.state = "THROTTLED"
+            self.min_delay_seconds = 1.5  # 1.5-second pacing
+            self.max_concurrency = 1
+            logger.warning(f"⚠️ MX [{self.mx_host}] returned 4xx rate-limit. Adaptive speed throttled to 1 msg/1.5s.")
+
+MX_HEALTH_REGISTRY: Dict[str, MXHealthState] = {}
+
+def get_mx_governor(mx_host: str) -> MXHealthState:
+    clean_host = mx_host.lower().strip()
+    if clean_host not in MX_HEALTH_REGISTRY:
+        MX_HEALTH_REGISTRY[clean_host] = MXHealthState(clean_host)
+    return MX_HEALTH_REGISTRY[clean_host]
 
 class AttachmentItem(BaseModel):
     filename: str
@@ -189,7 +288,11 @@ async def deliver_email_direct(payload: SendEmailPayload):
         except Exception as dkim_err:
             logger.error(f"DKIM signing warning for {sender_domain}: {dkim_err}")
 
-    # 5. Socket Transmission: Either via Port 2525 Smart Relay (DO Unblocked) or Direct MX Port 25
+    # 5. Socket Transmission: Protected by Adaptive Speed Throttle Governor
+    target_host = RELAY_HOST or mx_host
+    governor = get_mx_governor(target_host)
+    await governor.acquire_slot()
+
     try:
         if RELAY_HOST:
             logger.info(f"⚡ Smart Relay Transmission via [{RELAY_HOST}:{RELAY_PORT}] (Port 2525 Allowed by DigitalOcean)")
@@ -231,20 +334,49 @@ async def deliver_email_direct(payload: SendEmailPayload):
             await smtp_client.quit()
             delivery_target = f"MX:{mx_host}:25"
 
+        governor.record_success()
         latency_ms = round((time.time() - start_time) * 1000, 2)
-        logger.info(f"🏁 Transmission SUCCESS to [{delivery_target}] in {latency_ms}ms")
+        logger.info(f"🏁 Transmission SUCCESS to [{delivery_target}] in {latency_ms}ms (Throttle: {governor.state})")
 
         return {
             "status": "delivered",
             "target": delivery_target,
             "latency_ms": latency_ms,
             "recipient_count": len(payload.to_addresses),
+            "throttle_state": governor.state,
             "response": str(response)
         }
 
     except Exception as smtp_err:
-        logger.error(f"❌ Transmission failed: {smtp_err}")
-        raise HTTPException(status_code=502, detail=f"Transmission failed via {RELAY_HOST or mx_host}: {str(smtp_err)}")
+        err_str = str(smtp_err)
+        logger.error(f"❌ Transmission error: {err_str}")
+        is_transient_4xx = any(code in err_str.lower() for code in ["421", "451", "try again later", "rate limit", "greylist", "too many connections", "slow down", "service unavailable"])
+        if is_transient_4xx:
+            governor.record_throttle(err_str)
+            raise HTTPException(
+                status_code=429,
+                detail=f"Adaptive Throttle Rate-Limit (421/451) on [{target_host}]: {err_str}"
+            )
+        raise HTTPException(
+            status_code=502,
+            detail=f"Transmission failed via {target_host}: {err_str}"
+        )
+    finally:
+        governor.release_slot()
+
+@app.get("/v1/throttle-status")
+async def get_throttle_status():
+    """
+    Returns real-time MX adaptive pacing telemetry, active concurrency, and circuit breaker states.
+    """
+    hosts_data = [gov.get_status_dict() for gov in MX_HEALTH_REGISTRY.values()]
+    return {
+        "status": "online",
+        "governor": "Sendport Adaptive Anti-Blocker Engine",
+        "total_tracked_mx": len(hosts_data),
+        "hosts": hosts_data,
+        "timestamp": time.time()
+    }
 
 @app.post("/v1/verify-mailbox", dependencies=[Depends(verify_auth_token)])
 async def verify_mailbox(payload: VerifyMailboxPayload):

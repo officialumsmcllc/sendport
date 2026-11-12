@@ -1,7 +1,3 @@
-// ==============================================================
-// Created & Owned by: officialum1
-// Suite: umiskills
-// ==============================================================
 
 import dns from "dns/promises";
 import type { DnsVerificationResult, DnsDiagnosticReport } from "@/types/dns";
@@ -234,7 +230,28 @@ export async function verifyDomainDns(
       result.isDmarcValid = true;
     }
 
-    // 4. Check MX record (optional or inbound)
+    // 4. Verify BIMI TXT Record on default._bimi.domain.com
+    const bimiHostname = `default._bimi.${cleanDomain}`;
+    let isBimiValid = false;
+    let bimiWarning: string | undefined;
+    const bimiRecords = await resolveTxtWithFallback(bimiHostname);
+    result.recordsFound.bimi = bimiRecords;
+
+    const bimiMatch = bimiRecords.find((r) => r.toLowerCase().includes("v=bimi1"));
+    if (bimiMatch) {
+      // Check DMARC strictness (must be quarantine or reject for Google/Yahoo to honor BIMI)
+      const dmarcRec = dmarcMatches[0] || "";
+      const isStrictDmarc = /p=\s*(quarantine|reject)\b/i.test(dmarcRec);
+      if (!isStrictDmarc) {
+        bimiWarning = "BIMI record detected, but DMARC policy is 'p=none'. Gmail and Yahoo require 'p=quarantine' or 'p=reject' for the verified brand logo to display.";
+      } else {
+        isBimiValid = true;
+      }
+    }
+    result.isBimiValid = isBimiValid;
+    result.bimiWarning = bimiWarning;
+
+    // 5. Check MX record (optional or inbound)
     try {
       const mxRecords = await dns.resolveMx(cleanDomain);
       result.recordsFound.mx = mxRecords.map((m) => `${m.priority} ${m.exchange}`);
@@ -267,15 +284,17 @@ export async function inspectDomainDnsHealth(
   const cleanDomain = domainName.trim().toLowerCase();
   const dkimHostname = `${dkimSelector}._domainkey.${cleanDomain}`;
   const dmarcHostname = `_dmarc.${cleanDomain}`;
+  const bimiHostname = `default._bimi.${cleanDomain}`;
 
   // 1. Detect DNS Provider
   const dnsProvider = await detectDnsProvider(cleanDomain);
 
   // 2. Fetch all DNS records in parallel via high-availability DoH
-  const [rootTxtRecords, dkimRecords, dmarcRecords, mxRecordsRaw] = await Promise.all([
+  const [rootTxtRecords, dkimRecords, dmarcRecords, bimiRecords, mxRecordsRaw] = await Promise.all([
     resolveTxtWithFallback(cleanDomain),
     resolveTxtWithFallback(dkimHostname),
     resolveTxtWithFallback(dmarcHostname),
+    resolveTxtWithFallback(bimiHostname),
     dns.resolveMx(cleanDomain).catch(() => []),
   ]);
 
@@ -399,12 +418,38 @@ export async function inspectDomainDnsHealth(
     dmarcSteps.push(`Value: ${suggestedMergedDmarc}`);
   }
 
-  // 6. MX Records
+  // 6. BIMI Analysis (Verified Inbox Avatar)
+  const isDmarcStrict = dmarcPolicy.toLowerCase() === "quarantine" || dmarcPolicy.toLowerCase() === "reject";
+  const bimiMatches = bimiRecords.filter((r) => r.toLowerCase().includes("v=bimi1"));
+  let bimiStatus: "PASS" | "DMARC_INSUFFICIENT" | "MISSING" | "INVALID_SVG" = "MISSING";
+  let bimiLogoUrl: string | undefined;
+  let bimiWarning: string | undefined;
+  const bimiSteps: string[] = [];
+
+  if (bimiMatches.length > 0) {
+    const rawBimi = bimiMatches[0];
+    const lMatch = rawBimi.match(/l=([^;]+)/i);
+    if (lMatch) bimiLogoUrl = lMatch[1].trim();
+
+    if (!isDmarcStrict) {
+      bimiStatus = "DMARC_INSUFFICIENT";
+      bimiWarning = `BIMI record detected at '${bimiHostname}', but your DMARC policy is 'p=${dmarcPolicy}'. Gmail and Yahoo mandate strict 'p=quarantine' or 'p=reject' before rendering verified brand logos in the recipient's inbox.`;
+      bimiSteps.push(`Upgrade DMARC policy on ${dnsProvider.name} to: v=DMARC1; p=quarantine; rua=mailto:dmarc@getsendport.com`);
+    } else {
+      bimiStatus = "PASS";
+    }
+  } else {
+    bimiStatus = "MISSING";
+    bimiSteps.push(`Upload your brand logo SVG in SendPort's BIMI manager.`);
+    bimiSteps.push(`Add a TXT record at host 'default._bimi' with value: v=BIMI1; l=https://getsendport.com/api/v1/domains/bimi/${cleanDomain}/logo.svg;`);
+  }
+
+  // 7. MX Records
   const mxList = Array.isArray(mxRecordsRaw)
     ? mxRecordsRaw.map((m: any) => `${m.priority} ${m.exchange}`)
     : [];
 
-  // 7. Calculate Health Score
+  // 8. Calculate Health Score
   let score = 100;
   if (multipleSpf) score -= 40;
   else if (spfStatus === "MISSING") score -= 30;
@@ -464,9 +509,20 @@ export async function inspectDomainDnsHealth(
       recordsFound: dmarcRecords,
       multipleDetected: multipleDmarc,
       policy: dmarcPolicy,
+      isStrictPolicy: isDmarcStrict,
       suggestedMergedRecord: suggestedMergedDmarc,
       warningMessage: dmarcWarning,
       stepByStepFix: dmarcSteps,
+    },
+    bimi: {
+      status: bimiStatus,
+      selector: "default",
+      hostname: bimiHostname,
+      logoUrl: bimiLogoUrl,
+      recordsFound: bimiRecords,
+      warningMessage: bimiWarning,
+      stepByStepFix: bimiSteps,
+      isDmarcStrict,
     },
     mx: {
       status: mxList.length > 0 ? "CONFIGURED" : "OPTIONAL_PENDING",

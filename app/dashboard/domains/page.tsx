@@ -1,7 +1,3 @@
-// ==============================================================
-// Created & Owned by: officialum1
-// Suite: umiskills
-// ==============================================================
 
 "use client";
 
@@ -36,6 +32,11 @@ interface DomainItem {
   dkimPublicKey?: string;
   spfRecord?: string;
   dmarcRecord?: string;
+  bimiSelector?: string;
+  bimiRecord?: string;
+  bimiSvgContent?: string;
+  isBimiValid?: boolean;
+  bimiStatus?: string;
   spfValid: boolean;
   dkimValid: boolean;
   dmarcValid: boolean;
@@ -64,6 +65,55 @@ export default function DomainsPage() {
   const [dmarcConflictAlert, setDmarcConflictAlert] = useState<{ domain: string; warning: string; mergedDmarc?: string } | null>(null);
   const [diagnosticReport, setDiagnosticReport] = useState<DnsDiagnosticReport | null>(null);
   const [inspectingReport, setInspectingReport] = useState(false);
+  const [bimiUploading, setBimiUploading] = useState(false);
+  const [bimiNotice, setBimiNotice] = useState<{ type: "success" | "error"; message: string } | null>(null);
+
+  const handleBimiUpload = async (domainName: string, file: File) => {
+    try {
+      setBimiUploading(true);
+      setBimiNotice(null);
+
+      const text = await file.text();
+      const cleanDomain = domainName.replace(/\/+$/, "").toLowerCase();
+
+      const res = await fetch(`/api/v1/domains/bimi/${cleanDomain}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ svg: text }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setBimiNotice({
+          type: "success",
+          message: "BIMI logo sanitized & saved! Add the DNS TXT record below to activate in Gmail & Yahoo.",
+        });
+        setSelectedDomain((prev) =>
+          prev
+            ? {
+                ...prev,
+                bimiRecord: data.bimiRecord,
+                bimiStatus: "READY_FOR_DNS",
+                bimiSvgContent: text,
+              }
+            : null
+        );
+        fetchDomains();
+      } else {
+        setBimiNotice({
+          type: "error",
+          message: data.error || "Failed to process SVG logo.",
+        });
+      }
+    } catch (err: any) {
+      setBimiNotice({
+        type: "error",
+        message: err.message || "Failed to upload logo file.",
+      });
+    } finally {
+      setBimiUploading(false);
+    }
+  };
 
   const fetchDomains = async () => {
     try {
@@ -403,6 +453,7 @@ export default function DomainsPage() {
                   <th className="px-5 py-3">Status</th>
                   <th className="px-5 py-3">DKIM (2048-bit)</th>
                   <th className="px-5 py-3">SPF & DMARC</th>
+                  <th className="px-5 py-3">BIMI Logo</th>
                   <th className="px-5 py-3">Verified Date</th>
                   <th className="px-5 py-3 text-right">Actions</th>
                 </tr>
@@ -443,6 +494,15 @@ export default function DomainsPage() {
                         <span className="text-slate-700 font-mono text-[11px]">v=spf1 ~all (Pass)</span>
                       ) : (
                         <span className="text-slate-400 font-mono text-[11px]">v=spf1 pending</span>
+                      )}
+                    </td>
+                    <td className="px-5 py-4">
+                      {dom.isBimiValid || dom.bimiSvgContent ? (
+                        <span className="inline-flex items-center gap-1 rounded bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-700 border border-blue-200">
+                          <CheckCircle2 className="w-3 h-3 text-blue-600" /> Active
+                        </span>
+                      ) : (
+                        <span className="text-slate-400 text-[11px]">Optional</span>
                       )}
                     </td>
                     <td className="px-5 py-4 text-slate-500">{dom.verifiedAt}</td>
@@ -1062,6 +1122,208 @@ export default function DomainsPage() {
                       </div>
                     </div>
                   </div>
+                </div>
+
+                {/* 5. BIMI BRAND LOGO & VERIFIED INBOX AVATAR */}
+                <div className="p-4 rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50/60 via-white to-sky-50/40 space-y-4 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded bg-blue-600 text-white font-mono font-bold text-[11px] shadow-xs">
+                        BIMI
+                      </span>
+                      <span className="text-xs font-bold text-slate-900">
+                        5. Brand Indicators (BIMI) & Verified Gmail/Yahoo Inbox Avatar
+                      </span>
+                    </div>
+                    {selectedDomain.isBimiValid ? (
+                      <span className="text-[11px] font-semibold text-emerald-600 flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                        <CheckCircle2 className="w-3 h-3" /> BIMI Verified Active
+                      </span>
+                    ) : (
+                      <span className="text-[10px] uppercase font-bold text-blue-700 bg-blue-100/70 px-2 py-0.5 rounded">
+                        2026 Deliverability Standard
+                      </span>
+                    )}
+                  </div>
+
+                  <p className="text-[11px] text-slate-600 leading-relaxed">
+                    Displays your official brand logo with verified checkmark in <strong>Gmail, Yahoo, Apple Mail, and Fastmail</strong>. Builds instant subscriber trust and increases email open rates by up to 39%.
+                  </p>
+
+                  {/* LIVE GMAIL INBOX MOCKUP */}
+                  <div className="rounded-xl border border-slate-200 bg-white p-3.5 shadow-sm space-y-2">
+                    <div className="flex items-center justify-between text-[10px] uppercase font-bold text-slate-400">
+                      <span>Live Gmail / Apple Mail Recipient View</span>
+                      <span className="text-blue-600 font-semibold lowercase">inbox preview</span>
+                    </div>
+
+                    <div className="flex items-center gap-3 p-2.5 rounded-lg bg-slate-50 border border-slate-100 hover:border-slate-200 transition-colors">
+                      {/* Avatar with Verified Badge */}
+                      <div className="relative shrink-0">
+                        <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-tr from-blue-600 to-sky-400 flex items-center justify-center text-white font-bold text-base shadow-sm border border-white">
+                          {selectedDomain.bimiSvgContent ? (
+                            <div
+                              className="w-full h-full p-1 flex items-center justify-center [&>svg]:w-full [&>svg]:h-full"
+                              dangerouslySetInnerHTML={{ __html: selectedDomain.bimiSvgContent }}
+                            />
+                          ) : (
+                            <span>{cleanSelectedDomainName.charAt(0).toUpperCase()}</span>
+                          )}
+                        </div>
+                        <div className="absolute -bottom-1 -right-1 bg-blue-600 text-white rounded-full p-0.5 border border-white shadow-xs">
+                          <CheckCircle2 className="w-3 h-3 text-white fill-blue-600" />
+                        </div>
+                      </div>
+
+                      {/* Email Row preview */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className="text-xs font-bold text-slate-900 truncate">
+                              {cleanSelectedDomainName}
+                            </span>
+                            <span className="text-[10px] text-blue-600 font-bold bg-blue-50 border border-blue-200 px-1 rounded">
+                              Verified
+                            </span>
+                          </div>
+                          <span className="text-[10px] text-slate-400 shrink-0 font-medium">9:41 AM</span>
+                        </div>
+                        <div className="text-xs font-semibold text-slate-800 truncate mt-0.5">
+                          ⚡ Your account security update & special announcement
+                        </div>
+                        <div className="text-[11px] text-slate-500 truncate">
+                          Brand logo successfully verified via Sendport SVG Tiny 1.2 PS...
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* DMARC STRICTNESS STATUS */}
+                  {(() => {
+                    const isDmarcStrict = /p=\s*(quarantine|reject)\b/i.test(selectedDomain.dmarcRecord || "");
+                    const strictDmarcSuggestion = "v=DMARC1; p=quarantine; rua=mailto:dmarc@getsendport.com; aspf=r; adkim=r";
+
+                    if (!isDmarcStrict) {
+                      return (
+                        <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-3 space-y-2 text-xs">
+                          <div className="flex items-center gap-1.5 font-bold text-amber-900">
+                            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                            <span>BIMI Prerequisite: DMARC Must Be 'quarantine' or 'reject'</span>
+                          </div>
+                          <p className="text-[11px] text-amber-800 leading-relaxed">
+                            Google & Yahoo require a strict DMARC policy for BIMI. Your domain currently uses <code>p=none</code>. Upgrade your DMARC TXT record to <code>p=quarantine</code> to enable your brand avatar.
+                          </p>
+                          <div className="flex items-center justify-between bg-white p-2 rounded-lg border border-amber-200 font-mono text-[10px]">
+                            <span className="text-slate-800 truncate">{strictDmarcSuggestion}</span>
+                            <button
+                              onClick={() => handleCopy(strictDmarcSuggestion, "bimi-strict-dmarc")}
+                              className="text-amber-800 font-bold hover:text-amber-950 flex items-center gap-1 shrink-0 ml-2 cursor-pointer"
+                            >
+                              {copiedKey === "bimi-strict-dmarc" ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                              Copy Strict DMARC
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className="rounded-xl border border-emerald-200 bg-emerald-50/80 p-2.5 text-xs text-emerald-900 flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <span><strong>Strict DMARC Policy Active:</strong> Your domain meets Google & Yahoo's security requirements for verified brand logos.</span>
+                      </div>
+                    );
+                  })()}
+
+                  {/* SVG LOGO UPLOADER */}
+                  <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-800">Upload Official Brand Logo (SVG)</span>
+                      <span className="text-[10px] text-slate-500 font-medium">Auto-sanitizes to RFC SVG Tiny 1.2 PS</span>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2.5">
+                      <label className="flex-1 cursor-pointer flex items-center justify-center gap-2 p-2.5 rounded-lg border-2 border-dashed border-slate-300 hover:border-blue-500 bg-white text-xs text-slate-600 font-medium transition-colors">
+                        <input
+                          type="file"
+                          accept=".svg,image/svg+xml"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleBimiUpload(selectedDomain.name, file);
+                          }}
+                          disabled={bimiUploading}
+                        />
+                        <Zap className="w-3.5 h-3.5 text-blue-600" />
+                        <span>{bimiUploading ? "Sanitizing & Validating..." : "Select Brand SVG Logo"}</span>
+                      </label>
+                    </div>
+
+                    {bimiNotice && (
+                      <div
+                        className={`p-2.5 rounded-lg text-xs font-semibold ${
+                          bimiNotice.type === "success"
+                            ? "bg-emerald-100/70 text-emerald-800 border border-emerald-200"
+                            : "bg-rose-100/70 text-rose-800 border border-rose-200"
+                        }`}
+                      >
+                        {bimiNotice.message}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* BIMI DNS TXT RECORD */}
+                  {(() => {
+                    const bimiHost = `default._bimi.${cleanSelectedDomainName}`;
+                    const bimiVal =
+                      selectedDomain.bimiRecord ||
+                      `v=BIMI1; l=https://getsendport.com/api/v1/domains/bimi/${cleanSelectedDomainName}/logo.svg;`;
+
+                    return (
+                      <div className="space-y-2">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                          <div>
+                            <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500 mb-1">
+                              <span>BIMI Host / Name</span>
+                              <button
+                                onClick={() => handleCopy(bimiHost, "bimi-name")}
+                                className="text-primary-600 hover:text-primary-700 font-bold flex items-center gap-1 text-[11px]"
+                              >
+                                {copiedKey === "bimi-name" ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                                Copy Host
+                              </button>
+                            </div>
+                            <div className="font-mono text-[11px] bg-white p-2 rounded-lg border border-slate-200 text-slate-800 break-all select-all">
+                              default._bimi (or {bimiHost})
+                            </div>
+                          </div>
+                          <div>
+                            <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500 mb-1">
+                              <span>Record Type & TTL</span>
+                            </div>
+                            <div className="font-mono text-[11px] bg-white p-2 rounded-lg border border-slate-200 text-slate-800">
+                              TXT &bull; Auto (3600)
+                            </div>
+                          </div>
+                        </div>
+
+                        <div>
+                          <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500 mb-1">
+                            <span>BIMI Value / Content</span>
+                            <button
+                              onClick={() => handleCopy(bimiVal, "bimi-val")}
+                              className="text-primary-600 hover:text-primary-700 font-bold flex items-center gap-1 text-[11px]"
+                            >
+                              {copiedKey === "bimi-val" ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                              Copy BIMI Record
+                            </button>
+                          </div>
+                          <div className="font-mono text-[11px] bg-white p-2.5 rounded-lg border border-slate-200 text-slate-800 break-all select-all leading-relaxed">
+                            {bimiVal}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
 

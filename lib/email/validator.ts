@@ -1,7 +1,3 @@
-// ==============================================================
-// Created & Owned by: officialum1
-// Suite: umiskills
-// ==============================================================
 
 // Common disposable email domains to block
 const DISPOSABLE_DOMAINS = new Set([

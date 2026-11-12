@@ -57,6 +57,31 @@ export async function ensureDbSchema(): Promise<void> {
           END;
 
           BEGIN
+            ALTER TABLE "Domain" ADD COLUMN IF NOT EXISTS "bimiSelector" TEXT NOT NULL DEFAULT 'default';
+          EXCEPTION WHEN others THEN NULL;
+          END;
+
+          BEGIN
+            ALTER TABLE "Domain" ADD COLUMN IF NOT EXISTS "bimiRecord" TEXT;
+          EXCEPTION WHEN others THEN NULL;
+          END;
+
+          BEGIN
+            ALTER TABLE "Domain" ADD COLUMN IF NOT EXISTS "bimiSvgContent" TEXT;
+          EXCEPTION WHEN others THEN NULL;
+          END;
+
+          BEGIN
+            ALTER TABLE "Domain" ADD COLUMN IF NOT EXISTS "bimiStatus" TEXT NOT NULL DEFAULT 'NOT_CONFIGURED';
+          EXCEPTION WHEN others THEN NULL;
+          END;
+
+          BEGIN
+            ALTER TABLE "Domain" ADD COLUMN IF NOT EXISTS "isBimiValid" BOOLEAN NOT NULL DEFAULT false;
+          EXCEPTION WHEN others THEN NULL;
+          END;
+
+          BEGIN
             CREATE TABLE IF NOT EXISTS "AppSumoRedemption" (
               "id" TEXT PRIMARY KEY,
               "code" TEXT UNIQUE NOT NULL,

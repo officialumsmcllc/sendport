@@ -1,7 +1,3 @@
-// ==============================================================
-// Created & Owned by: officialum1
-// Suite: umiskills
-// ==============================================================
 
 /**
  * Automated Googlebot URL Inspection & Auto-Healer Engine

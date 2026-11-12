@@ -74,7 +74,7 @@ model Domain {
   id              String      @id @default(cuid())
   workspaceId     String
   userId          String
-  name            String      // e.g. officialum1.com
+  name            String      // e.g. example.com
   status          String      @default("PENDING") // PENDING, VERIFIED, FAILED
   dkimSelector    String      @default("sendport")
   dkimPrivateKey  String      @db.Text // RSA-2048 private key (PEM)
@@ -86,6 +86,11 @@ model Domain {
   isSpfValid      Boolean     @default(false)
   isDmarcValid    Boolean     @default(false)
   isMxValid       Boolean     @default(false)
+  bimiSelector    String      @default("default")
+  bimiRecord      String?
+  bimiSvgContent  String?     @db.Text
+  bimiStatus      String      @default("NOT_CONFIGURED") // NOT_CONFIGURED, READY_FOR_DNS, VERIFIED, DMARC_INSUFFICIENT
+  isBimiValid     Boolean     @default(false)
   verifiedAt      DateTime?
   lastCheckedAt   DateTime?
   createdAt       DateTime    @default(now())

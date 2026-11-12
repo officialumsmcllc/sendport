@@ -1,7 +1,3 @@
-// ==============================================================
-// Created & Owned by: officialum1
-// Suite: umiskills
-// ==============================================================
 
 export interface DnsVerificationResult {
   domain: string;
@@ -9,6 +5,7 @@ export interface DnsVerificationResult {
   isSpfValid: boolean;
   isDmarcValid: boolean;
   isMxValid: boolean;
+  isBimiValid?: boolean;
   allValid: boolean;
   multipleSpfDetected?: boolean;
   spfWarning?: string;
@@ -16,11 +13,14 @@ export interface DnsVerificationResult {
   multipleDmarcDetected?: boolean;
   dmarcWarning?: string;
   suggestedMergedDmarc?: string;
+  bimiWarning?: string;
+  suggestedBimiRecord?: string;
   recordsFound: {
     dkim?: string[];
     spf?: string[];
     dmarc?: string[];
     mx?: string[];
+    bimi?: string[];
   };
   errors?: string[];
 }
@@ -56,9 +56,20 @@ export interface DnsDiagnosticReport {
     recordsFound: string[];
     multipleDetected: boolean;
     policy: string;
+    isStrictPolicy?: boolean;
     suggestedMergedRecord: string;
     warningMessage?: string;
     stepByStepFix: string[];
+  };
+  bimi?: {
+    status: "PASS" | "DMARC_INSUFFICIENT" | "MISSING" | "INVALID_SVG";
+    selector: string;
+    hostname: string;
+    logoUrl?: string;
+    recordsFound: string[];
+    warningMessage?: string;
+    stepByStepFix: string[];
+    isDmarcStrict: boolean;
   };
   mx: {
     status: "CONFIGURED" | "OPTIONAL_PENDING";
