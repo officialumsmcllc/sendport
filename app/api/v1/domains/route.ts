@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { generateDkimKeyPair } from "@/lib/dns/dkim";
 import { getAuthContext } from "@/lib/auth/workspace-auth";
+import { ensureDbSchema } from "@/lib/db/ensure-schema";
 
 /**
  * GET, POST & DELETE /api/v1/domains
@@ -21,6 +22,8 @@ export async function GET(req: NextRequest) {
 
     const userWorkspaceIds = userMemberships.map((m: any) => m.workspaceId);
     const allWorkspaceIds = Array.from(new Set([auth.workspace.id, ...userWorkspaceIds].filter(Boolean)));
+
+    await ensureDbSchema().catch(() => {});
 
     const domains = await prisma.domain.findMany({
       where: {
@@ -102,6 +105,8 @@ export async function POST(req: NextRequest) {
     const cleanDomain = name.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
 
     // Check if domain already exists for THIS user or workspace
+    await ensureDbSchema().catch(() => {});
+
     const existing = await prisma.domain.findFirst({
       where: {
         OR: [

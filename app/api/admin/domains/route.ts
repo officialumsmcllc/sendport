@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
 import { isSuperAdminUser } from "@/lib/auth/admin-guard";
 import { logSecurityAudit } from "@/lib/security/audit";
+import { ensureDbSchema } from "@/lib/db/ensure-schema";
 
 export async function GET() {
   try {
@@ -10,6 +11,8 @@ export async function GET() {
     if (!session || !isSuperAdminUser(session.email, session.role)) {
       return NextResponse.json({ error: "Access denied. Administrator privileges required." }, { status: 403 });
     }
+
+    await ensureDbSchema().catch(() => {});
 
     const domains = await prisma.domain.findMany({
       orderBy: { createdAt: "desc" },
