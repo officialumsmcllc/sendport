@@ -108,6 +108,11 @@ export async function ensureDbSchema(): Promise<void> {
             UPDATE "PaymentMethodConfig" SET "accountTitle" = 'Sendport Treasury' WHERE "accountTitle" LIKE '%Official TRC20%';
           EXCEPTION WHEN others THEN NULL;
           END;
+
+          BEGIN
+            UPDATE "PaymentMethodConfig" SET "isActive" = false;
+          EXCEPTION WHEN others THEN NULL;
+          END;
         END $$;
       `);
       schemaEnsured = true;

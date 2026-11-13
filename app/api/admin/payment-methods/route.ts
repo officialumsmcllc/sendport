@@ -13,7 +13,7 @@ const DEFAULT_METHODS = [
     currency: "PKR",
     instructions: "Transfer exact PKR amount via Easypaisa App or *786#. Paste Transaction ID / TID below.",
     displayOrder: 1,
-    isActive: true,
+    isActive: false,
   },
   {
     code: "JAZZCASH",
@@ -23,7 +23,7 @@ const DEFAULT_METHODS = [
     currency: "PKR",
     instructions: "Send via JazzCash App or USSD *786#. Enter the 12-digit TID in the form.",
     displayOrder: 2,
-    isActive: true,
+    isActive: false,
   },
   {
     code: "RAAST",
@@ -33,7 +33,7 @@ const DEFAULT_METHODS = [
     currency: "PKR",
     instructions: "Use Raast Instant Payment from any Pakistani bank app without any transfer fees.",
     displayOrder: 3,
-    isActive: true,
+    isActive: false,
   },
   {
     code: "BANK_TRANSFER",
@@ -43,7 +43,7 @@ const DEFAULT_METHODS = [
     currency: "PKR",
     instructions: "Transfer to Meezan Bank. Please attach transaction screenshot or enter Reference number.",
     displayOrder: 4,
-    isActive: true,
+    isActive: false,
   },
   {
     code: "SADAPAY",
@@ -53,7 +53,7 @@ const DEFAULT_METHODS = [
     currency: "PKR",
     instructions: "Send via SadaPay App or IBAN transfer. Enter the SadaPay transaction ID in the field.",
     displayOrder: 5,
-    isActive: true,
+    isActive: false,
   },
   {
     code: "NAYAPAY",
@@ -63,7 +63,7 @@ const DEFAULT_METHODS = [
     currency: "PKR",
     instructions: "Transfer to NayaPay wallet or IBAN. Enter your NayaPay Reference ID below.",
     displayOrder: 6,
-    isActive: true,
+    isActive: false,
   },
   {
     code: "USDT_TRC20",
@@ -73,7 +73,7 @@ const DEFAULT_METHODS = [
     currency: "USD",
     instructions: "Send only TRC-20 USDT. Minimum equivalent amount. Enter your 64-character TxHash.",
     displayOrder: 7,
-    isActive: true,
+    isActive: false,
   },
   {
     code: "WISE_PAYONEER",
@@ -83,7 +83,7 @@ const DEFAULT_METHODS = [
     currency: "USD",
     instructions: "Transfer via Wise or Payoneer directly. Enter Wise transfer reference number.",
     displayOrder: 8,
-    isActive: true,
+    isActive: false,
   },
 ];
 
@@ -100,7 +100,7 @@ async function ensurePaymentMethodTable() {
         "instructions" TEXT,
         "qrCodeUrl" TEXT,
         "currency" TEXT NOT NULL DEFAULT 'PKR',
-        "isActive" BOOLEAN NOT NULL DEFAULT true,
+        "isActive" BOOLEAN NOT NULL DEFAULT false,
         "displayOrder" INTEGER NOT NULL DEFAULT 0,
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -179,6 +179,20 @@ export async function POST(req: NextRequest) {
     await ensurePaymentMethodTable();
 
     const body = await req.json();
+
+    if (body.action === "DISABLE_ALL") {
+      await prisma.paymentMethodConfig.updateMany({
+        data: { isActive: false },
+      });
+      logSecurityAudit("ALL_PAYMENT_METHODS_DISABLED", session.userId, {
+        note: "All manual payment gateways disabled to keep only Cryptomus active",
+      });
+      return NextResponse.json({
+        success: true,
+        message: "All manual payment gateways have been disabled. Cryptomus is the active payment gateway.",
+      });
+    }
+
     const { code, name, accountTitle, accountNumber, instructions, currency, isActive, displayOrder } = body;
 
     if (!code || !name || !accountTitle || !accountNumber) {

@@ -704,50 +704,19 @@ function BillingContent() {
           </div>
 
           <div className="space-y-4">
-            <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Select Payment Method</h4>
-
-            <div className="flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setPaymentMethod("CRYPTOMUS")}
-                className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold border transition-all cursor-pointer ${
-                  paymentMethod === "CRYPTOMUS"
-                    ? "bg-slate-900 text-white border-slate-900 shadow-xs ring-2 ring-indigo-500/20"
-                    : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
-                }`}
-              >
-                <Coins className="w-4 h-4 text-amber-400" />
-                <span>Crypto Checkout (Instant)</span>
-                <span className="text-[10px] font-bold bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded-md border border-indigo-400/30">
-                  Cryptomus
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-1">
+              <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                <span>Active Payment Rail:</span>
+                <span className="text-[11px] font-mono font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
+                  <Coins className="w-3.5 h-3.5 text-amber-500" /> Cryptomus Web3 Gateway (Automated)
                 </span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setPaymentMethod("STRIPE")}
-                className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold border transition-all cursor-pointer ${
-                  paymentMethod === "STRIPE"
-                    ? "bg-slate-900 text-white border-slate-900 shadow-xs"
-                    : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
-                }`}
-              >
-                <CreditCard className="w-4 h-4" /> Credit / Debit Card (Stripe)
-              </button>
-              <button
-                type="button"
-                onClick={() => setPaymentMethod("MANUAL")}
-                className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold border transition-all cursor-pointer ${
-                  paymentMethod === "MANUAL"
-                    ? "bg-slate-900 text-white border-slate-900 shadow-xs"
-                    : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
-                }`}
-              >
-                <Upload className="w-4 h-4" /> Easypaisa / JazzCash / USDT / Bank Wire
-              </button>
+              </h4>
+              <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 inline-flex items-center gap-1">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> Instant Blockchain Auto-Activation
+              </span>
             </div>
 
-            {paymentMethod === "CRYPTOMUS" ? (
-              <div className="p-6 rounded-2xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white border border-indigo-800/50 shadow-lg space-y-5">
+            <div className="p-6 rounded-2xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white border border-indigo-800/50 shadow-lg space-y-5">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-indigo-800/40 pb-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center shrink-0">
@@ -848,169 +817,6 @@ function BillingContent() {
                   </span>
                 </div>
               </div>
-            ) : paymentMethod === "STRIPE" ? (
-              <div className="p-6 rounded-2xl bg-slate-50/80 border border-slate-200 space-y-4">
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  Instant activation via encrypted Stripe checkout. Supports Visa, Mastercard, Apple Pay, and Google Pay worldwide.
-                </p>
-                <button
-                  onClick={() => alert(`Redirecting to Stripe secure checkout for ${purchaseMode === "CREDITS" ? selectedCreditPack.name : targetPlanObj?.name}...`)}
-                  className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-xs font-bold text-white hover:bg-indigo-700 shadow-xs transition-colors cursor-pointer"
-                >
-                  <span>
-                    Proceed to Stripe Checkout (
-                    {formatPrice(
-                      purchaseMode === "CREDITS" ? selectedCreditPack.usdPrice : (targetPlanObj?.usdPrice || 0),
-                      currency
-                    )}
-                    )
-                  </span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            ) : (
-              <form
-                onSubmit={handleManualSubmit}
-                className="p-6 rounded-2xl bg-slate-50/80 border border-slate-200 space-y-4 text-xs"
-              >
-                {submitted ? (
-                  <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 font-semibold flex items-center gap-2.5">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-                    <span>
-                      Payment slip submitted successfully! Our billing team verifies and activates your quota within 15 minutes.
-                    </span>
-                  </div>
-                ) : (
-                  <>
-                    <div>
-                      <label className="block font-bold text-slate-700 mb-1.5">Select Payment Channel</label>
-                      <select
-                        value={manualMethod}
-                        onChange={(e) => setManualMethod(e.target.value)}
-                        className="w-full rounded-xl border border-slate-200 p-2.5 bg-white text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                      >
-                        {availableGateways.length > 0 ? (
-                          availableGateways.map((gw) => (
-                            <option key={gw.code} value={gw.code}>
-                              {gw.name} ({gw.currency}) — {gw.accountTitle}
-                            </option>
-                          ))
-                        ) : (
-                          <>
-                            <option value="EASYPAISA">Easypaisa (Pakistan)</option>
-                            <option value="JAZZCASH">JazzCash (Pakistan)</option>
-                            <option value="RAAST">Raast Instant IBAN</option>
-                            <option value="USDT">Binance USDT (TRC-20)</option>
-                            <option value="BANK">Bank Wire / IBAN</option>
-                          </>
-                        )}
-                      </select>
-                    </div>
-
-                    {/* DYNAMIC ACCOUNT DETAILS CARD */}
-                    {(() => {
-                      const activeGw =
-                        availableGateways.find((g) => g.code === manualMethod) || availableGateways[0];
-                      if (!activeGw) return null;
-                      return (
-                        <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
-                          <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs font-bold text-slate-900">{activeGw.name}</span>
-                              <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
-                                {activeGw.currency}
-                              </span>
-                            </div>
-                            <span className="text-[11px] font-medium text-slate-500">
-                              Account Title: <strong className="text-slate-900">{activeGw.accountTitle}</strong>
-                            </span>
-                          </div>
-
-                          <div className="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-                            <div className="min-w-0 pr-2">
-                              <div className="text-[10px] uppercase font-bold text-slate-400">
-                                Account / IBAN / Wallet Address
-                              </div>
-                              <div className="font-mono text-xs font-bold text-slate-900 truncate select-all">
-                                {activeGw.accountNumber}
-                              </div>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                navigator.clipboard.writeText(activeGw.accountNumber);
-                                setCopiedText(true);
-                                setTimeout(() => setCopiedText(false), 2000);
-                              }}
-                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors shrink-0 shadow-xs cursor-pointer"
-                            >
-                              {copiedText ? (
-                                <>
-                                  <Check className="w-3.5 h-3.5 text-emerald-600" />
-                                  <span className="text-emerald-700">Copied</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Copy className="w-3.5 h-3.5 text-slate-500" />
-                                  <span>Copy</span>
-                                </>
-                              )}
-                            </button>
-                          </div>
-
-                          {activeGw.instructions && (
-                            <div className="text-[11px] text-slate-600 bg-amber-50/60 p-2.5 rounded-xl border border-amber-200/60 leading-relaxed">
-                              <strong className="text-amber-900 font-semibold">Instructions: </strong>
-                              {activeGw.instructions}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })()}
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block font-bold text-slate-700 mb-1">Transaction ID / TxHash *</label>
-                        <input
-                          type="text"
-                          required
-                          placeholder="e.g. TID-9823412 or 0x4f..."
-                          value={txId}
-                          onChange={(e) => setTxId(e.target.value)}
-                          className="w-full rounded-xl border border-slate-200 p-2.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block font-bold text-slate-700 mb-1">Sender Name / Phone Number</label>
-                        <input
-                          type="text"
-                          placeholder="e.g. Muhammad Umar (0300-1234567)"
-                          value={senderName}
-                          onChange={(e) => setSenderName(e.target.value)}
-                          className="w-full rounded-xl border border-slate-200 p-2.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                        />
-                      </div>
-                    </div>
-
-                    {manualError && (
-                      <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2">
-                        <AlertCircle className="w-4 h-4 shrink-0" />
-                        <span>{manualError}</span>
-                      </div>
-                    )}
-
-                    <button
-                      type="submit"
-                      disabled={submittingManual}
-                      className="rounded-xl bg-slate-900 px-6 py-2.5 text-xs font-bold text-white hover:bg-slate-800 disabled:opacity-50 shadow-xs transition-colors cursor-pointer"
-                    >
-                      {submittingManual ? "Submitting Slip..." : "Submit Payment Receipt"}
-                    </button>
-                  </>
-                )}
-              </form>
-            )}
           </div>
         </div>
       ) : (

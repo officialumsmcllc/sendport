@@ -53,7 +53,7 @@ interface PaymentMethod {
 }
 
 export default function AdminPaymentsPage() {
-  const [activeTab, setActiveTab] = useState<"SLIPS" | "GATEWAYS" | "CRYPTOMUS">("SLIPS");
+  const [activeTab, setActiveTab] = useState<"SLIPS" | "GATEWAYS" | "CRYPTOMUS">("CRYPTOMUS");
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -251,6 +251,29 @@ export default function AdminPaymentsPage() {
     setTimeout(() => setToast(null), 3500);
   };
 
+  const handleDisableAllGateways = async () => {
+    try {
+      const res = await fetch("/api/admin/payment-methods", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "DISABLE_ALL" }),
+      });
+      if (res.ok) {
+        setGateways((prev) => prev.map((g) => ({ ...g, isActive: false })));
+        setToast({
+          message: "All manual deposit accounts disabled! Only Cryptomus is active.",
+          type: "success",
+        });
+      } else {
+        const err = await res.json();
+        setToast({ message: err.error || "Failed to disable gateways.", type: "error" });
+      }
+    } catch {
+      setToast({ message: "Network error disabling gateways.", type: "error" });
+    }
+    setTimeout(() => setToast(null), 3500);
+  };
+
   const openAddModal = () => {
     setEditingGateway(null);
     setFormCode("");
@@ -427,22 +450,15 @@ export default function AdminPaymentsPage() {
         {/* TABS SWITCHER */}
         <div className="flex items-center bg-[#0d1424] border border-white/10 p-1 rounded-xl text-xs font-bold shadow-lg">
           <button
-            onClick={() => setActiveTab("SLIPS")}
+            onClick={() => setActiveTab("CRYPTOMUS")}
             className={`px-3.5 py-2 rounded-lg flex items-center gap-2 transition-all cursor-pointer ${
-              activeTab === "SLIPS"
-                ? "bg-amber-400 text-slate-950 font-black shadow-sm"
-                : "text-slate-400 hover:text-white"
+              activeTab === "CRYPTOMUS"
+                ? "bg-indigo-600 text-white font-black shadow-sm"
+                : "text-slate-400 hover:text-indigo-300"
             }`}
           >
-            <Receipt className="w-3.5 h-3.5" />
-            <span>Slip Approvals</span>
-            {pendingCount > 0 && (
-              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
-                activeTab === "SLIPS" ? "bg-slate-950 text-amber-400" : "bg-rose-500 text-white animate-pulse"
-              }`}>
-                {pendingCount}
-              </span>
-            )}
+            <Coins className="w-3.5 h-3.5 text-amber-400" />
+            <span>⚡ Cryptomus Web3 (Active)</span>
           </button>
           <button
             onClick={() => setActiveTab("GATEWAYS")}
@@ -454,17 +470,33 @@ export default function AdminPaymentsPage() {
           >
             <Wallet className="w-3.5 h-3.5" />
             <span>Deposit Accounts ({gateways.length})</span>
+            {activeGatewaysCount > 0 ? (
+              <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                {activeGatewaysCount} ON
+              </span>
+            ) : (
+              <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-white/10 text-slate-400">
+                Disabled
+              </span>
+            )}
           </button>
           <button
-            onClick={() => setActiveTab("CRYPTOMUS")}
+            onClick={() => setActiveTab("SLIPS")}
             className={`px-3.5 py-2 rounded-lg flex items-center gap-2 transition-all cursor-pointer ${
-              activeTab === "CRYPTOMUS"
-                ? "bg-indigo-600 text-white font-black shadow-sm"
-                : "text-slate-400 hover:text-indigo-300"
+              activeTab === "SLIPS"
+                ? "bg-amber-400 text-slate-950 font-black shadow-sm"
+                : "text-slate-400 hover:text-white"
             }`}
           >
-            <Coins className="w-3.5 h-3.5" />
-            <span>Cryptomus Web3</span>
+            <Receipt className="w-3.5 h-3.5" />
+            <span>Slip Archive</span>
+            {pendingCount > 0 && (
+              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
+                activeTab === "SLIPS" ? "bg-slate-950 text-amber-400" : "bg-rose-500 text-white animate-pulse"
+              }`}>
+                {pendingCount}
+              </span>
+            )}
           </button>
         </div>
       </div>
@@ -671,28 +703,64 @@ export default function AdminPaymentsPage() {
       {/* TAB 2: CONFIGURE PAYMENT GATEWAYS VIEW */}
       {activeTab === "GATEWAYS" && (
         <div className="space-y-6">
+          {/* Policy Banner: Cryptomus Exclusive */}
+          <div className="p-4 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-indigo-500/20 text-indigo-300 border border-indigo-400/20 shrink-0">
+                <Coins className="w-5 h-5 text-amber-400" />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-white flex items-center gap-2">
+                  <span>Checkout Policy: Cryptomus Web3 Only</span>
+                  <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    Active & Running
+                  </span>
+                </h4>
+                <p className="text-[11px] text-indigo-200/80 mt-0.5">
+                  Customer billing checkout exclusively processes automated Web3 crypto transactions via Cryptomus. All manual bank/wallet deposit rails remain disabled.
+                </p>
+              </div>
+            </div>
+            {activeGatewaysCount > 0 && (
+              <button
+                type="button"
+                onClick={handleDisableAllGateways}
+                className="px-3.5 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/30 text-rose-300 text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5"
+              >
+                <Power className="w-3.5 h-3.5" />
+                <span>Disable All ({activeGatewaysCount} Active)</span>
+              </button>
+            )}
+          </div>
+
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl border border-white/5 bg-[#0d1424]">
             <div>
               <div className="flex items-center gap-2">
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 uppercase tracking-wider">
                   Payment Endpoints
                 </span>
+                <span className="text-xs text-slate-500">•</span>
+                <span className="text-xs text-slate-400 font-mono">
+                  {activeGatewaysCount > 0 ? `${activeGatewaysCount} Active` : "All Disabled (Standby)"}
+                </span>
               </div>
               <h2 className="text-base font-bold text-white flex items-center gap-2 mt-1.5">
                 <Wallet className="w-5 h-5 text-amber-400" />
-                Active Payment Gateways & Deposit Accounts
+                Deposit Accounts Ledger
               </h2>
               <p className="text-xs text-slate-400 mt-1">
-                These accounts are rendered on the customer billing checkout modal. Update IBANs, wallet addresses, and instructions dynamically.
+                Manual bank and wallet endpoints. When disabled, customers are not shown manual slips and checkout only via Cryptomus.
               </p>
             </div>
-            <button
-              onClick={openAddModal}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-xs transition-all shadow-md active:scale-95 shrink-0"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Add New Payment Gateway</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={openAddModal}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-xs transition-all shadow-md active:scale-95 shrink-0"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add New Gateway</span>
+              </button>
+            </div>
           </div>
 
           {loadingGateways ? (
