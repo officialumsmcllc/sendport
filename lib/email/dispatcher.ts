@@ -91,14 +91,17 @@ export interface SendEmailResult {
 /**
  * Extracts pure email and domain from a From header (e.g. "Name <email@domain.com>")
  */
-export function parseFromHeader(from: string): { name?: string; email: string; domain: string } {
+export function parseFromHeader(from: string): { name?: string; email: string; address: string; domain: string } {
   const match = from.match(/(?:(.*?)<)?([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})>?/);
   if (!match) {
-    return { email: from.trim(), domain: from.split("@")[1] || "" };
+    const clean = from.trim();
+    return { email: clean, address: clean, domain: from.split("@")[1] || "" };
   }
+  const email = match[2].trim().toLowerCase();
   return {
     name: match[1]?.trim().replace(/^["']|["']$/g, ""),
-    email: match[2].trim().toLowerCase(),
+    email,
+    address: email,
     domain: match[2].split("@")[1].toLowerCase(),
   };
 }
@@ -352,7 +355,7 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
   const mtaSecretKey = process.env.MTA_SECRET_KEY || "sendport_mta_master_secret_key_2026";
 
   const parsedFrom = parseFromHeader(options.from);
-  const cleanFromAddress = parsedFrom.address;
+  const cleanFromAddress = parsedFrom.address || parsedFrom.email || senderEmail || options.from;
 
   try {
     const mtaRes = await fetch(`${mtaServerUrl}/v1/deliver`, {
