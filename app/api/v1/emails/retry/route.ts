@@ -136,6 +136,18 @@ export async function POST(req: NextRequest) {
             },
           });
           results.push({ id: email.id, to: email.to, status: "DELIVERED" });
+        } else if (sendResult.status === "queued") {
+          deliveredCount++;
+          await prisma.emailLog.update({
+            where: { id: email.id },
+            data: {
+              status: "QUEUED",
+              bounceType: "SOFT",
+              bounceReason: sendResult.error || "Adaptive Throttle Pacing (421)",
+              updatedAt: new Date(),
+            },
+          });
+          results.push({ id: email.id, to: email.to, status: "QUEUED", reason: sendResult.error });
         } else {
           failedCount++;
           await prisma.emailLog.update({
@@ -153,6 +165,16 @@ export async function POST(req: NextRequest) {
         failedCount++;
         results.push({ id: email.id, to: email.to, status: "ERROR", error: err.message });
       }
+
+      // Domain-aware pacing between retry attempts
+      const recipientDomain = email.to.split("@")[1]?.toLowerCase() || "";
+      const isStrict =
+        recipientDomain.includes("yahoo") ||
+        recipientDomain.includes("aol") ||
+        recipientDomain.includes("hotmail") ||
+        recipientDomain.includes("outlook") ||
+        recipientDomain.includes("live");
+      await new Promise((r) => setTimeout(r, isStrict ? 750 : 150));
     }
 
     return NextResponse.json({

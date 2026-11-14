@@ -121,39 +121,47 @@ export async function POST(req: NextRequest) {
     let sentCount = 0;
     let failedCount = 0;
 
-    // Send emails in batches of 10
-    const batchSize = 10;
-    for (let i = 0; i < activeContacts.length; i += batchSize) {
-      const batch = activeContacts.slice(i, i + batchSize);
-      await Promise.all(
-        batch.map(async (contact) => {
-          try {
-            // Personalized tags replacement
-            const personalizedHtml = htmlContent
-              .replace(/\{\{\s*first_name\s*\}\}/gi, contact.firstName || "")
-              .replace(/\{\{\s*last_name\s*\}\}/gi, contact.lastName || "")
-              .replace(/\{\{\s*email\s*\}\}/gi, contact.email);
+    // Send emails sequentially with intelligent domain-aware pacing to prevent Yahoo TSS04 & Outlook rate limits
+    for (let i = 0; i < activeContacts.length; i++) {
+      const contact = activeContacts[i];
+      try {
+        // Personalized tags replacement
+        const personalizedHtml = htmlContent
+          .replace(/\{\{\s*first_name\s*\}\}/gi, contact.firstName || "")
+          .replace(/\{\{\s*last_name\s*\}\}/gi, contact.lastName || "")
+          .replace(/\{\{\s*email\s*\}\}/gi, contact.email);
 
-            const sendResult = await sendEmailEngine({
-              workspaceId: auth.workspace.id,
-              from: fromAddress,
-              to: [contact.email],
-              subject,
-              html: personalizedHtml,
-              replyTo: replyTo || undefined,
-            });
+        const sendResult = await sendEmailEngine({
+          workspaceId: auth.workspace.id,
+          from: fromAddress,
+          to: [contact.email],
+          subject,
+          html: personalizedHtml,
+          replyTo: replyTo || undefined,
+        });
 
-            if (sendResult && sendResult.status === "delivered") {
-              sentCount++;
-            } else {
-              failedCount++;
-            }
-          } catch (err) {
-            console.error(`Broadcast failed to ${contact.email}:`, err);
-            failedCount++;
-          }
-        })
-      );
+        if (sendResult && (sendResult.status === "delivered" || sendResult.status === "queued")) {
+          sentCount++;
+        } else {
+          failedCount++;
+        }
+      } catch (err) {
+        console.error(`Broadcast failed to ${contact.email}:`, err);
+        failedCount++;
+      }
+
+      // Anti-Throttle Pacing: Yahoo, Hotmail, and Outlook require spacing between direct SMTP connections
+      const recipientDomain = contact.email.split("@")[1]?.toLowerCase() || "";
+      const isStrictThrottleMx =
+        recipientDomain.includes("yahoo") ||
+        recipientDomain.includes("aol") ||
+        recipientDomain.includes("hotmail") ||
+        recipientDomain.includes("outlook") ||
+        recipientDomain.includes("live") ||
+        recipientDomain.includes("msn");
+
+      const delayMs = isStrictThrottleMx ? 750 : 150;
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
 
     // Update workspace quota
