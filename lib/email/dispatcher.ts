@@ -5,9 +5,9 @@
  * Policy, SPF/DKIM/DMARC, PTR, or reputation errors must NEVER be treated as hard bounces,
  * because the recipient's mailbox is completely active and legitimate.
  */
-function detectHardBounce(errText: string): string | null {
+function detectHardBounce(errText: any): string | null {
   if (!errText) return null;
-  const lower = errText.toLowerCase();
+  const lower = (typeof errText === "string" ? errText : String(errText)).toLowerCase();
 
   // 1. Policy, authentication, PTR/rDNS, IP reputation, or spam blocks are NOT recipient hard bounces!
   // Allowing these through enables fallback cascade (Hostinger Enterprise Engine / SMTP Relay)
@@ -369,13 +369,22 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
         html: processedHtml,
         text: plainTextBody,
         reply_to: options.replyTo,
-        headers: {
-          "List-Unsubscribe": listUnsubscribeHeader,
-          "List-Unsubscribe-Post": listUnsubscribePostHeader,
-          "Feedback-ID": `sendport:${options.workspaceId || "direct"}:${domainRecord?.name || senderDomain}:blast`,
-          "X-Entity-Ref-ID": messageId,
-          ...options.headers,
-        },
+        headers: (() => {
+          const h: Record<string, string> = {
+            "List-Unsubscribe": listUnsubscribeHeader,
+            "List-Unsubscribe-Post": listUnsubscribePostHeader,
+            "Feedback-ID": `sendport:${options.workspaceId || "direct"}:${domainRecord?.name || senderDomain}:blast`,
+            "X-Entity-Ref-ID": messageId,
+          };
+          if (options.headers) {
+            for (const [k, v] of Object.entries(options.headers)) {
+              if (v !== undefined && v !== null) {
+                h[k] = String(v);
+              }
+            }
+          }
+          return h;
+        })(),
         dkim_selector: domainRecord?.dkimSelector || "sendport",
         dkim_private_key: domainRecord?.dkimPrivateKey || undefined,
       }),
@@ -391,24 +400,40 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
       let parsedDetail = mtaErr;
       try {
         const json = JSON.parse(mtaErr);
-        if (json.detail) parsedDetail = json.detail;
+        if (json.detail) {
+          if (typeof json.detail === "string") {
+            parsedDetail = json.detail;
+          } else if (Array.isArray(json.detail)) {
+            // FastAPI Pydantic validation error array: [{ loc: [...], msg: "..." }]
+            parsedDetail = json.detail
+              .map((d: any) => (d.msg ? `${d.loc?.filter((x: any) => x !== "body").join(".") || "param"}: ${d.msg}` : JSON.stringify(d)))
+              .join("; ");
+          } else {
+            parsedDetail = JSON.stringify(json.detail);
+          }
+        } else if (json.message) {
+          parsedDetail = typeof json.message === "string" ? json.message : JSON.stringify(json.message);
+        }
       } catch (_) {}
+
+      const cleanDetail = typeof parsedDetail === "string" ? parsedDetail : String(parsedDetail || "");
+      const lowerDetail = cleanDetail.toLowerCase();
 
       const isSoftThrottle =
         mtaRes.status === 429 ||
-        parsedDetail.toLowerCase().includes("adaptive throttle") ||
-        parsedDetail.toLowerCase().includes("421") ||
-        parsedDetail.toLowerCase().includes("451") ||
-        parsedDetail.toLowerCase().includes("rate limit") ||
-        parsedDetail.toLowerCase().includes("try again later");
+        lowerDetail.includes("adaptive throttle") ||
+        lowerDetail.includes("421") ||
+        lowerDetail.includes("451") ||
+        lowerDetail.includes("rate limit") ||
+        lowerDetail.includes("try again later");
 
       if (isSoftThrottle) {
         deliveryStatus = "QUEUED";
         bounceType = "SOFT";
-        deliveryError = `Adaptive Throttle Pacing (421): ${parsedDetail}`;
+        deliveryError = `Adaptive Throttle Pacing (421): ${cleanDetail}`;
         console.warn(`[ADAPTIVE THROTTLE SOFT DEFERRAL] ${deliveryError}`);
       } else {
-        const hardBounce = detectHardBounce(parsedDetail);
+        const hardBounce = detectHardBounce(cleanDetail);
         if (hardBounce) {
           deliveryStatus = "BOUNCED";
           bounceType = "HARD";
@@ -417,14 +442,14 @@ export async function sendEmailEngine(options: SendEmailOptions): Promise<SendEm
         } else {
           deliveryStatus = "FAILED";
           bounceType = null;
-          deliveryError = `Dedicated VPS MTA: ${parsedDetail || mtaRes.statusText}`;
+          deliveryError = `Dedicated VPS MTA: ${cleanDetail || mtaRes.statusText}`;
           console.warn(`[MTA DELIVERY FAILURE] ${deliveryError}`);
         }
       }
     }
   } catch (mtaErr: any) {
     deliveryStatus = "FAILED";
-    deliveryError = `Dedicated VPS MTA connection error: ${mtaErr.message}`;
+    deliveryError = `Dedicated VPS MTA connection error: ${mtaErr?.message || String(mtaErr)}`;
     console.warn(`[MTA CONNECTION ERROR] ${deliveryError}`);
   }
 
