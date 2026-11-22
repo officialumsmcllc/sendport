@@ -270,6 +270,51 @@ ${emailFooter}
 }
 
 /**
+ * 3b. Subscription Plan Expired Action Email
+ */
+export async function sendSubscriptionExpiredEmail(
+  user: { email: string; name?: string | null },
+  plan: string
+): Promise<boolean> {
+  const name = user.name || "Customer";
+  const planDisplay = plan === "SCALE_PRO" ? "Scale Pro" : plan === "GROWTH" ? "Growth" : plan;
+
+  const html = `
+${emailHeader}
+  <div style="display: inline-block; background: #881337; color: #fb7185; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
+    🚨 Action Required: Plan Expired
+  </div>
+  <h2 style="color: #ffffff; font-size: 22px; font-weight: 800; margin-top: 0; margin-bottom: 12px;">Your ${planDisplay} Subscription Has Expired</h2>
+  <p style="color: #94a3b8; font-size: 14px; line-height: 1.6; margin-bottom: 16px;">
+    Hello ${name}, your monthly Sendport <strong>${planDisplay}</strong> plan subscription has expired.
+  </p>
+  <div style="background: rgba(244, 63, 94, 0.08); border-left: 3px solid #f43f5e; padding: 14px 18px; border-radius: 8px; margin-bottom: 24px;">
+    <p style="color: #fda4af; font-size: 13px; font-weight: 700; margin: 0 0 6px 0;">
+      Daily Quota Reset to Free Tier (100 emails/day)
+    </p>
+    <p style="color: #cbd5e1; font-size: 13px; line-height: 1.5; margin: 0;">
+      To prevent your ongoing email dispatches from pausing or bouncing, please renew your subscription now. Your custom DKIM keys and domains remain active.
+    </p>
+  </div>
+  <div style="text-align: center; margin: 28px 0 24px 0;">
+    <a href="https://getsendport.com/dashboard/billing?renew=true#payment-section" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #0f172a; padding: 14px 32px; font-size: 14px; font-weight: 900; text-decoration: none; border-radius: 12px; display: inline-block; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);">
+      ⚡ Renew Subscription Now &rarr;
+    </a>
+  </div>
+  <p style="color: #64748b; font-size: 12px; text-align: center; margin: 0;">
+    Instant auto-activation available via Cryptomus Web3 (USDT, BTC, ETH). Zero delay.
+  </p>
+${emailFooter}
+  `;
+
+  return sendSystemEmail({
+    to: user.email,
+    subject: `🚨 Urgent: Your Sendport ${planDisplay} plan has expired – Renew to reactivate quota`,
+    html,
+  });
+}
+
+/**
  * 4. Password Reset Code Email
  */
 export async function sendPasswordResetEmail(
