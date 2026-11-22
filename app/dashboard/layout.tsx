@@ -175,7 +175,7 @@ export default function DashboardLayout({
                           <span>Subscription Expired</span>
                         </div>
                         <Link
-                          href="/dashboard/billing"
+                          href="/dashboard/billing?renew=true#payment-section"
                           className="flex items-center justify-center gap-1.5 w-full py-1.5 px-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-[11px] shadow-sm transition-colors"
                         >
                           <RotateCw className="w-3 h-3" /> Renew Plan Now

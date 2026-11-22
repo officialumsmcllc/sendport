@@ -14,7 +14,8 @@ import {
   Sparkles,
   Layers,
   AlertCircle,
-  Coins
+  Coins,
+  RotateCw
 } from "lucide-react";
 import { CURRENCIES, SupportedCurrency, formatPrice } from "@/lib/payments/currencies";
 
@@ -104,6 +105,25 @@ function BillingContent() {
 
   const searchParams = useSearchParams();
   const planQuery = searchParams.get("plan");
+  const renewQuery = searchParams.get("renew");
+
+  const handleRenewPlan = (planId?: string) => {
+    const planToRenew = planId || workspaceStats.plan || "GROWTH";
+    setPurchaseMode("PLAN");
+    setSelectedUpgradePlan(planToRenew as any);
+    setTimeout(() => {
+      const el = document.getElementById("payment-section");
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 100);
+  };
+
+  useEffect(() => {
+    if (renewQuery) {
+      handleRenewPlan();
+    }
+  }, [renewQuery, workspaceStats.plan]);
 
   useEffect(() => {
     if (planQuery) {
@@ -283,7 +303,7 @@ function BillingContent() {
   }
 
   const currentPlan = workspaceStats.plan;
-  const targetPlanObj = plans.find((p) => p.id === selectedUpgradePlan) || null;
+  const targetPlanObj = plans.find((p) => p.id === (selectedUpgradePlan || currentPlan)) || null;
 
   return (
     <div className="space-y-8">
@@ -403,14 +423,10 @@ function BillingContent() {
                       </p>
                       <button
                         type="button"
-                        onClick={() => {
-                          setSelectedUpgradePlan(currentPlan as any);
-                          const el = document.getElementById("payment-section");
-                          if (el) el.scrollIntoView({ behavior: "smooth" });
-                        }}
-                        className="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs rounded-lg shadow-sm"
+                        onClick={() => handleRenewPlan(currentPlan)}
+                        className="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs rounded-lg shadow-sm cursor-pointer transition-colors shrink-0 flex items-center gap-1.5"
                       >
-                        Renew Plan Now →
+                        <RotateCw className="w-3.5 h-3.5" /> Renew Plan Now →
                       </button>
                     </div>
                   );
@@ -512,6 +528,12 @@ function BillingContent() {
               onClick={() => {
                 if (!isCurrentPlan) {
                   setSelectedUpgradePlan(p.id as any);
+                  setTimeout(() => {
+                    const el = document.getElementById("payment-section");
+                    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }, 100);
+                } else if (p.id !== "STARTER") {
+                  handleRenewPlan(p.id);
                 }
               }}
               className={`rounded-3xl border p-6 flex flex-col justify-between transition-all duration-200 relative ${
@@ -591,18 +613,64 @@ function BillingContent() {
               {/* Action Button */}
               <div className="mt-6">
                 {isCurrentPlan ? (
-                  <button
-                    disabled
-                    className="w-full py-2.5 rounded-xl text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 cursor-default flex items-center justify-center gap-1.5"
-                  >
-                    <Check className="w-3.5 h-3.5" /> Current Active Plan
-                  </button>
+                  workspaceStats.isPlanExpired && p.id !== "STARTER" ? (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRenewPlan(p.id);
+                      }}
+                      className="w-full py-2.5 rounded-xl text-xs font-black bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-sm flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                    >
+                      <RotateCw className="w-3.5 h-3.5 animate-spin-hover" /> Renew {p.name} Plan Now
+                    </button>
+                  ) : selectedUpgradePlan === p.id && p.id !== "STARTER" ? (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRenewPlan(p.id);
+                      }}
+                      className="w-full py-2.5 rounded-xl text-xs font-black bg-indigo-600 text-white shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <Check className="w-3.5 h-3.5" /> Selected for Renewal
+                    </button>
+                  ) : p.id !== "STARTER" ? (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRenewPlan(p.id);
+                      }}
+                      className="w-full py-2.5 rounded-xl text-xs font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                    >
+                      <RotateCw className="w-3.5 h-3.5 text-emerald-600" /> Current Plan (Renew / Extend)
+                    </button>
+                  ) : (
+                    <button
+                      disabled
+                      className="w-full py-2.5 rounded-xl text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 cursor-default flex items-center justify-center gap-1.5"
+                    >
+                      <Check className="w-3.5 h-3.5" /> Current Free Plan
+                    </button>
+                  )
                 ) : isSelectedForUpgrade ? (
                   <button className="w-full py-2.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-xs flex items-center justify-center gap-1.5 cursor-pointer">
                     <Check className="w-3.5 h-3.5" /> Selected for Upgrade
                   </button>
                 ) : (
-                  <button className="w-full py-2.5 rounded-xl text-xs font-semibold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedUpgradePlan(p.id as any);
+                      setTimeout(() => {
+                        const el = document.getElementById("payment-section");
+                        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                      }, 100);
+                    }}
+                    className="w-full py-2.5 rounded-xl text-xs font-semibold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+                  >
                     {p.id === "STARTER" ? "Downgrade to Starter" : `Upgrade to ${p.name}`}
                   </button>
                 )}
@@ -678,19 +746,25 @@ function BillingContent() {
       )}
 
       {/* CHECKOUT / UPGRADE SECTION */}
-      {purchaseMode === "CREDITS" || (selectedUpgradePlan && selectedUpgradePlan !== currentPlan) ? (
-        <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-xs space-y-6">
+      {purchaseMode === "CREDITS" || Boolean(selectedUpgradePlan && (selectedUpgradePlan !== currentPlan || currentPlan !== "STARTER")) ? (
+        <div id="payment-section" className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-xs space-y-6 scroll-mt-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-4 gap-3">
             <div>
               <div className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 uppercase tracking-wider">
-                <Sparkles className="w-3 h-3" /> {purchaseMode === "CREDITS" ? "Credit Top-Up Summary" : "Upgrade Order Summary"}
+                <Sparkles className="w-3 h-3" /> {purchaseMode === "CREDITS" ? "Credit Top-Up Summary" : selectedUpgradePlan === currentPlan ? "Subscription Renewal Summary" : "Upgrade Order Summary"}
               </div>
               <h3 className="text-xl font-black text-slate-900 mt-0.5">
-                {purchaseMode === "CREDITS" ? `Top Up ${selectedCreditPack.name}` : `Switch from ${currentPlan} to ${targetPlanObj?.name} Plan`}
+                {purchaseMode === "CREDITS"
+                  ? `Top Up ${selectedCreditPack.name}`
+                  : selectedUpgradePlan === currentPlan
+                  ? `Renew ${targetPlanObj?.name || currentPlan} Plan (1 Month)`
+                  : `Switch from ${currentPlan} to ${targetPlanObj?.name} Plan`}
               </h3>
               <p className="text-xs text-slate-500 mt-1">
                 {purchaseMode === "CREDITS"
                   ? `${selectedCreditPack.credits.toLocaleString()} non-expiring credits will be added to your workspace balance immediately.`
+                  : selectedUpgradePlan === currentPlan
+                  ? `Your daily sending quota of ${targetPlanObj?.defaultQuota || "3,000 emails/day"} will be reactivated for 30 days upon payment confirmation.`
                   : `Your daily quota will instantly upgrade to ${targetPlanObj?.defaultQuota} upon payment confirmation.`}
               </p>
             </div>
@@ -822,19 +896,39 @@ function BillingContent() {
       ) : (
         <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs flex items-center justify-between">
           <div>
-            <h4 className="text-sm font-bold text-slate-900">Need higher sending limits?</h4>
+            <h4 className="text-sm font-bold text-slate-900">
+              {workspaceStats.isPlanExpired ? "Ready to reactivate your sending quota?" : "Need higher sending limits?"}
+            </h4>
             <p className="text-xs text-slate-500 mt-0.5">
-              Click on any tier above (Growth or Scale Pro) to upgrade your sending limits immediately.
+              {workspaceStats.isPlanExpired
+                ? "Click Renew Growth Tier to immediately reactivate your 3,000 emails/day quota."
+                : "Click on any tier above (Growth or Scale Pro) to upgrade your sending limits immediately."}
             </p>
           </div>
-          {currentPlan !== "SCALE_PRO" && (
+          {workspaceStats.isPlanExpired ? (
             <button
-              onClick={() => setSelectedUpgradePlan("GROWTH")}
+              type="button"
+              onClick={() => handleRenewPlan(currentPlan)}
+              className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-black transition-colors cursor-pointer flex items-center gap-1.5 shadow-sm"
+            >
+              <RotateCw className="w-3.5 h-3.5" /> Renew Growth Tier
+            </button>
+          ) : currentPlan !== "SCALE_PRO" ? (
+            <button
+              type="button"
+              onClick={() => {
+                const target = currentPlan === "STARTER" ? "GROWTH" : "SCALE_PRO";
+                setSelectedUpgradePlan(target);
+                setTimeout(() => {
+                  const el = document.getElementById("payment-section");
+                  if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                }, 100);
+              }}
               className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-colors cursor-pointer"
             >
-              Explore Growth Tier
+              {currentPlan === "STARTER" ? "Explore Growth Tier" : "Upgrade to Scale Pro"}
             </button>
-          )}
+          ) : null}
         </div>
       )}
     </div>
